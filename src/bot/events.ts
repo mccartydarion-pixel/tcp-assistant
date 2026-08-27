@@ -6,7 +6,7 @@ import { SpecialIntentRouter } from '../ai/specialIntentRouter.js';
 import { normalizeUserQuestion } from '../ai/question.js';
 import { detectBotMention } from './mention.js';
 import { determineMessageRoute } from './messageRoute.js';
-import { ConversationMemory, detectFollowUpIntent } from '../ai/conversationMemory.js';
+import { ConversationMemory } from '../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../ai/question.js';
 
 export function registerEvents(
@@ -52,6 +52,8 @@ export function registerEvents(
     logger.info(`[TCP Message] Support category match: ${isTicket ? 'YES' : 'NO'}`);
     const guildId = message.guildId ?? 'dm';
     const activeSession = memory.hasActive(guildId, message.channelId, message.author.id, isTicket);
+    logger.info(`[TCP Session] Key: ${memory.key(guildId, message.channelId, message.author.id)}`);
+    logger.info(`[TCP Session] Active: ${activeSession}`);
     const route = determineMessageRoute({ isTicket, mentionsBot: isMentioned, activeSession });
     logger.info(`[TCP Message] Route: ${route}`);
     if (route === 'IGNORE') return;
