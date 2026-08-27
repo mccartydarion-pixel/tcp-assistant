@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import type { ConversationTurn } from '../ai/promptBuilder.js';
 import { SpecialIntentRouter } from '../ai/specialIntentRouter.js';
+import { normalizeUserQuestion } from '../ai/question.js';
 
 export function registerEvents(client: Client, assistant: AssistantService, specialIntentRouter: SpecialIntentRouter): void {
   const conversations = new Map<string, ConversationTurn[]>();
@@ -24,16 +25,22 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
   });
 
   client.on(Events.MessageCreate, async (message) => {
-    if (!message.content.trim()) return;
-    const guildId = message.guildId;
-    if (!guildId) return;
+    const isMentioned = client.user !== null && message.mentions.users.has(client.user.id);
+    logger.info('[TCP Message] Received');
+    logger.info(`[TCP Message] Author bot: ${message.author.bot}`);
+    logger.info(`[TCP Message] Channel: ${message.channelId}`);
+    logger.info(`[TCP Message] Mentions bot: ${isMentioned}`);
+
+    if (message.author.bot) return;
+
     const isTicket = isSupportTicketChannel(message);
 
     if (isTicket) {
-      logger.info('[TCP Ticket] Message received');
       logger.info('[TCP Ticket] Support category match: YES');
     }
+    if (!isTicket && !isMentioned) return;
 
+    const guildId = message.guildId ?? 'dm';
     if (message.author.id === env.OWNER_USER_ID) {
       if (specialIntentRouter.isEscalated(guildId, message.channelId)) {
         specialIntentRouter.markOwnerJoined(guildId, message.channelId);
@@ -41,41 +48,42 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
       }
       return;
     }
-    if (message.author.bot) return;
     if (isTicket) logger.info('[TCP Ticket] User message accepted');
 
-    const question = message.content
-      .replace(new RegExp(`<@!?${client.user?.id ?? '0'}>`, 'g'), '')
-      .trim();
-    if (!question) return;
+    const question = normalizeUserQuestion(message.content, client.user?.id);
+    logger.info(`[TCP Message] Clean question: ${question || '<empty>'}`);
 
-    logger.info('[TCP Escalation] Checking intent');
-    const escalationResult = specialIntentRouter.check(guildId, message.channelId, message.author.id, question);
-    if (escalationResult) {
-      if (!escalationResult.shouldNotify) {
-        logger.info(`[TCP Escalation] Duplicate ping prevented: ${message.channelId}`);
-        await message.reply(specialIntentRouter.ownerResponse(true));
+    try {
+      if (!question) {
+        await message.reply('How can I help with T.C.P.?');
         return;
       }
 
-      logger.info(`[TCP Escalation] Human support requested: ${message.channelId}`);
-      await message.reply(specialIntentRouter.ownerResponse(false));
-      logger.info(`[TCP Escalation] Owner notified: ${message.channelId}`);
-      return;
-    }
-    logger.info('[TCP Escalation] Intent: NONE');
+      logger.info('[TCP Escalation] Checking intent');
+      const escalationResult = specialIntentRouter.check(guildId, message.channelId, message.author.id, question);
+      if (escalationResult) {
+        if (!escalationResult.shouldNotify) {
+          logger.info(`[TCP Escalation] Duplicate ping prevented: ${message.channelId}`);
+          await message.reply(specialIntentRouter.ownerResponse(true));
+          return;
+        }
 
-    if (isTicket && specialIntentRouter.isEscalated(guildId, message.channelId) && /^hello(?:[!?. ]*)$/i.test(question)) {
-      await message.reply("I'm still here. The owner has already been notified. You can leave any additional details about the issue while you're waiting.");
-      return;
-    }
+        logger.info(`[TCP Escalation] Human support requested: ${message.channelId}`);
+        await message.reply(specialIntentRouter.ownerResponse(false));
+        logger.info(`[TCP Escalation] Owner notified: ${message.channelId}`);
+        return;
+      }
+      logger.info('[TCP Escalation] Intent: NONE');
 
-    if (!isTicket && !isRelevantMessage(message)) return;
-    if (specialIntentRouter.isOwnerHandling(guildId, message.channelId) && !message.mentions.has(client.user!)) return;
+      if (isTicket && specialIntentRouter.isEscalated(guildId, message.channelId) && /^hello(?:[!?. ]*)$/i.test(question)) {
+        await message.reply("I'm still here. The owner has already been notified. You can leave any additional details about the issue while you're waiting.");
+        return;
+      }
 
-    if (isTicket) logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
+      if (specialIntentRouter.isOwnerHandling(guildId, message.channelId) && !isMentioned) return;
 
-    try {
+      if (isTicket) logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
+
       logger.info('[TCP AI] Request started');
       const history = conversations.get(message.channelId) ?? [];
       const answer = await assistant.answer(question, history, client.user?.id);
@@ -87,8 +95,12 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
       conversations.set(message.channelId, turns.slice(-8));
       await message.reply(answer);
     } catch (error) {
-      logger.error({ err: error }, '[TCP Discord ERROR] Message response failed');
-      await message.reply('I could not process that request right now. Please try again or open a support ticket.');
+      logger.error({ err: error }, '[TCP Discord ERROR] Message processing failed');
+      try {
+        await message.reply('T.C.P. Assistant hit an error processing that message.');
+      } catch (replyError) {
+        logger.error({ err: replyError }, '[TCP Discord ERROR] Missing SendMessages permission or reply failed');
+      }
     }
   });
 
@@ -102,19 +114,9 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
     }
   });
 
-  logger.info('[TCP Discord] interactionCreate: LOADED');
-  logger.info('[TCP Discord] messageCreate: LOADED');
-  logger.info('[TCP Discord] channelCreate: LOADED');
-}
-
-function isRelevantMessage(message: Message): boolean {
-  const mentioned = Boolean(message.client.user && message.mentions.has(message.client.user));
-  const configuredChannel = [
-    env.FAQ_CHANNEL_ID,
-    env.BUG_REPORT_CHANNEL_ID,
-    env.DOWNLOAD_CHANNEL_ID,
-  ].includes(message.channelId);
-  return mentioned || isSupportTicketChannel(message) || configuredChannel;
+  logger.info('[TCP Events] interactionCreate loaded');
+  logger.info('[TCP Events] messageCreate loaded');
+  logger.info('[TCP Events] channelCreate loaded');
 }
 
 export function isSupportTicketChannel(message: Message): boolean {

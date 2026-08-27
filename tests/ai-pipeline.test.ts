@@ -8,6 +8,8 @@ const question = 'my gun keeps going UP and my vertical is 38, ADS Sens 90 Preci
   it('removes only the bot mention during normalization', () => {
     expect(normalizeUserQuestion('<@123> my gun keeps going UP, vertical is 38', '123'))
       .toBe('my gun keeps going UP, vertical is 38');
+    expect(normalizeUserQuestion('<@!123> can i speak to the owner please', '123'))
+      .toBe('can i speak to the owner please');
   });
 
   it('extracts symptoms and preserves all numeric settings', () => {
