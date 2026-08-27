@@ -6,6 +6,7 @@ import type { ConversationTurn } from '../ai/promptBuilder.js';
 import { SpecialIntentRouter } from '../ai/specialIntentRouter.js';
 import { normalizeUserQuestion } from '../ai/question.js';
 import { detectBotMention } from './mention.js';
+import { determineMessageRoute } from './messageRoute.js';
 
 export function registerEvents(client: Client, assistant: AssistantService, specialIntentRouter: SpecialIntentRouter): void {
   const conversations = new Map<string, ConversationTurn[]>();
@@ -43,11 +44,10 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
 
     const isTicket = isSupportTicketChannel(message);
 
-    if (isTicket) {
-      logger.info('[TCP Ticket] Support category match: YES');
-    }
-    if (!isTicket && !isMentioned) return;
-    logger.info(`[TCP Message] Route: ${isTicket ? 'ticket' : 'mention'}`);
+    logger.info(`[TCP Message] Support category match: ${isTicket ? 'YES' : 'NO'}`);
+    const route = determineMessageRoute({ isTicket, mentionsBot: isMentioned });
+    logger.info(`[TCP Message] Route: ${route}`);
+    if (route === 'IGNORE') return;
 
     const guildId = message.guildId ?? 'dm';
     if (message.author.id === env.OWNER_USER_ID) {
@@ -59,7 +59,10 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
     }
     if (isTicket) logger.info('[TCP Ticket] User message accepted');
 
-    const question = normalizeUserQuestion(message.content, botId);
+    const question = normalizeUserQuestion(
+      message.content,
+      route === 'MENTION' || route === 'TICKET_MENTION' ? botId : undefined,
+    );
     logger.info(`[TCP Message] Clean question: ${question || '<empty>'}`);
 
     try {
@@ -89,9 +92,9 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
         return;
       }
 
-      if (specialIntentRouter.isOwnerHandling(guildId, message.channelId) && !isMentioned) return;
+      if (route === 'TICKET' && specialIntentRouter.isOwnerHandling(guildId, message.channelId)) return;
 
-      if (isTicket) logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
+      if (route === 'TICKET' || route === 'TICKET_MENTION') logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
 
       logger.info('[TCP AI] Request started');
       const history = conversations.get(message.channelId) ?? [];
