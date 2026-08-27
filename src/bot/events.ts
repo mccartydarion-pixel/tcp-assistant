@@ -28,6 +28,12 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
     if (!message.content.trim()) return;
     const guildId = message.guildId;
     if (!guildId) return;
+    const isTicket = isSupportTicketChannel(message);
+
+    if (isTicket) {
+      logger.info('[TCP Ticket] Message received');
+      logger.info('[TCP Ticket] Support category match: YES');
+    }
 
     if (message.author.id === env.OWNER_USER_ID) {
       if (escalation.isEscalated(guildId, message.channelId)) {
@@ -37,12 +43,14 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
       return;
     }
     if (message.author.bot) return;
+    if (isTicket) logger.info('[TCP Ticket] User message accepted');
 
     const question = message.content
       .replace(new RegExp(`<@!?${client.user?.id ?? '0'}>`, 'g'), '')
       .trim();
     if (!question) return;
 
+    logger.info('[TCP Escalation] Checking intent');
     const escalationResult = escalation.request(guildId, message.channelId, message.author.id, question);
     if (escalationResult) {
       if (!env.OWNER_USER_ID) {
@@ -64,9 +72,17 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
       logger.info(`[TCP Escalation] Owner notified: ${message.channelId}`);
       return;
     }
+    logger.info('[TCP Escalation] Intent: NONE');
 
-    if (!isRelevantMessage(message)) return;
+    if (isTicket && escalation.isEscalated(guildId, message.channelId) && /^hello(?:[!?. ]*)$/i.test(question)) {
+      await message.reply("I'm still here. The owner has already been notified. You can leave any additional details about the issue while you're waiting.");
+      return;
+    }
+
+    if (!isTicket && !isRelevantMessage(message)) return;
     if (escalation.isOwnerHandling(guildId, message.channelId) && !message.mentions.has(client.user!)) return;
+
+    if (isTicket) logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
 
     try {
       logger.info('[TCP AI] Request started');
@@ -102,13 +118,20 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
 
 function isRelevantMessage(message: Message): boolean {
   const mentioned = Boolean(message.client.user && message.mentions.has(message.client.user));
-  const inSupportChannel = Boolean(env.SUPPORT_CATEGORY_ID && 'parentId' in message.channel && message.channel.parentId === env.SUPPORT_CATEGORY_ID);
   const configuredChannel = [
     env.FAQ_CHANNEL_ID,
     env.BUG_REPORT_CHANNEL_ID,
     env.DOWNLOAD_CHANNEL_ID,
   ].includes(message.channelId);
-  return mentioned || inSupportChannel || configuredChannel;
+  return mentioned || isSupportTicketChannel(message) || configuredChannel;
+}
+
+export function isSupportTicketChannel(message: Message): boolean {
+  return Boolean(
+    env.SUPPORT_CATEGORY_ID &&
+      'parentId' in message.channel &&
+      message.channel.parentId === env.SUPPORT_CATEGORY_ID,
+  );
 }
 
 declare module 'discord.js' {

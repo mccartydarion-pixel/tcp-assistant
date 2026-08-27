@@ -1,9 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { detectEscalationIntent, EscalationService } from '../src/ai/escalation.js';
 
 describe('human escalation', () => {
   it.each(['can you get the owner in here', 'ping the owner', 'I need a human', 'get an admin', 'AI is not helping, escalate this'])('detects %s', (question) => {
     expect(detectEscalationIntent(question)).not.toBeNull();
+  });
+
+  it('detects the ticket owner request phrasing', () => {
+    expect(detectEscalationIntent('can i speak to the owner please')).toBe('OWNER_REQUEST');
+    expect(detectEscalationIntent('owner?')).toBe('OWNER_REQUEST');
   });
 
   it.each(['who is the owner?', 'what does the owner do?', 'is the owner online?', 'can the owner change recoil settings?'])('does not escalate informational question: %s', (question) => {

@@ -7,7 +7,7 @@ export interface EscalationResult {
 }
 
 const informationalPattern = /\b(who\s+(?:is|owns?)|what\s+does|is\s+the)\s+(?:owner|admin|staff)\b/i;
-const ownerPattern = /\b(?:get|ping|contact|notify|need|talk to|speak to|bring in|call)\s+(?:the\s+)?owner\b|\bowner\s+(?:in here|please)\b/i;
+const ownerPattern = /\b(?:get|ping|contact|notify|need|talk to|speak to|bring in|call)\s+(?:the\s+)?owner\b|\bowner\s+(?:in here|please)\b|^owner[!?.,\s]*$/i;
 const adminPattern = /\b(?:get|ping|contact|need|talk to|speak to|bring in|call)\s+(?:an?\s+)?admin\b/i;
 const humanPattern = /\b(?:need|want|talk to|speak to|get)\s+(?:a\s+)?(?:human|real person|someone)\b|\bhuman support\b|\b(?:escalate|more help)\b|\bcan someone help me\b/i;
 
