@@ -25,11 +25,15 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
   });
 
   client.on(Events.MessageCreate, async (message) => {
-    const isMentioned = client.user !== null && message.mentions.users.has(client.user.id);
+    const isMentioned = client.user !== null && (
+      message.mentions.users.has(client.user.id) ||
+      new RegExp(`<@!?${client.user.id}>`).test(message.content)
+    );
     logger.info('[TCP Message] Received');
     logger.info(`[TCP Message] Author bot: ${message.author.bot}`);
     logger.info(`[TCP Message] Channel: ${message.channelId}`);
     logger.info(`[TCP Message] Mentions bot: ${isMentioned}`);
+    logger.info(`[TCP Message] Content available: ${message.content.length > 0}`);
 
     if (message.author.bot) return;
 
@@ -39,6 +43,7 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
       logger.info('[TCP Ticket] Support category match: YES');
     }
     if (!isTicket && !isMentioned) return;
+    logger.info(`[TCP Message] Route: ${isTicket ? 'ticket' : 'mention'}`);
 
     const guildId = message.guildId ?? 'dm';
     if (message.author.id === env.OWNER_USER_ID) {
