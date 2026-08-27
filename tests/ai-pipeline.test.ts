@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildTCPPrompt } from '../src/ai/promptBuilder.js';
 import { extractQuestionDetails, normalizeUserQuestion } from '../src/ai/question.js';
+import { detectBotMention } from '../src/bot/mention.js';
 
 const question = 'my gun keeps going UP and my vertical is 38, ADS Sens 90 Precision 45 Response 95 Easing 8 at 150m';
 
@@ -10,6 +11,13 @@ const question = 'my gun keeps going UP and my vertical is 38, ADS Sens 90 Preci
       .toBe('my gun keeps going UP, vertical is 38');
     expect(normalizeUserQuestion('<@!123> can i speak to the owner please', '123'))
       .toBe('can i speak to the owner please');
+  });
+
+  it('detects only ID-based Discord mentions', () => {
+    const noParsedMention = { users: { has: () => false } };
+    expect(detectBotMention({ content: '<@123> hello', mentions: noParsedMention }, '123')).toBe(true);
+    expect(detectBotMention({ content: '<@!123> hello', mentions: noParsedMention }, '123')).toBe(true);
+    expect(detectBotMention({ content: 'T.C.P. Assistant hello', mentions: noParsedMention }, '123')).toBe(false);
   });
 
   it('extracts symptoms and preserves all numeric settings', () => {

@@ -5,6 +5,7 @@ import { logger } from '../utils/logger.js';
 import type { ConversationTurn } from '../ai/promptBuilder.js';
 import { SpecialIntentRouter } from '../ai/specialIntentRouter.js';
 import { normalizeUserQuestion } from '../ai/question.js';
+import { detectBotMention } from './mention.js';
 
 export function registerEvents(client: Client, assistant: AssistantService, specialIntentRouter: SpecialIntentRouter): void {
   const conversations = new Map<string, ConversationTurn[]>();
@@ -25,13 +26,15 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
   });
 
   client.on(Events.MessageCreate, async (message) => {
-    const isMentioned = client.user !== null && (
-      message.mentions.users.has(client.user.id) ||
-      new RegExp(`<@!?${client.user.id}>`).test(message.content)
-    );
+    const botId = client.user?.id;
+    const mentionedIds = [...message.mentions.users.keys()];
+    const isMentioned = detectBotMention(message, botId);
     logger.info('[TCP Message] Received');
     logger.info(`[TCP Message] Author bot: ${message.author.bot}`);
     logger.info(`[TCP Message] Channel: ${message.channelId}`);
+    logger.info(`[TCP Message] Bot ID: ${botId ?? '<unavailable>'}`);
+    logger.info(`[TCP Message] Mentioned IDs: ${mentionedIds.join(', ') || '<none>'}`);
+    logger.info(`[TCP Message] Raw content: ${message.content}`);
     logger.info(`[TCP Message] Mentions bot: ${isMentioned}`);
     logger.info(`[TCP Message] Content available: ${message.content.length > 0}`);
     logger.info(`[TCP Message] Logged-in bot ID: ${client.user?.id ?? '<unavailable>'}`);
@@ -58,7 +61,7 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
     }
     if (isTicket) logger.info('[TCP Ticket] User message accepted');
 
-    const question = normalizeUserQuestion(message.content, client.user?.id);
+    const question = normalizeUserQuestion(message.content, botId);
     logger.info(`[TCP Message] Clean question: ${question || '<empty>'}`);
 
     try {
@@ -94,7 +97,7 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
 
       logger.info('[TCP AI] Request started');
       const history = conversations.get(message.channelId) ?? [];
-      const answer = await assistant.answer(question, history, client.user?.id);
+      const answer = await assistant.answer(question, history, botId);
       const turns: ConversationTurn[] = [
         ...history,
         { role: 'user', content: question },
