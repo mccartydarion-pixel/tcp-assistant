@@ -2,6 +2,7 @@ import { DocumentLoader } from './documentLoader.js';
 import { DocumentParser } from './documentParser.js';
 import { KeywordRetriever } from './retriever.js';
 import type { AssistantResponse, KnowledgeChunk, RetrievalResult } from './types.js';
+import { logger } from '../utils/logger.js';
 
 export class KnowledgeService {
   private loader = new DocumentLoader();
@@ -10,9 +11,15 @@ export class KnowledgeService {
   private retriever: KeywordRetriever | null = null;
 
   async initialize(): Promise<void> {
+    logger.info('[TCP Knowledge] Loading T.C.P_DOCUMENTATION.md');
     const text = await this.loader.load();
     this.chunks = this.parser.parse(text);
     this.retriever = new KeywordRetriever(this.chunks);
+    logger.info(`[TCP Knowledge] Parsed ${this.chunks.length} sections and indexed ${this.chunks.length} chunks`);
+  }
+
+  get chunkCount(): number {
+    return this.chunks.length;
   }
 
   async search(query: string, limit = 5): Promise<RetrievalResult[]> {

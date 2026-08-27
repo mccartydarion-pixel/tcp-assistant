@@ -4,7 +4,7 @@ const envSchema = z.object({
   DISCORD_TOKEN: z.string().min(1),
   DISCORD_CLIENT_ID: z.string().min(1),
   DISCORD_GUILD_ID: z.string().min(1),
-  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_API_KEY: z.string().min(1).optional(),
   OWNER_USER_ID: z.string().min(1),
   SUPPORT_CATEGORY_ID: z.string().optional(),
   BUG_REPORT_CHANNEL_ID: z.string().optional(),

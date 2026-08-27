@@ -1,6 +1,10 @@
 import Database from 'better-sqlite3';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
-export const db = new Database('data/tcp.db');
+const databasePath = 'data/tcp.db';
+mkdirSync(dirname(databasePath), { recursive: true });
+export const db = new Database(databasePath);
 
 export function initializeDatabase(): void {
   db.exec(`
