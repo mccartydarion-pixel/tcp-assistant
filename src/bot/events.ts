@@ -34,6 +34,9 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
     logger.info(`[TCP Message] Channel: ${message.channelId}`);
     logger.info(`[TCP Message] Mentions bot: ${isMentioned}`);
     logger.info(`[TCP Message] Content available: ${message.content.length > 0}`);
+    logger.info(`[TCP Message] Logged-in bot ID: ${client.user?.id ?? '<unavailable>'}`);
+    logger.info(`[TCP Message] Parsed mention IDs: ${[...message.mentions.users.keys()].join(', ') || '<none>'}`);
+    logger.info(`[TCP Message] Raw mention syntax: ${/<@!?\d+>/.test(message.content)}`);
 
     if (message.author.bot) return;
 

@@ -100,6 +100,7 @@ async function start(): Promise<void> {
 
 client.once(Events.ClientReady, (readyClient) => {
   logger.info(`[TCP Discord] Logged in as ${readyClient.user.tag}`);
+  logger.info(`[TCP Discord] Logged-in bot ID: ${readyClient.user.id}`);
   logger.info('T.C.P. Assistant ONLINE');
 });
 
