@@ -1,33 +1,35 @@
-import { systemPrompt } from './systemPrompt.js';
 import { KnowledgeService } from '../knowledge/knowledgeService.js';
 import { isOpenAiConfigured, openai } from '../services/openai.js';
 import { logger } from '../utils/logger.js';
+import { buildTCPPrompt, type ConversationTurn } from './promptBuilder.js';
+import { extractQuestionDetails, normalizeUserQuestion } from './question.js';
 
 export class AssistantService {
   constructor(private readonly knowledge: KnowledgeService) {}
 
-  async answer(question: string): Promise<string> {
-    const matches = await this.knowledge.search(question, 5);
+  async answer(question: string, conversationHistory: ConversationTurn[] = [], botId?: string): Promise<string> {
+    const normalizedQuestion = normalizeUserQuestion(question, botId);
+    const details = extractQuestionDetails(normalizedQuestion);
+    logger.info(`[TCP AI] Question received: ${normalizedQuestion}`);
+    logger.info(`[TCP AI] Conversation turns: ${conversationHistory.length}`);
+    const matches = await this.knowledge.search(normalizedQuestion, 5);
     logger.info(`[TCP Retrieval] Found ${matches.length} knowledge chunks`);
 
     if (!isOpenAiConfigured() || !openai) {
-      return (await this.knowledge.buildAnswer(question)).content;
+      return "T.C.P. Assistant's AI service is not configured right now. Please provide your weapon, distance, current settings, and symptom so the support team can help.";
     }
 
-    const context = matches
-      .map(({ chunk }) => `${chunk.section}${chunk.subsection ? ` > ${chunk.subsection}` : ''}\n${chunk.content}`)
-      .join('\n\n');
+    const prompt = buildTCPPrompt({ question: normalizedQuestion, retrievedChunks: matches, conversationHistory, details });
 
     try {
+      logger.info('[TCP AI] Sending question + documentation to OpenAI');
       const response = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         temperature: 0.2,
         messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Answer using only this documentation context. If it does not support the answer, say so.\n\nContext:\n${context || 'No matching documentation found.'}\n\nQuestion: ${question}`,
-          },
+          { role: 'system', content: `${prompt.system}\n\n${prompt.context}` },
+          ...prompt.history,
+          { role: 'user', content: prompt.question },
         ],
       });
       const answer = response.choices[0]?.message.content?.trim();
@@ -36,7 +38,7 @@ export class AssistantService {
       return answer;
     } catch (error) {
       logger.error({ err: error }, '[TCP AI ERROR] Request failed');
-      return (await this.knowledge.buildAnswer(question)).content;
+      return "I couldn't reach the T.C.P. AI service right now. Please try again shortly.";
     }
   }
 }

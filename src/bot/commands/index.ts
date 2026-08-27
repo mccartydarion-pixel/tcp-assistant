@@ -69,7 +69,7 @@ export function createCommands(assistant: AssistantService, knowledge: Knowledge
         const question = interaction.options.getString('question', true).trim();
         await interaction.deferReply();
         loggerRequest();
-        await interaction.editReply(await assistant.answer(question));
+        await interaction.editReply(await assistant.answer(question, [], interaction.client.user?.id));
       },
     },
   ];

@@ -2,8 +2,11 @@ import { Events, type Client, type Message } from 'discord.js';
 import type { AssistantService } from '../ai/assistantService.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import type { ConversationTurn } from '../ai/promptBuilder.js';
 
 export function registerEvents(client: Client, assistant: AssistantService): void {
+  const conversations = new Map<string, ConversationTurn[]>();
+
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
     const command = client.commands?.get(interaction.commandName) as { execute: (value: typeof interaction) => Promise<void> } | undefined;
@@ -30,7 +33,15 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
 
     try {
       logger.info('[TCP AI] Request started');
-      await message.reply(await assistant.answer(question));
+      const history = conversations.get(message.channelId) ?? [];
+      const answer = await assistant.answer(question, history, client.user?.id);
+      const turns: ConversationTurn[] = [
+        ...history,
+        { role: 'user', content: question },
+        { role: 'assistant', content: answer },
+      ];
+      conversations.set(message.channelId, turns.slice(-8));
+      await message.reply(answer);
     } catch (error) {
       logger.error({ err: error }, '[TCP Discord ERROR] Message response failed');
       await message.reply('I could not process that request right now. Please try again or open a support ticket.');
