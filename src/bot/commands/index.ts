@@ -8,6 +8,8 @@ import type { AssistantService } from '../../ai/assistantService.js';
 import type { KnowledgeService } from '../../knowledge/knowledgeService.js';
 import { env } from '../../config/env.js';
 import { SpecialIntentRouter } from '../../ai/specialIntentRouter.js';
+import { ConversationMemory, detectFollowUpIntent } from '../../ai/conversationMemory.js';
+import { extractQuestionDetails } from '../../ai/question.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -27,12 +29,14 @@ export function createCommands(
   knowledge: KnowledgeService,
   status: BotStatus,
   specialIntentRouter: SpecialIntentRouter,
+  memory: ConversationMemory,
 ): Command[] {
   const tcp = new SlashCommandBuilder()
     .setName('tcp')
     .setDescription('T.C.P. Assistant commands')
     .addSubcommand((command) => command.setName('help').setDescription('Show T.C.P. Assistant help'))
     .addSubcommand((command) => command.setName('status').setDescription('Show assistant health and readiness'))
+    .addSubcommand((command) => command.setName('reset-session').setDescription('Clear your active T.C.P. support session'))
     .addSubcommand((command) =>
       command
         .setName('ask')
@@ -72,6 +76,17 @@ export function createCommands(
           return;
         }
 
+        if (!interaction.guildId) {
+          await interaction.reply('This command is only available inside a server.');
+          return;
+        }
+
+        if (subcommand === 'reset-session') {
+          memory.reset(interaction.guildId, interaction.channelId, interaction.user.id);
+          await interaction.reply('Your T.C.P. support session has been reset.');
+          return;
+        }
+
         const question = interaction.options.getString('question', true).trim();
         console.info('[TCP Command] /tcp ask received');
         console.info('[TCP Intent] Checking special intent');
@@ -84,9 +99,13 @@ export function createCommands(
             return;
           }
         }
+        const session = memory.getOrCreate(interaction.guildId, interaction.channelId, interaction.user.id);
+        const followUpIntent = memory.updateFromQuestion(session, extractQuestionDetails(question), question);
         await interaction.deferReply();
         loggerRequest();
-        await interaction.editReply(await assistant.answer(question, [], interaction.client.user?.id));
+        const answer = await assistant.answer(question, session.turns, interaction.client.user?.id, session.tuning, followUpIntent);
+        memory.record(session, question, answer);
+        await interaction.editReply(answer);
       },
     },
   ];

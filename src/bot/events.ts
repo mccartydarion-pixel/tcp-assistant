@@ -2,14 +2,19 @@ import { Events, type Client, type Message } from 'discord.js';
 import type { AssistantService } from '../ai/assistantService.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
-import type { ConversationTurn } from '../ai/promptBuilder.js';
 import { SpecialIntentRouter } from '../ai/specialIntentRouter.js';
 import { normalizeUserQuestion } from '../ai/question.js';
 import { detectBotMention } from './mention.js';
 import { determineMessageRoute } from './messageRoute.js';
+import { ConversationMemory, detectFollowUpIntent } from '../ai/conversationMemory.js';
+import { extractQuestionDetails } from '../ai/question.js';
 
-export function registerEvents(client: Client, assistant: AssistantService, specialIntentRouter: SpecialIntentRouter): void {
-  const conversations = new Map<string, ConversationTurn[]>();
+export function registerEvents(
+  client: Client,
+  assistant: AssistantService,
+  specialIntentRouter: SpecialIntentRouter,
+  memory: ConversationMemory,
+): void {
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
@@ -45,11 +50,12 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
     const isTicket = isSupportTicketChannel(message);
 
     logger.info(`[TCP Message] Support category match: ${isTicket ? 'YES' : 'NO'}`);
-    const route = determineMessageRoute({ isTicket, mentionsBot: isMentioned });
+    const guildId = message.guildId ?? 'dm';
+    const activeSession = memory.hasActive(guildId, message.channelId, message.author.id, isTicket);
+    const route = determineMessageRoute({ isTicket, mentionsBot: isMentioned, activeSession });
     logger.info(`[TCP Message] Route: ${route}`);
     if (route === 'IGNORE') return;
 
-    const guildId = message.guildId ?? 'dm';
     if (message.author.id === env.OWNER_USER_ID) {
       if (specialIntentRouter.isEscalated(guildId, message.channelId)) {
         specialIntentRouter.markOwnerJoined(guildId, message.channelId);
@@ -97,14 +103,10 @@ export function registerEvents(client: Client, assistant: AssistantService, spec
       if (route === 'TICKET' || route === 'TICKET_MENTION') logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
 
       logger.info('[TCP AI] Request started');
-      const history = conversations.get(message.channelId) ?? [];
-      const answer = await assistant.answer(question, history, botId);
-      const turns: ConversationTurn[] = [
-        ...history,
-        { role: 'user', content: question },
-        { role: 'assistant', content: answer },
-      ];
-      conversations.set(message.channelId, turns.slice(-8));
+      const session = memory.getOrCreate(guildId, message.channelId, message.author.id, isTicket);
+      const followUpIntent = memory.updateFromQuestion(session, extractQuestionDetails(question), question);
+      const answer = await assistant.answer(question, session.turns, botId, session.tuning, followUpIntent);
+      memory.record(session, question, answer);
       await message.reply(answer);
     } catch (error) {
       logger.error({ err: error }, '[TCP Discord ERROR] Message processing failed');

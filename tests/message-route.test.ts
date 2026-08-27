@@ -7,6 +7,7 @@ describe('message route priority', () => {
     [{ isTicket: false, mentionsBot: true }, 'MENTION'],
     [{ isTicket: true, mentionsBot: false }, 'TICKET'],
     [{ isTicket: true, mentionsBot: true }, 'TICKET_MENTION'],
+    [{ isTicket: false, mentionsBot: false, activeSession: true }, 'CONTINUATION'],
   ] as const)('maps %j to %s', (input, expected) => {
     expect(determineMessageRoute(input)).toBe(expected);
   });
