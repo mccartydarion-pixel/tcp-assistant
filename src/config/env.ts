@@ -17,6 +17,26 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
 });
 
-export const env = envSchema.parse(process.env);
+const parsedEnv = envSchema.safeParse(process.env);
+
+if (!parsedEnv.success) {
+  const missing = parsedEnv.error.issues
+    .filter((issue) => issue.code === 'invalid_type' && issue.received === 'undefined')
+    .map((issue) => issue.path.join('.'));
+  const invalid = parsedEnv.error.issues
+    .filter((issue) => !(issue.code === 'invalid_type' && issue.received === 'undefined'))
+    .map((issue) => issue.path.join('.'));
+
+  if (missing.length > 0) {
+    console.error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+  if (invalid.length > 0) {
+    console.error(`Invalid environment variables: ${invalid.join(', ')}`);
+  }
+
+  throw new Error('Environment validation failed. Set the variables listed above and restart the application.');
+}
+
+export const env = parsedEnv.data;
 
 export type Env = typeof env;

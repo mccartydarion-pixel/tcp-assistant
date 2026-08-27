@@ -84,7 +84,7 @@ npm test
 
 ## Railway deployment
 
-Use the included Dockerfile or the following build/start flow:
+Railway uses Railpack with the following build/start flow:
 
 ```bash
 npm run build

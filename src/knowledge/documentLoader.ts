@@ -1,9 +1,18 @@
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logger } from '../utils/logger.js';
 
 export class DocumentLoader {
-  constructor(private readonly documentPath = resolve(process.cwd(), 'knowledge', 'T.C.P_DOCUMENTATION.md')) {}
+  constructor(
+    private readonly documentPath = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      'knowledge',
+      'T.C.P_DOCUMENTATION.md',
+    ),
+  ) {}
 
   async load(): Promise<string> {
     try {
