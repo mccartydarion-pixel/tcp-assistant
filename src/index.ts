@@ -64,6 +64,7 @@ async function start(): Promise<void> {
   logger.info('T.C.P. ASSISTANT STARTUP');
   logger.info('====================================');
   logger.info(`Environment: ${env.NODE_ENV}`);
+  logger.info(env.OWNER_USER_ID ? '[TCP Escalation] Owner configured.' : '[TCP Escalation WARNING] OWNER_USER_ID not configured.');
   logger.info('[TCP Discord] MessageContent intent configured. Enable it in the Discord Developer Portal too.');
 
   try {

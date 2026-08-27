@@ -3,9 +3,11 @@ import type { AssistantService } from '../ai/assistantService.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import type { ConversationTurn } from '../ai/promptBuilder.js';
+import { EscalationService } from '../ai/escalation.js';
 
 export function registerEvents(client: Client, assistant: AssistantService): void {
   const conversations = new Map<string, ConversationTurn[]>();
+  const escalation = new EscalationService();
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
@@ -23,13 +25,48 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
   });
 
   client.on(Events.MessageCreate, async (message) => {
-    if (message.author.bot || !message.content.trim()) return;
-    if (!isRelevantMessage(message)) return;
+    if (!message.content.trim()) return;
+    const guildId = message.guildId;
+    if (!guildId) return;
+
+    if (message.author.id === env.OWNER_USER_ID) {
+      if (escalation.isEscalated(guildId, message.channelId)) {
+        escalation.markOwnerJoined(guildId, message.channelId);
+        logger.info(`[TCP Escalation] Owner joined conversation: ${message.channelId}`);
+      }
+      return;
+    }
+    if (message.author.bot) return;
 
     const question = message.content
       .replace(new RegExp(`<@!?${client.user?.id ?? '0'}>`, 'g'), '')
       .trim();
     if (!question) return;
+
+    const escalationResult = escalation.request(guildId, message.channelId, message.author.id, question);
+    if (escalationResult) {
+      if (!env.OWNER_USER_ID) {
+        logger.warn('[TCP Escalation WARNING] OWNER_USER_ID not configured.');
+        await message.reply('I can escalate this once the owner account is configured. Please leave the issue details here for now.');
+        return;
+      }
+      if (!escalationResult.shouldNotify) {
+        logger.info(`[TCP Escalation] Cooldown prevented duplicate notification: ${message.channelId}`);
+        await message.reply('The owner has already been notified for this conversation. You do not need to ping again; add any extra details here and they will be available when they review it.');
+        return;
+      }
+
+      logger.info(`[TCP Escalation] Human support requested: ${message.channelId}`);
+      await message.reply({
+        content: `Owner requested. I've notified <@${env.OWNER_USER_ID}> that assistance is needed here. Please leave a quick description of the issue so they have context when they arrive.`,
+        allowedMentions: { users: [env.OWNER_USER_ID] },
+      });
+      logger.info(`[TCP Escalation] Owner notified: ${message.channelId}`);
+      return;
+    }
+
+    if (!isRelevantMessage(message)) return;
+    if (escalation.isOwnerHandling(guildId, message.channelId) && !message.mentions.has(client.user!)) return;
 
     try {
       logger.info('[TCP AI] Request started');
