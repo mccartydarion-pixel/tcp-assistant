@@ -6,7 +6,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   logger.info(`Logged in as ${client.user?.tag ?? 'unknown user'}`);
 });
 
