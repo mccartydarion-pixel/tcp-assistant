@@ -8,12 +8,14 @@ import { isOpenAiConfigured } from './services/openai.js';
 import { createCommands, type BotStatus } from './bot/commands/index.js';
 import { registerCommands } from './bot/registerCommands.js';
 import { registerEvents } from './bot/events.js';
+import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 const knowledge = new KnowledgeService();
 const assistant = new AssistantService(knowledge);
+const specialIntentRouter = new SpecialIntentRouter();
 const status: BotStatus = {
   databaseReady: false,
   knowledgeReady: false,
@@ -85,11 +87,11 @@ async function start(): Promise<void> {
 
   logger.info(isOpenAiConfigured() ? '[TCP AI] OpenAI configured.' : '[TCP AI ERROR] OPENAI_API_KEY missing.');
 
-  const commands = createCommands(assistant, knowledge, status);
+  const commands = createCommands(assistant, knowledge, status, specialIntentRouter);
   client.commands = new Map(commands.map((command) => [command.data.name, command]));
   status.commandsLoaded = commands.length;
   logger.info(`[TCP Commands] Loaded ${commands.length} commands.`);
-  registerEvents(client, assistant);
+  registerEvents(client, assistant, specialIntentRouter);
   await client.login(env.DISCORD_TOKEN);
   await validateGuildConfiguration();
   status.commandsRegistered = await registerCommands(commands);

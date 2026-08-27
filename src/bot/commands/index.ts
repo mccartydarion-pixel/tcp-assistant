@@ -7,6 +7,7 @@ import {
 import type { AssistantService } from '../../ai/assistantService.js';
 import type { KnowledgeService } from '../../knowledge/knowledgeService.js';
 import { env } from '../../config/env.js';
+import { SpecialIntentRouter } from '../../ai/specialIntentRouter.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -21,7 +22,12 @@ export interface BotStatus {
   startedAt: number;
 }
 
-export function createCommands(assistant: AssistantService, knowledge: KnowledgeService, status: BotStatus): Command[] {
+export function createCommands(
+  assistant: AssistantService,
+  knowledge: KnowledgeService,
+  status: BotStatus,
+  specialIntentRouter: SpecialIntentRouter,
+): Command[] {
   const tcp = new SlashCommandBuilder()
     .setName('tcp')
     .setDescription('T.C.P. Assistant commands')
@@ -67,6 +73,17 @@ export function createCommands(assistant: AssistantService, knowledge: Knowledge
         }
 
         const question = interaction.options.getString('question', true).trim();
+        console.info('[TCP Command] /tcp ask received');
+        console.info('[TCP Intent] Checking special intent');
+        if (interaction.guildId) {
+          const intent = specialIntentRouter.check(interaction.guildId, interaction.channelId, interaction.user.id, question);
+          if (intent) {
+            console.info('[TCP Command] AI bypassed');
+            await interaction.reply(specialIntentRouter.ownerResponse(!intent.shouldNotify));
+            if (intent.shouldNotify) console.info('[TCP Escalation] Owner notified');
+            return;
+          }
+        }
         await interaction.deferReply();
         loggerRequest();
         await interaction.editReply(await assistant.answer(question, [], interaction.client.user?.id));

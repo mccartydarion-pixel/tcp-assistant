@@ -3,11 +3,10 @@ import type { AssistantService } from '../ai/assistantService.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import type { ConversationTurn } from '../ai/promptBuilder.js';
-import { EscalationService } from '../ai/escalation.js';
+import { SpecialIntentRouter } from '../ai/specialIntentRouter.js';
 
-export function registerEvents(client: Client, assistant: AssistantService): void {
+export function registerEvents(client: Client, assistant: AssistantService, specialIntentRouter: SpecialIntentRouter): void {
   const conversations = new Map<string, ConversationTurn[]>();
-  const escalation = new EscalationService();
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
@@ -36,8 +35,8 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
     }
 
     if (message.author.id === env.OWNER_USER_ID) {
-      if (escalation.isEscalated(guildId, message.channelId)) {
-        escalation.markOwnerJoined(guildId, message.channelId);
+      if (specialIntentRouter.isEscalated(guildId, message.channelId)) {
+        specialIntentRouter.markOwnerJoined(guildId, message.channelId);
         logger.info(`[TCP Escalation] Owner joined conversation: ${message.channelId}`);
       }
       return;
@@ -51,36 +50,28 @@ export function registerEvents(client: Client, assistant: AssistantService): voi
     if (!question) return;
 
     logger.info('[TCP Escalation] Checking intent');
-    const escalationResult = escalation.request(guildId, message.channelId, message.author.id, question);
+    const escalationResult = specialIntentRouter.check(guildId, message.channelId, message.author.id, question);
     if (escalationResult) {
-      if (!env.OWNER_USER_ID) {
-        logger.warn('[TCP Escalation WARNING] OWNER_USER_ID not configured.');
-        await message.reply('I can escalate this once the owner account is configured. Please leave the issue details here for now.');
-        return;
-      }
       if (!escalationResult.shouldNotify) {
-        logger.info(`[TCP Escalation] Cooldown prevented duplicate notification: ${message.channelId}`);
-        await message.reply('The owner has already been notified for this conversation. You do not need to ping again; add any extra details here and they will be available when they review it.');
+        logger.info(`[TCP Escalation] Duplicate ping prevented: ${message.channelId}`);
+        await message.reply(specialIntentRouter.ownerResponse(true));
         return;
       }
 
       logger.info(`[TCP Escalation] Human support requested: ${message.channelId}`);
-      await message.reply({
-        content: `Owner requested. I've notified <@${env.OWNER_USER_ID}> that assistance is needed here. Please leave a quick description of the issue so they have context when they arrive.`,
-        allowedMentions: { users: [env.OWNER_USER_ID] },
-      });
+      await message.reply(specialIntentRouter.ownerResponse(false));
       logger.info(`[TCP Escalation] Owner notified: ${message.channelId}`);
       return;
     }
     logger.info('[TCP Escalation] Intent: NONE');
 
-    if (isTicket && escalation.isEscalated(guildId, message.channelId) && /^hello(?:[!?. ]*)$/i.test(question)) {
+    if (isTicket && specialIntentRouter.isEscalated(guildId, message.channelId) && /^hello(?:[!?. ]*)$/i.test(question)) {
       await message.reply("I'm still here. The owner has already been notified. You can leave any additional details about the issue while you're waiting.");
       return;
     }
 
     if (!isTicket && !isRelevantMessage(message)) return;
-    if (escalation.isOwnerHandling(guildId, message.channelId) && !message.mentions.has(client.user!)) return;
+    if (specialIntentRouter.isOwnerHandling(guildId, message.channelId) && !message.mentions.has(client.user!)) return;
 
     if (isTicket) logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
 
