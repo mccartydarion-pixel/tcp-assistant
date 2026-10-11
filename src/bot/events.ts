@@ -8,6 +8,7 @@ import { detectBotMention } from './mention.js';
 import { determineMessageRoute } from './messageRoute.js';
 import { ConversationMemory } from '../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../ai/question.js';
+import { handleLicenseInteraction } from '../license/licensePanel.js';
 
 export function registerEvents(
   client: Client,
@@ -17,6 +18,17 @@ export function registerEvents(
 ): void {
 
   client.on(Events.InteractionCreate, async (interaction) => {
+    if (interaction.isButton() || interaction.isModalSubmit() || interaction.isUserSelectMenu()) {
+      try {
+        await handleLicenseInteraction(interaction);
+      } catch (error) {
+        logger.error({ err: error }, '[TCP License ERROR] Interaction failed');
+        const response = { content: 'Something went wrong generating your code. Please try again.', ephemeral: true };
+        if (interaction.deferred || interaction.replied) await interaction.followUp(response);
+        else await interaction.reply(response);
+      }
+      return;
+    }
     if (!interaction.isChatInputCommand()) return;
     const command = client.commands?.get(interaction.commandName) as { execute: (value: typeof interaction) => Promise<void> } | undefined;
     if (!command) return;

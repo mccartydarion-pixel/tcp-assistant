@@ -7,6 +7,8 @@ export const schema = {
   conversationSessions: 'conversationSessions',
   tuningSessions: 'tuningSessions',
   botSettings: 'botSettings',
+  licenseCodes: 'licenseCodes',
+  licenseSubscriptions: 'licenseSubscriptions',
 };
 
 export type UserRow = {

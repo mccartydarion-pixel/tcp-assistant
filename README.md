@@ -47,6 +47,10 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `ANNOUNCEMENT_CHANNEL_ID` (optional)
 - `DOWNLOAD_CHANNEL_ID` (optional)
 - `FAQ_CHANNEL_ID` (optional)
+- `LICENSE_CHANNEL_ID` (optional; the channel that holds the licence generator panel)
+- `LICENSE_SECRET` (needed for the generator; six comma-separated numbers that must match the key built into the script)
+- `LICENSE_ADMIN_CHANNEL_ID` (optional; a private channel for the owner's licence panel)
+- `LICENSE_MAX_CODES` (optional, default 3; new codes each member may generate per day)
 - `DATABASE_URL` (optional, default SQLite file)
 - `NODE_ENV`
 - `PORT`
@@ -60,6 +64,31 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
    - `MessageContent`
 3. Add the bot to the target server with application commands permissions.
 4. Invite the bot with `applications.commands` and `bot` scopes.
+
+## Licence generator
+
+The T.C.P. script shows a five-digit number on the Zen. A member brings it here and gets back the six-digit code that unlocks the script. Codes run out, so members return for a new one, and the bot only gives one while their subscription is active.
+
+**Member panel.** With `LICENSE_CHANNEL_ID` and `LICENSE_SECRET` set, the bot posts a panel with a **Generate** button in that channel on startup, and refreshes its own panel if one is already there. The button opens a form for the number, and the code comes back in a reply only that member can see.
+
+**Owner panel.** With `LICENSE_ADMIN_CHANNEL_ID` and `OWNER_USER_ID` set, the bot posts a second panel in that channel. Keep the channel private. Pick a member from the menu to see their subscription, then **Add days** or **End access**. Nobody can generate a code until they have been given days. The owner can always generate.
+
+**How long a code lasts.** The code carries a tier chosen from the days left on the subscription, and the script counts power-ups against it:
+
+| Days left | Power-ups |
+|---|---|
+| 63 or more | 400 |
+| 34 to 62 | 200 |
+| 16 to 33 | 80 |
+| 8 to 15 | 50 |
+| 1 to 7 | 20 |
+
+When the power-ups are used up, the script shows a new number. Ending a member's access stops new codes; a code already on their Zen runs until its power-ups are gone.
+
+- The arithmetic lives in `src/license/licenseCode.ts` and is mirrored in the script. Change one and the other must change too.
+- `LICENSE_MAX_CODES` is how many new numbers a member may get codes for in a day. Asking again for the same number does not count.
+- Subscriptions and issued codes are stored in Postgres when `DATABASE_URL` starts with `postgres://` or `postgresql://`. Otherwise they go in the local SQLite file `data/tcp.db`, which a redeploy clears.
+- The bot needs View Channel, Send Messages, Embed Links and Read Message History in both channels.
 
 ## Knowledge file setup
 

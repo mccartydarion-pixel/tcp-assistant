@@ -10,6 +10,7 @@ import { registerCommands } from './bot/registerCommands.js';
 import { registerEvents } from './bot/events.js';
 import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
 import { ConversationMemory } from './ai/conversationMemory.js';
+import { ensureLicensePanel } from './license/licensePanel.js';
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
@@ -98,6 +99,7 @@ async function start(): Promise<void> {
   await validateGuildConfiguration();
   status.commandsRegistered = await registerCommands(commands);
   logger.info('[TCP Ticket] Ticket Assistant: READY');
+  await ensureLicensePanel(client);
 }
 
 client.once(Events.ClientReady, (readyClient) => {
