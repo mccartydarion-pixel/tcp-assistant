@@ -50,6 +50,8 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `LICENSE_CHANNEL_ID` (optional; the channel that holds the licence generator panel)
 - `LICENSE_SECRET` (needed for the generator; six comma-separated numbers that must match the key built into the script)
 - `LICENSE_ADMIN_CHANNEL_ID` (optional; a private channel for the owner's licence panel)
+- `LICENSE_MEMBER_ROLE_ID` (optional; the role given to a member when they generate a code)
+- `LICENSE_TRIAL_DAYS` (optional, default 14; length of the free trial granted on first generate)
 - `LICENSE_MAX_CODES` (optional, default 3; new codes each member may generate per day)
 - `DATABASE_URL` (optional, default SQLite file)
 - `NODE_ENV`
@@ -70,6 +72,8 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 The T.C.P. script shows a five-digit number on the Zen. A member brings it here and gets back the six-digit code that unlocks the script. Codes run out, so members return for a new one, and the bot only gives one while their subscription is active.
 
 **Member panel.** With `LICENSE_CHANNEL_ID` and `LICENSE_SECRET` set, the bot posts a panel with a **Generate** button in that channel on startup, and refreshes its own panel if one is already there. The button opens a form for the number, and the code comes back in a reply only that member can see.
+
+**Free trial and role.** The first time a member presses **Generate** with no active subscription, the bot gives them a free trial of `LICENSE_TRIAL_DAYS` days (default 14) automatically, once. Whenever a member successfully gets a code, the bot also gives them the role in `LICENSE_MEMBER_ROLE_ID` (if set). The trial is once per member — generating again after it ends does not renew it; that needs the owner panel or a paid subscription. For the role, the bot needs the **Manage Roles** permission and its own role must sit above the member role.
 
 **Owner panel.** With `LICENSE_ADMIN_CHANNEL_ID` and `OWNER_USER_ID` set, the bot posts a second panel in that channel. Keep the channel private. Pick a member from the menu to see their subscription, then **Add days** or **End access**. Nobody can generate a code until they have been given days. The owner can always generate.
 

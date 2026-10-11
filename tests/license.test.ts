@@ -10,6 +10,7 @@ import {
   parseChallenge,
   parseDays,
   parseLicenseKey,
+  shouldGrantTrial,
   tierForDaysLeft,
   type LicenseKey,
   type LicenseTier,
@@ -129,6 +130,25 @@ describe('subscription', () => {
     expect(extendExpiry(null, 30, now)).toBe(now + 30 * DAY);
     expect(extendExpiry(now + 10 * DAY, 30, now)).toBe(now + 40 * DAY);
     expect(extendExpiry(now - 10 * DAY, 30, now)).toBe(now + 30 * DAY);
+  });
+});
+
+describe('free trial', () => {
+  it('grants to a new member with no subscription', () => {
+    expect(shouldGrantTrial({ daysLeft: 0, hadTrial: false, isOwner: false })).toBe(true);
+    expect(shouldGrantTrial({ daysLeft: -5, hadTrial: false, isOwner: false })).toBe(true);
+  });
+
+  it('does not grant a second time once used', () => {
+    expect(shouldGrantTrial({ daysLeft: 0, hadTrial: true, isOwner: false })).toBe(false);
+  });
+
+  it('does not grant while a subscription is still active', () => {
+    expect(shouldGrantTrial({ daysLeft: 10, hadTrial: false, isOwner: false })).toBe(false);
+  });
+
+  it('never grants to the owner', () => {
+    expect(shouldGrantTrial({ daysLeft: 0, hadTrial: false, isOwner: true })).toBe(false);
   });
 });
 

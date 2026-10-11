@@ -21,6 +21,7 @@ import {
   parseChallenge,
   parseDays,
   parseLicenseKey,
+  shouldGrantTrial,
   tierForDaysLeft,
 } from './licenseCode.js';
 import { createLicenseStore, type LicenseStore } from './licenseStore.js';
@@ -57,6 +58,8 @@ export function buildLicensePanel() {
         '',
         'Your code only works with your number, so sharing it will not unlock anyone else.',
         'Every so often the script asks for a new code. Come back here and press **Generate** again.',
+        '',
+        `New here? Pressing **Generate** gives you a free **${env.LICENSE_TRIAL_DAYS}-day** trial automatically.`,
       ].join('\n'),
     );
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -220,6 +223,23 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
   return false;
 }
 
+/** Give the member the licensed-member role. Best effort: needs Manage Roles and the right hierarchy. */
+async function grantMemberRole(interaction: Interaction, userId: string): Promise<void> {
+  if (!env.LICENSE_MEMBER_ROLE_ID || !interaction.guild) return;
+  try {
+    const member = await interaction.guild.members.fetch(userId);
+    if (!member.roles.cache.has(env.LICENSE_MEMBER_ROLE_ID)) {
+      await member.roles.add(env.LICENSE_MEMBER_ROLE_ID);
+      logger.info(`[TCP License] Gave the member role to ${userId}`);
+    }
+  } catch (error) {
+    logger.warn(
+      { err: error },
+      '[TCP License] Could not assign the member role; check the bot has Manage Roles and its own role sits above the member role.',
+    );
+  }
+}
+
 /** Handles the licence panels' buttons, menus and forms. Returns true when the interaction was one of ours. */
 export async function handleLicenseInteraction(interaction: Interaction): Promise<boolean> {
   if (!interaction.isButton() && !interaction.isModalSubmit() && !interaction.isUserSelectMenu()) return false;
@@ -264,14 +284,27 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   const now = Date.now();
   const isOwner = Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID;
 
-  const days = daysLeft(await store.getExpiry(userId), now);
+  let days = daysLeft(await store.getExpiry(userId), now);
+  // First-timers with no subscription get the free trial automatically, once.
+  let trialGranted = false;
+  if (shouldGrantTrial({ daysLeft: days, hadTrial: await store.hasHadTrial(userId), isOwner })) {
+    const expiresAt = extendExpiry(null, env.LICENSE_TRIAL_DAYS, now);
+    await store.grantTrial(userId, expiresAt);
+    days = daysLeft(expiresAt, now);
+    trialGranted = true;
+    logger.info(`[TCP License] Granted ${env.LICENSE_TRIAL_DAYS}-day trial to ${userId}`);
+  }
+
   // The owner always gets the longest-lasting code, with or without a subscription of their own.
   const tier = isOwner ? 5 : tierForDaysLeft(days);
   if (tier === null) {
     logger.info(`[TCP License] Refused ${userId}: no active subscription`);
-    await interaction.editReply('You do not have an active T.C.P. subscription, so no code can be generated. Open a support ticket to get access or renew.');
+    await interaction.editReply('Your T.C.P. trial or subscription has ended, so no new code can be generated. Open a support ticket to renew.');
     return true;
   }
+
+  // Mark them as a licensed member in the server.
+  await grantMemberRole(interaction, userId);
 
   const alreadyIssued = await store.hasCode(userId, challenge);
   const issuedToday = await store.countCodesSince(userId, now - DAY_MS);
@@ -293,6 +326,7 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
     )
     .setDescription(
       [
+        trialGranted ? `Welcome! You have a **${env.LICENSE_TRIAL_DAYS}-day** free trial.\n` : '',
         'Enter the code on your Zen: Up/Down changes a digit, Left/Right moves along, X confirms.',
         '',
         `This code lasts **${TIER_USES[tier]} power-ups** of the script. After that the Zen shows a new number; come back and press **Generate** again.`,

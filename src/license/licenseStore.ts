@@ -11,6 +11,10 @@ export interface LicenseStore {
   init(): Promise<void>;
   getExpiry(discordUserId: string): Promise<number | null>;
   setExpiry(discordUserId: string, expiresAt: number): Promise<void>;
+  /** True when this member has already been given their one free trial. */
+  hasHadTrial(discordUserId: string): Promise<boolean>;
+  /** Set the subscription end and mark the free trial as used, in one step. */
+  grantTrial(discordUserId: string, expiresAt: number): Promise<void>;
   /** True when this member has already been given a code for this number. */
   hasCode(discordUserId: string, challenge: number): Promise<boolean>;
   /** How many different numbers this member has been given a code for since the given time. */
@@ -30,7 +34,8 @@ class PostgresLicenseStore implements LicenseStore {
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS license_subscriptions (
         discord_user_id TEXT PRIMARY KEY,
-        expires_at BIGINT NOT NULL
+        expires_at BIGINT NOT NULL,
+        trial_granted_at BIGINT
       );
       CREATE TABLE IF NOT EXISTS license_codes (
         id TEXT PRIMARY KEY,
@@ -40,6 +45,8 @@ class PostgresLicenseStore implements LicenseStore {
         created_at BIGINT NOT NULL
       );
     `);
+    // Add the trial column to a table created by an earlier version.
+    await this.pool.query('ALTER TABLE license_subscriptions ADD COLUMN IF NOT EXISTS trial_granted_at BIGINT');
   }
 
   async getExpiry(discordUserId: string): Promise<number | null> {
@@ -52,6 +59,20 @@ class PostgresLicenseStore implements LicenseStore {
       `INSERT INTO license_subscriptions (discord_user_id, expires_at) VALUES ($1, $2)
        ON CONFLICT (discord_user_id) DO UPDATE SET expires_at = EXCLUDED.expires_at`,
       [discordUserId, expiresAt],
+    );
+  }
+
+  async hasHadTrial(discordUserId: string): Promise<boolean> {
+    const result = await this.pool.query('SELECT trial_granted_at FROM license_subscriptions WHERE discord_user_id = $1', [discordUserId]);
+    return result.rows.length > 0 && result.rows[0].trial_granted_at !== null;
+  }
+
+  async grantTrial(discordUserId: string, expiresAt: number): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO license_subscriptions (discord_user_id, expires_at, trial_granted_at) VALUES ($1, $2, $3)
+       ON CONFLICT (discord_user_id) DO UPDATE SET expires_at = EXCLUDED.expires_at,
+         trial_granted_at = COALESCE(license_subscriptions.trial_granted_at, EXCLUDED.trial_granted_at)`,
+      [discordUserId, expiresAt, Date.now()],
     );
   }
 
@@ -92,7 +113,8 @@ class SqliteLicenseStore implements LicenseStore {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS licenseSubscriptions (
         discordUserId TEXT PRIMARY KEY,
-        expiresAt INTEGER NOT NULL
+        expiresAt INTEGER NOT NULL,
+        trialGrantedAt INTEGER
       );
       CREATE TABLE IF NOT EXISTS licenseCodes (
         id TEXT PRIMARY KEY,
@@ -102,6 +124,12 @@ class SqliteLicenseStore implements LicenseStore {
         createdAt INTEGER NOT NULL
       );
     `);
+    // Add the trial column to a table created by an earlier version (throws if it is already there).
+    try {
+      this.db.exec('ALTER TABLE licenseSubscriptions ADD COLUMN trialGrantedAt INTEGER');
+    } catch {
+      // column already present
+    }
   }
 
   async getExpiry(discordUserId: string): Promise<number | null> {
@@ -118,6 +146,23 @@ class SqliteLicenseStore implements LicenseStore {
          ON CONFLICT (discordUserId) DO UPDATE SET expiresAt = excluded.expiresAt`,
       )
       .run(discordUserId, expiresAt);
+  }
+
+  async hasHadTrial(discordUserId: string): Promise<boolean> {
+    const row = this.db.prepare('SELECT trialGrantedAt FROM licenseSubscriptions WHERE discordUserId = ?').get(discordUserId) as
+      | { trialGrantedAt: number | null }
+      | undefined;
+    return row !== undefined && row.trialGrantedAt !== null;
+  }
+
+  async grantTrial(discordUserId: string, expiresAt: number): Promise<void> {
+    this.db
+      .prepare(
+        `INSERT INTO licenseSubscriptions (discordUserId, expiresAt, trialGrantedAt) VALUES (?, ?, ?)
+         ON CONFLICT (discordUserId) DO UPDATE SET expiresAt = excluded.expiresAt,
+           trialGrantedAt = COALESCE(licenseSubscriptions.trialGrantedAt, excluded.trialGrantedAt)`,
+      )
+      .run(discordUserId, expiresAt, Date.now());
   }
 
   async hasCode(discordUserId: string, challenge: number): Promise<boolean> {
