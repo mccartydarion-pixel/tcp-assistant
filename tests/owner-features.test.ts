@@ -8,7 +8,9 @@ process.env.DISCORD_TOKEN ??= 'test-token';
 process.env.DISCORD_CLIENT_ID ??= 'test-client';
 process.env.DISCORD_GUILD_ID ??= 'test-guild';
 const { parseAnnouncement, buildAnnouncementEmbed } = await import('../src/owner/announcer.js');
-const { parseSettingsShare, cooldownMinutesLeft, buildSettingsEmbed, SHARE_COOLDOWN_MS } = await import('../src/settings/settingsPanel.js');
+const { readRecoilForm, readAdsForm, parseSettingValue, cooldownMinutesLeft, buildSettingsCard, applyGuide, SHARE_COOLDOWN_MS } = await import(
+  '../src/settings/settingsPanel.js'
+);
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = 1_700_000_000_000;
@@ -69,13 +71,35 @@ describe('announcements', () => {
 });
 
 describe('settings sharing', () => {
-  const full = { name: 'Long range M4', recoil: 'V 26 / H 0', ads: '', inGame: 'Vertical 3 / Horizontal 5', notes: '' };
+  const recoilForm = { name: ' Long range M4 ', vertical: '26', horizontal: '-3', turn: '', inGame: 'Vertical 3 / Horizontal 5' };
 
-  it('needs a name, the in-game sensitivity, and recoil or ADS values', () => {
-    expect('share' in parseSettingsShare(full)).toBe(true);
-    expect('error' in parseSettingsShare({ ...full, name: ' ' })).toBe(true);
-    expect('error' in parseSettingsShare({ ...full, inGame: '' })).toBe(true);
-    expect('error' in parseSettingsShare({ ...full, recoil: '', ads: '' })).toBe(true);
+  it('checks each value against the range the script accepts', () => {
+    expect(parseSettingValue('horizontal', '-3', false)).toEqual({ value: -3 });
+    expect(parseSettingValue('vertical', ' 26 ', true)).toEqual({ value: 26 });
+    expect(parseSettingValue('turn', '', false)).toEqual({});
+    expect(parseSettingValue('vertical', '', true)).toEqual({ error: 'Vertical is needed.' });
+    expect(parseSettingValue('horizontal', '51', false)).toEqual({ error: 'Horizontal must be between -50 and 50.' });
+    expect(parseSettingValue('fireSens', '10', false)).toEqual({ error: 'Fire Sens must be between 20 and 100.' });
+    expect('error' in parseSettingValue('easing', '12.5', false)).toBe(true);
+    expect('error' in parseSettingValue('easing', 'high', false)).toBe(true);
+  });
+
+  it('reads the recoil form, needing a name, Vertical and the in-game sensitivity', () => {
+    expect(readRecoilForm(recoilForm)).toEqual({
+      name: 'Long range M4',
+      inGame: 'Vertical 3 / Horizontal 5',
+      values: { vertical: 26, horizontal: -3 },
+    });
+    expect('error' in readRecoilForm({ ...recoilForm, name: ' ' })).toBe(true);
+    expect('error' in readRecoilForm({ ...recoilForm, inGame: '' })).toBe(true);
+    expect(readRecoilForm({ ...recoilForm, vertical: '140' })).toEqual({ error: 'Vertical must be between 0 and 100.' });
+  });
+
+  it('reads the ADS form, where everything is optional but something is needed', () => {
+    const blank = { adsSens: '', precision: '', easing: '', fireSens: '', notes: '' };
+    expect('error' in readAdsForm(blank)).toBe(true);
+    expect(readAdsForm({ ...blank, adsSens: '60', easing: '12' })).toEqual({ values: { adsSens: 60, easing: 12 }, notes: '' });
+    expect(readAdsForm({ ...blank, notes: ' M4 only ' })).toEqual({ values: {}, notes: 'M4 only' });
   });
 
   it('limits each member to one share every ten minutes', () => {
@@ -84,8 +108,45 @@ describe('settings sharing', () => {
     expect(cooldownMinutesLeft(now - SHARE_COOLDOWN_MS, now)).toBe(0);
   });
 
-  it('only shows the sections that were filled in', () => {
-    const fields = buildSettingsEmbed(full, { name: 'Player' }).toJSON().fields ?? [];
-    expect(fields.map((field) => field.name)).toEqual(['Anti-Recoil', 'DayZ in-game sensitivity']);
+  const draft = {
+    playstyle: 'Long range',
+    weapon: 'Assault rifle',
+    name: 'Long range M4',
+    inGame: 'Vertical 3 / Horizontal 5',
+    notes: '',
+    values: { vertical: 26, horizontal: 0, turn: 40, adsSens: 60, easing: 12 },
+    typed: {},
+    hasAds: true,
+    createdAt: now,
+  };
+
+  it('lays the card out as tagged rows of three, recoil then ADS', () => {
+    const card = buildSettingsCard(draft, { name: 'Player' }).toJSON();
+    expect(card.description).toBe('**Long range**  ·  **Assault rifle**');
+    const names = (card.fields ?? []).map((field) => field.name);
+    expect(names).toEqual([
+      'ANTI-RECOIL', 'Vertical', 'Horizontal', 'Turn Strength',
+      'ADS ACCURACY', 'ADS Sens', 'Easing', '​',
+      'DayZ in-game sensitivity',
+    ]);
+  });
+
+  it('leaves out the ADS section when no ADS values were given', () => {
+    const card = buildSettingsCard({ ...draft, values: { vertical: 26 } }, { name: 'Player' }).toJSON();
+    expect((card.fields ?? []).map((field) => field.name)).not.toContain('ADS ACCURACY');
+  });
+
+  it('tells anyone which menu page each value on a card goes on', () => {
+    const guide = applyGuide(buildSettingsCard(draft, { name: 'Player' }).toJSON().fields ?? []);
+    const lines = guide.split('\n').filter((line) => line.startsWith('`Page'));
+    expect(lines).toEqual([
+      '`Page 10` Vertical Recoil → **26**',
+      '`Page 11` Horizontal Recoil → **0**',
+      '`Page 12` Turn Strength → **40**',
+      '`Page 18` ADS Sens → **60**',
+      '`Page 23` Easing → **12**',
+    ]);
+    expect(guide).toContain('Vertical 3 / Horizontal 5');
+    expect(applyGuide([])).toBe('This card has no values to apply.');
   });
 });

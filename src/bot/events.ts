@@ -20,7 +20,7 @@ export function registerEvents(
 ): void {
 
   client.on(Events.InteractionCreate, async (interaction) => {
-    if (interaction.isButton() || interaction.isModalSubmit() || interaction.isUserSelectMenu()) {
+    if (interaction.isButton() || interaction.isModalSubmit() || interaction.isUserSelectMenu() || interaction.isStringSelectMenu()) {
       try {
         // Each panel claims only the components whose IDs carry its own prefix.
         (await handleLicenseInteraction(interaction)) ||

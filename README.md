@@ -105,7 +105,14 @@ The owner panel (in `LICENSE_ADMIN_CHANNEL_ID`) has three rows:
 
 ## Settings sharing
 
-With `SETTINGS_CHANNEL_ID` set, the bot posts a **Share my settings** panel in that channel. A member fills in a setup name, anti-recoil values, ADS values, their DayZ in-game sensitivity (required, because values only carry over between players with similar in-game sensitivity) and optional notes. The bot posts it as a card and moves its panel back to the bottom of the channel. Each member can share once every 10 minutes. The bot needs View Channel, Send Messages, Embed Links and Read Message History in that channel.
+With `SETTINGS_CHANNEL_ID` set, the bot posts a **Share my settings** panel in that channel. Pressing it starts a short private wizard:
+
+1. Pick a playstyle and a weapon from two dropdowns.
+2. Fill in the anti-recoil form: setup name, Vertical, Horizontal, Turn Strength and the DayZ in-game aiming sensitivity (required, because values only carry over between players with similar in-game sensitivity).
+3. Optionally fill in the ADS form: ADS Sens, Precision, Easing, Fire Sens and notes.
+4. Check the preview, edit any part, then post.
+
+Every value is checked against the range the script accepts (`SETTING_FIELDS` in `src/settings/settingsPanel.ts`); a mistake reopens the form with what was typed. The posted card shows the values in rows of three under ANTI-RECOIL and ADS ACCURACY headings, with the playstyle and weapon as tags. Its **How to apply** button tells anyone which menu page each value goes on; the page numbers in `SETTING_FIELDS` must match the script's menu. Each member can share once every 10 minutes, and a form left unfinished expires after 20 minutes. The bot moves its panel back to the bottom of the channel after each post. It needs View Channel, Send Messages, Embed Links and Read Message History there.
 
 ## Knowledge file setup
 
