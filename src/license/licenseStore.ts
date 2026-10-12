@@ -24,6 +24,13 @@ export interface LicenseStore {
   listSubscriptions(): Promise<SubscriptionRecord[]>;
   /** The most recently issued codes, newest first. */
   listRecentCodes(limit: number): Promise<CodeRecord[]>;
+  /** This member's subscription record, if they have one. */
+  getSubscription(discordUserId: string): Promise<SubscriptionRecord | null>;
+  /** This member's most recent code, if any. */
+  latestCodeFor(discordUserId: string): Promise<CodeRecord | null>;
+  /** True when this reminder was already sent for this subscription end date. */
+  hasReminder(discordUserId: string, kind: string, expiresAt: number): Promise<boolean>;
+  recordReminder(discordUserId: string, kind: string, expiresAt: number): Promise<void>;
 }
 
 export interface SubscriptionRecord {
@@ -64,6 +71,16 @@ class PostgresLicenseStore implements LicenseStore {
     `);
     // Add the trial column to a table created by an earlier version.
     await this.pool.query('ALTER TABLE license_subscriptions ADD COLUMN IF NOT EXISTS trial_granted_at BIGINT');
+    // One row per reminder sent, keyed to the end date it was about, so adding days starts a fresh set.
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS license_reminders (
+        discord_user_id TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        expires_at BIGINT NOT NULL,
+        sent_at BIGINT NOT NULL,
+        PRIMARY KEY (discord_user_id, kind, expires_at)
+      );
+    `);
   }
 
   async getExpiry(discordUserId: string): Promise<number | null> {
@@ -142,6 +159,46 @@ class PostgresLicenseStore implements LicenseStore {
       createdAt: Number(row.created_at),
     }));
   }
+
+  async getSubscription(discordUserId: string): Promise<SubscriptionRecord | null> {
+    const result = await this.pool.query(
+      'SELECT discord_user_id, expires_at, trial_granted_at FROM license_subscriptions WHERE discord_user_id = $1',
+      [discordUserId],
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      discordUserId: row.discord_user_id,
+      expiresAt: Number(row.expires_at),
+      trialGrantedAt: row.trial_granted_at === null ? null : Number(row.trial_granted_at),
+    };
+  }
+
+  async latestCodeFor(discordUserId: string): Promise<CodeRecord | null> {
+    const result = await this.pool.query(
+      'SELECT discord_user_id, challenge, tier, created_at FROM license_codes WHERE discord_user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [discordUserId],
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    return { discordUserId: row.discord_user_id, challenge: Number(row.challenge), tier: Number(row.tier), createdAt: Number(row.created_at) };
+  }
+
+  async hasReminder(discordUserId: string, kind: string, expiresAt: number): Promise<boolean> {
+    const result = await this.pool.query(
+      'SELECT 1 FROM license_reminders WHERE discord_user_id = $1 AND kind = $2 AND expires_at = $3 LIMIT 1',
+      [discordUserId, kind, expiresAt],
+    );
+    return result.rows.length > 0;
+  }
+
+  async recordReminder(discordUserId: string, kind: string, expiresAt: number): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO license_reminders (discord_user_id, kind, expires_at, sent_at) VALUES ($1, $2, $3, $4)
+       ON CONFLICT DO NOTHING`,
+      [discordUserId, kind, expiresAt, Date.now()],
+    );
+  }
 }
 
 class SqliteLicenseStore implements LicenseStore {
@@ -171,6 +228,15 @@ class SqliteLicenseStore implements LicenseStore {
     } catch {
       // column already present
     }
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS licenseReminders (
+        discordUserId TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        expiresAt INTEGER NOT NULL,
+        sentAt INTEGER NOT NULL,
+        PRIMARY KEY (discordUserId, kind, expiresAt)
+      );
+    `);
   }
 
   async getExpiry(discordUserId: string): Promise<number | null> {
@@ -233,6 +299,33 @@ class SqliteLicenseStore implements LicenseStore {
     return this.db
       .prepare('SELECT discordUserId, challenge, tier, createdAt FROM licenseCodes ORDER BY createdAt DESC LIMIT ?')
       .all(limit) as CodeRecord[];
+  }
+
+  async getSubscription(discordUserId: string): Promise<SubscriptionRecord | null> {
+    const row = this.db
+      .prepare('SELECT discordUserId, expiresAt, trialGrantedAt FROM licenseSubscriptions WHERE discordUserId = ?')
+      .get(discordUserId) as SubscriptionRecord | undefined;
+    return row ?? null;
+  }
+
+  async latestCodeFor(discordUserId: string): Promise<CodeRecord | null> {
+    const row = this.db
+      .prepare('SELECT discordUserId, challenge, tier, createdAt FROM licenseCodes WHERE discordUserId = ? ORDER BY createdAt DESC LIMIT 1')
+      .get(discordUserId) as CodeRecord | undefined;
+    return row ?? null;
+  }
+
+  async hasReminder(discordUserId: string, kind: string, expiresAt: number): Promise<boolean> {
+    return (
+      this.db.prepare('SELECT 1 FROM licenseReminders WHERE discordUserId = ? AND kind = ? AND expiresAt = ?').get(discordUserId, kind, expiresAt) !==
+      undefined
+    );
+  }
+
+  async recordReminder(discordUserId: string, kind: string, expiresAt: number): Promise<void> {
+    this.db
+      .prepare('INSERT OR IGNORE INTO licenseReminders (discordUserId, kind, expiresAt, sentAt) VALUES (?, ?, ?, ?)')
+      .run(discordUserId, kind, expiresAt, Date.now());
   }
 }
 

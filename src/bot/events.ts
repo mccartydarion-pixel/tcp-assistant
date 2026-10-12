@@ -1,4 +1,4 @@
-import { Events, type Client, type Message } from 'discord.js';
+import { Events, MessageType, type Client, type Message } from 'discord.js';
 import type { AssistantService } from '../ai/assistantService.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
@@ -11,6 +11,9 @@ import { extractQuestionDetails } from '../ai/question.js';
 import { handleLicenseInteraction } from '../license/licensePanel.js';
 import { handleAnnounceInteraction } from '../owner/announcer.js';
 import { handleSettingsInteraction } from '../settings/settingsPanel.js';
+import { handleBugInteraction } from '../bugs/bugReports.js';
+import { greetNewMember, handleWelcomeInteraction } from '../welcome/welcome.js';
+import { reportUnanswered } from '../ai/unanswered.js';
 
 export function registerEvents(
   client: Client,
@@ -25,7 +28,9 @@ export function registerEvents(
         // Each panel claims only the components whose IDs carry its own prefix.
         (await handleLicenseInteraction(interaction)) ||
           (await handleAnnounceInteraction(interaction)) ||
-          (await handleSettingsInteraction(interaction));
+          (await handleSettingsInteraction(interaction)) ||
+          (await handleBugInteraction(interaction)) ||
+          (await handleWelcomeInteraction(interaction));
       } catch (error) {
         logger.error({ err: error }, '[TCP Panels ERROR] Interaction failed');
         const response = { content: 'Something went wrong. Please try again.', ephemeral: true };
@@ -63,6 +68,12 @@ export function registerEvents(
     logger.info(`[TCP Message] Raw mention syntax: ${/<@!?\d+>/.test(message.content)}`);
 
     if (message.author.bot) return;
+
+    // Discord's own "joined the server" message: greet the new member (its author) and stop there.
+    if (message.type === MessageType.UserJoin) {
+      await greetNewMember(message);
+      return;
+    }
 
     const isTicket = isSupportTicketChannel(message);
 
@@ -127,9 +138,12 @@ export function registerEvents(
       logger.info('[TCP AI] Request started');
       const session = memory.getOrCreate(guildId, message.channelId, message.author.id, isTicket);
       const followUpIntent = memory.updateFromQuestion(session, extractQuestionDetails(question), question);
-      const answer = await assistant.answer(question, session.turns, botId, session.tuning, followUpIntent);
-      memory.record(session, question, answer);
-      await message.reply(answer);
+      const result = await assistant.answerDetailed(question, session.turns, botId, session.tuning, followUpIntent);
+      memory.record(session, question, result.text);
+      await message.reply(result.text);
+      if (result.unanswered) {
+        await reportUnanswered(client, { question, userId: message.author.id, where: message.url, sources: result.sources });
+      }
     } catch (error) {
       logger.error({ err: error }, '[TCP Discord ERROR] Message processing failed');
       try {

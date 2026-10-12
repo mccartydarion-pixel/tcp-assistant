@@ -10,6 +10,7 @@ import { env } from '../../config/env.js';
 import { SpecialIntentRouter } from '../../ai/specialIntentRouter.js';
 import { ConversationMemory, detectFollowUpIntent } from '../../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../../ai/question.js';
+import { reportUnanswered } from '../../ai/unanswered.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -103,9 +104,17 @@ export function createCommands(
         const followUpIntent = memory.updateFromQuestion(session, extractQuestionDetails(question), question);
         await interaction.deferReply();
         loggerRequest();
-        const answer = await assistant.answer(question, session.turns, interaction.client.user?.id, session.tuning, followUpIntent);
-        memory.record(session, question, answer);
-        await interaction.editReply(answer);
+        const result = await assistant.answerDetailed(question, session.turns, interaction.client.user?.id, session.tuning, followUpIntent);
+        memory.record(session, question, result.text);
+        await interaction.editReply(result.text);
+        if (result.unanswered) {
+          await reportUnanswered(interaction.client, {
+            question,
+            userId: interaction.user.id,
+            where: `<#${interaction.channelId}> (/tcp ask)`,
+            sources: result.sources,
+          });
+        }
       },
     },
   ];

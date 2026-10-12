@@ -52,6 +52,10 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `LICENSE_ADMIN_CHANNEL_ID` (optional; a private channel for the owner's licence panel)
 - `LICENSE_MEMBER_ROLE_ID` (optional; the role given to a member when they generate a code)
 - `SETTINGS_CHANNEL_ID` (optional; the channel where members share their T.C.P setups)
+- `WELCOME_CHANNEL_ID` (optional; the channel for the Start here panel and new-member greetings)
+- `RULES_CHANNEL_ID` (optional; adds a Rules button to the welcome guide)
+- `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
+- `LICENSE_REMINDERS` (optional, default true; `false` stops expiry reminder DMs)
 - `LICENSE_TRIAL_DAYS` (optional, default 14; length of the free trial granted on first generate)
 - `LICENSE_MAX_CODES` (optional, default 3; new codes each member may generate per day)
 - `DATABASE_URL` (optional, default SQLite file)
@@ -113,6 +117,24 @@ With `SETTINGS_CHANNEL_ID` set, the bot posts a **Share my settings** panel in t
 4. Check the preview, edit any part, then post.
 
 Every value is checked against the range the script accepts (`SETTING_FIELDS` in `src/settings/settingsPanel.ts`); a mistake reopens the form with what was typed. The posted card shows the values in rows of three under ANTI-RECOIL and ADS ACCURACY headings, with the playstyle and weapon as tags. Its **How to apply** button tells anyone which menu page each value goes on; the page numbers in `SETTING_FIELDS` must match the script's menu. Each member can share once every 10 minutes, and a form left unfinished expires after 20 minutes. The bot moves its panel back to the bottom of the channel after each post. It needs View Channel, Send Messages, Embed Links and Read Message History there.
+
+## My licence and expiry reminders
+
+The licence panel has a **My licence** button next to Generate. It shows the member, privately, their days left, end date, the power-ups a code would last now, codes generated today and their last code.
+
+Once an hour the bot checks subscriptions and DMs each member whose trial or subscription ends within three days, and again in its last day (`src/license/reminders.ts`). Each reminder is recorded against the end date it was about (`license_reminders` table), so it is sent once, and adding days starts a fresh pair. The owner gets none. Members with DMs closed cannot be reached; that is logged and not retried.
+
+## Bug reports
+
+With `BUG_REPORT_CHANNEL_ID` set, the bot posts a **Report a bug** panel there. A member picks the feature and build, fills in a summary, what happened, what was expected, steps to reproduce and (optionally) version and settings, previews it and submits. The card is posted in that channel with status buttons (Investigating, Fixed, Can't reproduce, Reopen) that only the owner can use; the reporter gets a DM when the status changes. One report per member every five minutes.
+
+## Welcome
+
+With `WELCOME_CHANNEL_ID` set, the bot posts a **Start here** panel with buttons for private guides (Get my licence, Download, Settings, Get help, Rules; each only when its channel is set). It also greets each new member in that channel with the same buttons. New members are noticed from Discord's own "joined the server" message, so the server's **System Messages Channel** must have *Send a random welcome message when someone joins* switched on (Server Settings → Overview). No privileged gateway intent is needed.
+
+## Unanswered questions
+
+When the documentation does not cover a question, the AI ends its reply with a marker the bot removes before replying (`src/ai/unansweredMarker.ts`). The bot then posts the question, who asked, where, and the closest documentation sections to `LOG_CHANNEL_ID`, at most once a day per question. Questions with no documentation match at all are logged too. Use these to decide what to add to the knowledge file.
 
 ## Knowledge file setup
 

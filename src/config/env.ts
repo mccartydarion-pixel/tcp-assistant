@@ -16,6 +16,11 @@ const envSchema = z.object({
   LICENSE_SECRET: z.string().optional(),
   LICENSE_ADMIN_CHANNEL_ID: z.string().optional(),
   SETTINGS_CHANNEL_ID: z.string().optional(),
+  WELCOME_CHANNEL_ID: z.string().optional(),
+  RULES_CHANNEL_ID: z.string().optional(),
+  // 'false' turns the feature off; anything else (or unset) leaves it on.
+  LICENSE_REMINDERS: z.string().default('true'),
+  WELCOME_GREET: z.string().default('true'),
   LICENSE_MEMBER_ROLE_ID: z.string().optional(),
   LICENSE_TRIAL_DAYS: z.coerce.number().int().min(1).max(3650).default(14),
   LICENSE_MAX_CODES: z.coerce.number().int().min(1).default(3),

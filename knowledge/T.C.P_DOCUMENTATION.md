@@ -22,6 +22,14 @@ There are two ways to get T.C.P:
 - **Free version** on the Cronus marketplace. It has every feature and no lock.
 - **Licensed version** from the T.C.P Discord. It has the same features and needs an unlock code from the Discord (see Licence and Unlock Codes).
 
+## Getting Started
+
+New to T.C.P? The welcome channel has a **Start here** panel with buttons for a quick private guide: getting your licence, downloading the script, settings, getting help and the rules.
+
+1. Download the script from the download channel and load it onto your Cronus Zen with Zen Studio.
+2. Load it on the Zen, press X on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). New members get a free 14-day trial.
+3. Open the menu with L2 + OPTIONS and tune from there. The settings channel has setups shared by other players.
+
 ## Controls
 
 ### Menu controls
@@ -304,6 +312,10 @@ Hold L2, then press OPTIONS. The menu opens and closes the same way.
 
 Settings save when the menu closes. Close it with Circle or L2 + OPTIONS before turning the controller off.
 
+### Reporting a bug
+
+Use the **Report a bug** button in the bug report channel. Pick the feature and your build, then describe what happened, what you expected, the steps that make it happen, and your script version and settings. You get a direct message when the status of your report changes (Investigating, Fixed or Can't reproduce).
+
 ### Headset audio cuts out
 
 Drawing busy animations on the Zen's screen can briefly interrupt audio passing through it. The home screen is kept nearly static for this reason. If audio cuts while the menu is open, close the menu.
@@ -339,6 +351,14 @@ A code lasts a set number of power-ups of the script, based on the days left on 
 | 1 to 7 | 20 |
 
 When they run out, the Zen locks again with a new number and "RENEW IN DISCORD". Press Generate again. A new script release can also ask everyone for a fresh code.
+
+### Checking your days left
+
+Press **My licence** on the licence panel to see, privately, how many days you have left, when your subscription ends, how many power-ups a new code would last, and how many codes you have generated today.
+
+### Expiry reminders
+
+The bot sends you a direct message three days before your trial or subscription ends, and again on its last day. If you have direct messages from server members turned off, the reminder cannot reach you, so check **My licence** instead.
 
 ### Problems getting a code
 

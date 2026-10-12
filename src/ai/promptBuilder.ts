@@ -1,6 +1,7 @@
 import type { RetrievalResult } from '../knowledge/types.js';
 import type { UserQuestionDetails } from './question.js';
 import { systemPrompt } from './systemPrompt.js';
+import { UNANSWERED_INSTRUCTION } from './unansweredMarker.js';
 import type { TuningState } from './conversationMemory.js';
 
 export interface ConversationTurn {
@@ -32,7 +33,7 @@ export function buildTCPPrompt(params: {
 }): { question: string; system: string; context: string; history: ConversationTurn[] } {
   return {
     question: params.question,
-    system: `${systemPrompt}\n\nUse the supplied T.C.P. documentation as authoritative context. Do not simply repeat it; solve the user's actual problem. Identify symptoms and settings, give practical troubleshooting steps, and recommend one small controlled test at a time. Preserve the user's terminology and values. If the documentation is insufficient, say what information is missing and ask a useful follow-up question. Keep responses concise and conversational.`,
+    system: `${systemPrompt}\n\nUse the supplied T.C.P. documentation as authoritative context. Do not simply repeat it; solve the user's actual problem. Identify symptoms and settings, give practical troubleshooting steps, and recommend one small controlled test at a time. Preserve the user's terminology and values. If the documentation is insufficient, say what information is missing and ask a useful follow-up question. Keep responses concise and conversational.\n\n${UNANSWERED_INSTRUCTION}`,
     context: `${buildTCPContext(params.retrievedChunks, params.details)}\n\n${buildTuningContext(params.tuningState ?? {})}`,
     history: params.conversationHistory?.slice(-8) ?? [],
   };

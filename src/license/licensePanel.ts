@@ -25,7 +25,9 @@ import {
   tierForDaysLeft,
 } from './licenseCode.js';
 import { createLicenseStore, type LicenseStore } from './licenseStore.js';
-import { codeLine, joinLines, subscriptionLine, summarizeSubscriptions } from './ownerReports.js';
+import { codeLine, isOnTrial, joinLines, subscriptionLine, summarizeSubscriptions } from './ownerReports.js';
+import { describeMemberLicence } from './memberLicence.js';
+import { startReminderLoop } from './reminders.js';
 import { ensurePanel } from '../bot/panels.js';
 import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
 
@@ -33,6 +35,7 @@ const PREFIX = 'tcp-license:';
 export const LICENSE_BUTTON_ID = `${PREFIX}generate`;
 export const LICENSE_MODAL_ID = `${PREFIX}modal`;
 export const LICENSE_INPUT_ID = `${PREFIX}number`;
+const MY_LICENCE_ID = `${PREFIX}mine`;
 // Owner panel. The member being managed travels in the custom ID after the last colon.
 export const ADMIN_USER_SELECT_ID = `${PREFIX}admin-user`;
 const ADMIN_ADD_ID = `${PREFIX}admin-add:`;
@@ -67,10 +70,12 @@ export function buildLicensePanel() {
         'Every so often the script asks for a new code. Come back here and press **Generate** again.',
         '',
         `New here? Pressing **Generate** gives you a free **${env.LICENSE_TRIAL_DAYS}-day** trial automatically.`,
+        'Press **My licence** any time to see how many days you have left.',
       ].join('\n'),
     );
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId(LICENSE_BUTTON_ID).setLabel('Generate').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(MY_LICENCE_ID).setLabel('My licence').setStyle(ButtonStyle.Secondary),
   );
   return { embeds: [embed], components: [row] };
 }
@@ -118,6 +123,14 @@ export async function ensureLicensePanel(client: Client): Promise<void> {
     await opened.init();
     store = opened;
     logger.info(`[TCP License] Records ready (${opened.kind}).`);
+    if (env.LICENSE_REMINDERS !== 'false') {
+      startReminderLoop(client, opened, {
+        ownerId: env.OWNER_USER_ID,
+        trialDays: env.LICENSE_TRIAL_DAYS,
+        guildId: env.DISCORD_GUILD_ID,
+        licenceChannelId: env.LICENSE_CHANNEL_ID,
+      });
+    }
     if (opened.kind === 'sqlite' && env.NODE_ENV === 'production') {
       logger.warn('[TCP License] Using the local SQLite file in production; subscriptions will be lost on redeploy. Point DATABASE_URL at Postgres.');
     }
@@ -277,6 +290,30 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
     return true;
   }
   if (await handleAdmin(interaction, store)) return true;
+
+  if (interaction.isButton() && interaction.customId === MY_LICENCE_ID) {
+    await interaction.deferReply({ ephemeral: true });
+    const userId = interaction.user.id;
+    const now = Date.now();
+    const subscription = await store.getSubscription(userId);
+    const summary = describeMemberLicence({
+      expiresAt: subscription?.expiresAt ?? null,
+      hadTrial: subscription?.trialGrantedAt != null,
+      onTrial: subscription !== null && isOnTrial(subscription, env.LICENSE_TRIAL_DAYS),
+      codesToday: await store.countCodesSince(userId, now - DAY_MS),
+      maxPerDay: env.LICENSE_MAX_CODES,
+      latest: await store.latestCodeFor(userId),
+      now,
+      trialDays: env.LICENSE_TRIAL_DAYS,
+      isOwner: Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID,
+    });
+    const embed = new EmbedBuilder()
+      .setTitle(`Your licence: ${summary.title}`)
+      .setColor(summary.active ? PANEL_COLOUR : 0x868e96)
+      .setDescription(summary.lines.join('\n'));
+    await interaction.editReply({ embeds: [embed] });
+    return true;
+  }
 
   if (interaction.isButton() && interaction.customId === LICENSE_BUTTON_ID) {
     const input = new TextInputBuilder()

@@ -12,6 +12,8 @@ import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
 import { ConversationMemory } from './ai/conversationMemory.js';
 import { ensureLicensePanel } from './license/licensePanel.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
+import { ensureBugPanel } from './bugs/bugReports.js';
+import { ensureWelcomePanel } from './welcome/welcome.js';
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
@@ -104,6 +106,8 @@ async function start(): Promise<void> {
   logger.info('[TCP Ticket] Ticket Assistant: READY');
   await ensureLicensePanel(client);
   await ensureSettingsPanel(client);
+  await ensureBugPanel(client);
+  await ensureWelcomePanel(client);
 }
 
 client.once(Events.ClientReady, (readyClient) => {
