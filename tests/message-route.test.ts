@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { determineMessageRoute } from '../src/bot/messageRoute.js';
+import { determineMessageRoute, shouldAnswerOwner } from '../src/bot/messageRoute.js';
+
+describe('answering the owner', () => {
+  it.each([
+    ['MENTION', true],
+    ['CONTINUATION', true],
+    ['TICKET_MENTION', true],
+    ['TICKET', false],
+    ['IGNORE', false],
+  ] as const)('route %s answers the owner: %s', (route, expected) => {
+    expect(shouldAnswerOwner(route)).toBe(expected);
+  });
+});
 
 describe('message route priority', () => {
   it.each([

@@ -5,7 +5,7 @@ import { logger } from '../utils/logger.js';
 import { SpecialIntentRouter } from '../ai/specialIntentRouter.js';
 import { normalizeUserQuestion } from '../ai/question.js';
 import { detectBotMention } from './mention.js';
-import { determineMessageRoute } from './messageRoute.js';
+import { determineMessageRoute, shouldAnswerOwner } from './messageRoute.js';
 import { ConversationMemory } from '../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../ai/question.js';
 import { handleLicenseInteraction } from '../license/licensePanel.js';
@@ -75,12 +75,14 @@ export function registerEvents(
     logger.info(`[TCP Message] Route: ${route}`);
     if (route === 'IGNORE') return;
 
-    if (message.author.id === env.OWNER_USER_ID) {
+    const isOwner = Boolean(env.OWNER_USER_ID) && message.author.id === env.OWNER_USER_ID;
+    if (isOwner) {
       if (specialIntentRouter.isEscalated(guildId, message.channelId)) {
         specialIntentRouter.markOwnerJoined(guildId, message.channelId);
         logger.info(`[TCP Escalation] Owner joined conversation: ${message.channelId}`);
       }
-      return;
+      if (!shouldAnswerOwner(route)) return;
+      logger.info('[TCP Message] Answering the owner');
     }
     if (isTicket) logger.info('[TCP Ticket] User message accepted');
 
@@ -97,7 +99,8 @@ export function registerEvents(
       }
 
       logger.info('[TCP Escalation] Checking intent');
-      const escalationResult = specialIntentRouter.check(guildId, message.channelId, message.author.id, question);
+      // The owner asking for "a human" would only ping themselves.
+      const escalationResult = isOwner ? null : specialIntentRouter.check(guildId, message.channelId, message.author.id, question);
       if (escalationResult) {
         if (!escalationResult.shouldNotify) {
           logger.info(`[TCP Escalation] Duplicate ping prevented: ${message.channelId}`);
