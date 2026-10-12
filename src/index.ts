@@ -31,7 +31,9 @@ const status: BotStatus = {
 client.commands = new Map();
 
 async function validateGuildConfiguration(): Promise<void> {
-  const guild = await client.guilds.fetch(env.DISCORD_GUILD_ID);
+  // Right after login the cache only holds a placeholder for the server (its ID, no name), so ask
+  // Discord for the full details instead of returning that placeholder.
+  const guild = await client.guilds.fetch({ guild: env.DISCORD_GUILD_ID, force: true });
   logger.info(`[TCP Discord] Guild found: ${guild.name}`);
 
   if (env.SUPPORT_CATEGORY_ID) {
