@@ -20,6 +20,23 @@ export interface LicenseStore {
   /** How many different numbers this member has been given a code for since the given time. */
   countCodesSince(discordUserId: string, since: number): Promise<number>;
   recordCode(discordUserId: string, challenge: number, tier: number): Promise<void>;
+  /** Every member with a subscription record, soonest expiry first. */
+  listSubscriptions(): Promise<SubscriptionRecord[]>;
+  /** The most recently issued codes, newest first. */
+  listRecentCodes(limit: number): Promise<CodeRecord[]>;
+}
+
+export interface SubscriptionRecord {
+  discordUserId: string;
+  expiresAt: number;
+  trialGrantedAt: number | null;
+}
+
+export interface CodeRecord {
+  discordUserId: string;
+  challenge: number;
+  tier: number;
+  createdAt: number;
 }
 
 class PostgresLicenseStore implements LicenseStore {
@@ -101,6 +118,30 @@ class PostgresLicenseStore implements LicenseStore {
       Date.now(),
     ]);
   }
+
+  async listSubscriptions(): Promise<SubscriptionRecord[]> {
+    const result = await this.pool.query(
+      'SELECT discord_user_id, expires_at, trial_granted_at FROM license_subscriptions ORDER BY expires_at ASC',
+    );
+    return result.rows.map((row) => ({
+      discordUserId: row.discord_user_id,
+      expiresAt: Number(row.expires_at),
+      trialGrantedAt: row.trial_granted_at === null ? null : Number(row.trial_granted_at),
+    }));
+  }
+
+  async listRecentCodes(limit: number): Promise<CodeRecord[]> {
+    const result = await this.pool.query(
+      'SELECT discord_user_id, challenge, tier, created_at FROM license_codes ORDER BY created_at DESC LIMIT $1',
+      [limit],
+    );
+    return result.rows.map((row) => ({
+      discordUserId: row.discord_user_id,
+      challenge: Number(row.challenge),
+      tier: Number(row.tier),
+      createdAt: Number(row.created_at),
+    }));
+  }
 }
 
 class SqliteLicenseStore implements LicenseStore {
@@ -180,6 +221,18 @@ class SqliteLicenseStore implements LicenseStore {
     this.db
       .prepare('INSERT INTO licenseCodes (id, discordUserId, challenge, tier, createdAt) VALUES (?, ?, ?, ?, ?)')
       .run(randomUUID(), discordUserId, challenge, tier, Date.now());
+  }
+
+  async listSubscriptions(): Promise<SubscriptionRecord[]> {
+    return this.db
+      .prepare('SELECT discordUserId, expiresAt, trialGrantedAt FROM licenseSubscriptions ORDER BY expiresAt ASC')
+      .all() as SubscriptionRecord[];
+  }
+
+  async listRecentCodes(limit: number): Promise<CodeRecord[]> {
+    return this.db
+      .prepare('SELECT discordUserId, challenge, tier, createdAt FROM licenseCodes ORDER BY createdAt DESC LIMIT ?')
+      .all(limit) as CodeRecord[];
   }
 }
 

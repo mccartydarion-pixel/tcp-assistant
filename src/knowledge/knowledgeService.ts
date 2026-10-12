@@ -53,9 +53,10 @@ export class KnowledgeService {
       };
     }
 
-    if (/phase|pattern speed|v scale|h scale|profile/i.test(question)) {
+    // ADS profiles are a real feature, so only recoil-side legacy terms get this answer.
+    if (/\bphase\b|pattern speed|recoil pattern|v scale|h scale|recoil profile|weapon profile/i.test(question)) {
       return {
-        content: 'The current T.C.P. implementation uses Stable Core 2.0. Legacy phase/profile/pattern settings are retained for compatibility and are not part of the active recoil calculation.',
+        content: 'T.C.P. v2.0 has no recoil phases, patterns or weapon profiles. Recoil uses one Vertical and Horizontal value for the whole burst. (ADS profiles are different: there are two, swapped with L2 + SHARE.)',
         confidence: 'HIGH',
         sources: sections,
         escalationRecommended: false,
@@ -72,7 +73,7 @@ export class KnowledgeService {
     }
 
     return {
-      content: `Based on the current T.C.P. documentation, ${best.section} is the closest match for this topic. The current system is Stable Core 2.0 and the documentation is the authoritative source for technical answers.`,
+      content: `Based on the current T.C.P. documentation, ${best.section} is the closest match for this topic. The documentation for T.C.P. v2.0 is the authoritative source for technical answers.`,
       confidence: best.section.toLowerCase().includes('legacy') ? 'MEDIUM' : 'HIGH',
       sources: sections,
       escalationRecommended: false,

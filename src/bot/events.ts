@@ -9,6 +9,8 @@ import { determineMessageRoute } from './messageRoute.js';
 import { ConversationMemory } from '../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../ai/question.js';
 import { handleLicenseInteraction } from '../license/licensePanel.js';
+import { handleAnnounceInteraction } from '../owner/announcer.js';
+import { handleSettingsInteraction } from '../settings/settingsPanel.js';
 
 export function registerEvents(
   client: Client,
@@ -20,10 +22,13 @@ export function registerEvents(
   client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton() || interaction.isModalSubmit() || interaction.isUserSelectMenu()) {
       try {
-        await handleLicenseInteraction(interaction);
+        // Each panel claims only the components whose IDs carry its own prefix.
+        (await handleLicenseInteraction(interaction)) ||
+          (await handleAnnounceInteraction(interaction)) ||
+          (await handleSettingsInteraction(interaction));
       } catch (error) {
-        logger.error({ err: error }, '[TCP License ERROR] Interaction failed');
-        const response = { content: 'Something went wrong generating your code. Please try again.', ephemeral: true };
+        logger.error({ err: error }, '[TCP Panels ERROR] Interaction failed');
+        const response = { content: 'Something went wrong. Please try again.', ephemeral: true };
         if (interaction.deferred || interaction.replied) await interaction.followUp(response);
         else await interaction.reply(response);
       }

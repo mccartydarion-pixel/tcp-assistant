@@ -25,6 +25,9 @@ import {
   tierForDaysLeft,
 } from './licenseCode.js';
 import { createLicenseStore, type LicenseStore } from './licenseStore.js';
+import { codeLine, joinLines, subscriptionLine, summarizeSubscriptions } from './ownerReports.js';
+import { ensurePanel } from '../bot/panels.js';
+import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
 
 const PREFIX = 'tcp-license:';
 export const LICENSE_BUTTON_ID = `${PREFIX}generate`;
@@ -36,6 +39,10 @@ const ADMIN_ADD_ID = `${PREFIX}admin-add:`;
 const ADMIN_REVOKE_ID = `${PREFIX}admin-revoke:`;
 const ADMIN_DAYS_MODAL_ID = `${PREFIX}admin-days:`;
 const ADMIN_DAYS_INPUT_ID = `${PREFIX}days`;
+const ADMIN_ACTIVE_ID = `${PREFIX}admin-active`;
+const ADMIN_EXPIRING_ID = `${PREFIX}admin-expiring`;
+const ADMIN_CODES_ID = `${PREFIX}admin-codes`;
+const RECENT_CODES = 20;
 
 const PANEL_COLOUR = 0x2b8a3e;
 const ADMIN_COLOUR = 0x1971c2;
@@ -72,33 +79,28 @@ export function buildAdminPanel() {
   const embed = new EmbedBuilder()
     .setTitle('T.C.P. Licence Admin')
     .setColor(ADMIN_COLOUR)
-    .setDescription('Pick a member to see their subscription, add days, or end their access. Only the owner can use this.');
-  const row = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(
+    .setDescription(
+      [
+        '**Members:** pick one below to see their subscription, add days, or end their access.',
+        '**Reports:** who is subscribed, who runs out this week, and the latest codes.',
+        '**Announce:** post patch notes to the announcement channel, with or without the flyer.',
+        '',
+        'Only the owner can use this panel.',
+      ].join('\n'),
+    );
+  const members = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(
     new UserSelectMenuBuilder().setCustomId(ADMIN_USER_SELECT_ID).setPlaceholder('Pick a member').setMinValues(1).setMaxValues(1),
   );
-  return { embeds: [embed], components: [row] };
-}
-
-async function ensurePanel(client: Client, channelId: string, marker: string, panel: ReturnType<typeof buildLicensePanel> | ReturnType<typeof buildAdminPanel>, label: string): Promise<void> {
-  try {
-    const channel = await client.channels.fetch(channelId);
-    if (!channel || !channel.isTextBased() || !('send' in channel)) {
-      logger.error(`[TCP License ERROR] The ${label} channel is not a text channel.`);
-      return;
-    }
-    const recent = await channel.messages.fetch({ limit: 50 });
-    const existing = recent.find((message) => message.author.id === client.user?.id && JSON.stringify(message.components).includes(marker));
-    if (existing) {
-      // Keep the wording current without posting a second panel.
-      await existing.edit(panel);
-      logger.info(`[TCP License] ${label} panel already posted; refreshed.`);
-      return;
-    }
-    await channel.send(panel);
-    logger.info(`[TCP License] ${label} panel posted.`);
-  } catch (error) {
-    logger.error({ err: error }, `[TCP License ERROR] Could not post the ${label} panel`);
-  }
+  const reports = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId(ADMIN_ACTIVE_ID).setLabel('Active subscriptions').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(ADMIN_EXPIRING_ID).setLabel('Expiring this week').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(ADMIN_CODES_ID).setLabel('Recent codes').setStyle(ButtonStyle.Secondary),
+  );
+  const announce = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId(ANNOUNCE_BUTTON_ID).setLabel('Post announcement').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(ANNOUNCE_FLYER_BUTTON_ID).setLabel('Post announcement + flyer').setStyle(ButtonStyle.Primary),
+  );
+  return { embeds: [embed], components: [members, reports, announce] };
 }
 
 /** Opens the licence records and posts the member and owner panels unless ours are already there. */
@@ -152,7 +154,9 @@ function adminButtons(userId: string) {
 async function handleAdmin(interaction: Interaction, records: LicenseStore): Promise<boolean> {
   if (!interaction.isUserSelectMenu() && !interaction.isButton() && !interaction.isModalSubmit()) return false;
   const id = interaction.customId;
-  const isAdmin = id === ADMIN_USER_SELECT_ID || id.startsWith(ADMIN_ADD_ID) || id.startsWith(ADMIN_REVOKE_ID) || id.startsWith(ADMIN_DAYS_MODAL_ID);
+  const isReport = id === ADMIN_ACTIVE_ID || id === ADMIN_EXPIRING_ID || id === ADMIN_CODES_ID;
+  const isAdmin =
+    isReport || id === ADMIN_USER_SELECT_ID || id.startsWith(ADMIN_ADD_ID) || id.startsWith(ADMIN_REVOKE_ID) || id.startsWith(ADMIN_DAYS_MODAL_ID);
   if (!isAdmin) return false;
 
   if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
@@ -160,6 +164,29 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
     return true;
   }
   const now = Date.now();
+
+  if (interaction.isButton() && isReport) {
+    await interaction.deferReply({ ephemeral: true });
+    const embed = new EmbedBuilder().setColor(ADMIN_COLOUR).setTimestamp();
+    if (id === ADMIN_CODES_ID) {
+      const codes = await records.listRecentCodes(RECENT_CODES);
+      embed.setTitle(`Recent codes (latest ${RECENT_CODES})`).setDescription(joinLines(codes.map(codeLine), 'No codes have been generated yet.'));
+    } else {
+      const summary = summarizeSubscriptions(await records.listSubscriptions(), now, env.LICENSE_TRIAL_DAYS);
+      const rows = id === ADMIN_EXPIRING_ID ? summary.expiringSoon : summary.active;
+      const lines = rows.map((row) => subscriptionLine(row, now, env.LICENSE_TRIAL_DAYS));
+      if (id === ADMIN_EXPIRING_ID) {
+        embed.setTitle(`Expiring this week: ${rows.length}`).setDescription(joinLines(lines, 'Nobody runs out in the next 7 days.'));
+      } else {
+        embed
+          .setTitle(`Active subscriptions: ${summary.active.length}`)
+          .setDescription(joinLines(lines, 'No active subscriptions.'))
+          .setFooter({ text: `${summary.trialCount} on the free trial · ${summary.expiredCount} expired` });
+      }
+    }
+    await interaction.editReply({ embeds: [embed] });
+    return true;
+  }
 
   if (interaction.isUserSelectMenu()) {
     const userId = interaction.values[0]!;

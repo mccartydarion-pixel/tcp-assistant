@@ -13,9 +13,9 @@ export function getTuningRecommendation(observation: TuningObservation, profile:
     case 'BOUNCING':
       return 'Do not change multiple settings at once. Start with an AR-only baseline test and keep adjustments small.';
     case 'SLUGGISH':
-      return 'ADS feels sluggish. Review ADS Sens, Precision, Response, and Easing and make a small single-variable adjustment.';
+      return 'ADS feels slow or laggy. If Easing is above 0, lower it first, because Easing adds delay. Otherwise raise ADS Sens slightly, then retest.';
     case 'TOO_FAST':
-      return 'ADS feels too fast. Reduce ADS Sens or Response slightly, then retest.';
+      return 'ADS feels too fast. Reduce ADS Sens slightly, or add a little Precision (20 to 40) for finer control near the centre, then retest.';
     case 'STABLE':
       return 'The current baseline looks stable. Keep the current values and test another weapon or range.';
     default:
@@ -28,8 +28,8 @@ export function createInitialProfile(): TuningProfile {
     vertical: 25,
     horizontal: 3,
     adsSens: 90,
-    precision: 45,
-    response: 95,
-    easing: 8,
+    precision: 0,
+    response: 100,
+    easing: 0,
   };
 }

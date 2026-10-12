@@ -51,6 +51,7 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `LICENSE_SECRET` (needed for the generator; six comma-separated numbers that must match the key built into the script)
 - `LICENSE_ADMIN_CHANNEL_ID` (optional; a private channel for the owner's licence panel)
 - `LICENSE_MEMBER_ROLE_ID` (optional; the role given to a member when they generate a code)
+- `SETTINGS_CHANNEL_ID` (optional; the channel where members share their T.C.P setups)
 - `LICENSE_TRIAL_DAYS` (optional, default 14; length of the free trial granted on first generate)
 - `LICENSE_MAX_CODES` (optional, default 3; new codes each member may generate per day)
 - `DATABASE_URL` (optional, default SQLite file)
@@ -94,13 +95,25 @@ When the power-ups are used up, the script shows a new number. Ending a member's
 - Subscriptions and issued codes are stored in Postgres when `DATABASE_URL` starts with `postgres://` or `postgresql://`. Otherwise they go in the local SQLite file `data/tcp.db`, which a redeploy clears.
 - The bot needs View Channel, Send Messages, Embed Links and Read Message History in both channels.
 
+## Owner panel: reports and announcements
+
+The owner panel (in `LICENSE_ADMIN_CHANNEL_ID`) has three rows:
+
+- **Members**: pick a member to see their subscription, add days or end access.
+- **Reports**: *Active subscriptions* (everyone with days left, soonest expiry first, and how many are on the free trial), *Expiring this week* (7 days or less), and *Recent codes* (the latest 20 codes generated). Replies are private to the owner.
+- **Announce**: *Post announcement* or *Post announcement + flyer* opens a form (title, version, patch notes, link). The bot shows a private preview first; nothing is posted until **Post** or **Post + @everyone** is pressed. It posts to `ANNOUNCEMENT_CHANNEL_ID`. The flyer is `assets/tcp-flyer.gif`; replace that file to change it. The bot needs Send Messages, Embed Links and Attach Files there, and Mention Everyone to use the @everyone button.
+
+## Settings sharing
+
+With `SETTINGS_CHANNEL_ID` set, the bot posts a **Share my settings** panel in that channel. A member fills in a setup name, anti-recoil values, ADS values, their DayZ in-game sensitivity (required, because values only carry over between players with similar in-game sensitivity) and optional notes. The bot posts it as a card and moves its panel back to the bottom of the channel. Each member can share once every 10 minutes. The bot needs View Channel, Send Messages, Embed Links and Read Message History in that channel.
+
 ## Knowledge file setup
 
 The project uses the documentation file at:
 
 `knowledge/T.C.P_DOCUMENTATION.md`
 
-This file is the authoritative technical source for the bot.
+This file is the authoritative technical source for the bot. It is written for players: features, every menu page with its range and default, controls, tuning, troubleshooting and the licence. Keep it in step with the script when the script changes, and keep the root `T.C.P_DOCUMENTATION.md` copy identical. `tests/knowledge-doc.test.ts` checks that common player questions reach the right section.
 
 ## Running locally
 

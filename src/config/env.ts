@@ -15,6 +15,7 @@ const envSchema = z.object({
   LICENSE_CHANNEL_ID: z.string().optional(),
   LICENSE_SECRET: z.string().optional(),
   LICENSE_ADMIN_CHANNEL_ID: z.string().optional(),
+  SETTINGS_CHANNEL_ID: z.string().optional(),
   LICENSE_MEMBER_ROLE_ID: z.string().optional(),
   LICENSE_TRIAL_DAYS: z.coerce.number().int().min(1).max(3650).default(14),
   LICENSE_MAX_CODES: z.coerce.number().int().min(1).default(3),
