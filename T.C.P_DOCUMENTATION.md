@@ -4,7 +4,7 @@ This is the authoritative reference for T.C.P. Assistant. It describes T.C.P ver
 
 ## Overview
 
-T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation 5. It is built for competitive PvP and is tuned entirely from a 26-page menu on the Zen's OLED screen.
+T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a 26-page menu on the Zen's OLED screen.
 
 It does four main jobs:
 
@@ -27,10 +27,12 @@ There are two ways to get T.C.P:
 New to T.C.P? The welcome channel has a **Start here** panel with buttons for a quick private guide: getting your licence, downloading the script, settings, getting help and the rules.
 
 1. Download the script from the download channel and load it onto your Cronus Zen with Zen Studio.
-2. Load it on the Zen, press X on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). New members get a free 14-day trial.
-3. Open the menu with L2 + OPTIONS and tune from there. The settings channel has setups shared by other players.
+2. Load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). New members get a free 14-day trial.
+3. Open the menu with L2 + OPTIONS (LT + Menu on Xbox) and tune from there. The settings channel has setups shared by other players.
 
 ## Controls
+
+Button names in this guide are PlayStation names. See Xbox controllers below for the Xbox buttons.
 
 ### Menu controls
 
@@ -42,13 +44,23 @@ New to T.C.P? The welcome channel has a **Start here** panel with buttons for a 
 - **Move between items on a multi-item page** (Lean Spam, Drop Shot, Auto Movement): L1 and R1.
 - **Save and exit**: press Circle, or close the menu with L2 + OPTIONS. Settings are saved when the menu closes.
 
+### Xbox controllers
+
+T.C.P works with an Xbox Series X|S or Xbox One controller plugged into the Zen. The Xbox buttons do the same jobs as the PlayStation buttons in the same place: **A** = X (Cross), **B** = Circle, **X** = Square, **Y** = Triangle, **LB/RB** = L1/R1, **LT/RT** = L2/R2, **LS/RS** (stick clicks) = L3/R3, **Menu** = OPTIONS, **View** = SHARE. The D-pad and sticks are the same.
+
+The menu's hint line switches to Xbox names when an Xbox controller is plugged in (for example "A TOGGLE B EXIT"), and the lock screen says "PRESS A TO BEGIN".
+
+So on Xbox: open the menu with **LT + Menu**, switch things on or off with **A**, save and exit with **B**, move between items with **LB/RB**, and hold **LS + RS** for one second for Master on/off.
+
+One difference: the ADS profile swap (L2 + SHARE) is PlayStation only. On Xbox, View opens DayZ's inventory, so T.C.P leaves it alone; swap profiles on the ADS Profile page instead.
+
 ### Master on and off
 
 Hold **L3 + R3** for one second to switch the whole script on or off. The controller rumbles once for on and twice for off. A quick L3 + R3 press still reaches the game; only a deliberate hold toggles the script. When Master is off, T.C.P does not touch the controller at all.
 
 ### ADS profile swap
 
-Press **L2 + SHARE** to swap between ADS profile 1 and profile 2. One rumble pulse means profile 1, two pulses mean profile 2. SHARE is kept from the game while you are holding L2.
+Press **L2 + SHARE** to swap between ADS profile 1 and profile 2. One rumble pulse means profile 1, two pulses mean profile 2. SHARE is kept from the game while you are holding L2. This needs Master on and a PlayStation controller; on an Xbox controller, swap on the ADS Profile page.
 
 ### Factory reset
 
@@ -194,7 +206,7 @@ Steady Hold (0 to 5, default 0 = off) absorbs thumb tremor. The aim only moves o
 
 ### ADS Profiles
 
-There are two ADS profiles. Each stores its own ADS Sens, Precision, Response, Easing and Steady Hold. Switch on the ADS Profile page or with L2 + SHARE. A common setup is one profile for close range and one for long range.
+There are two ADS profiles. Each stores its own ADS Sens, Precision, Response, Easing and Steady Hold. Switch on the ADS Profile page, or with L2 + SHARE on a PlayStation controller. A common setup is one profile for close range and one for long range.
 
 ## Movement and Utility
 
@@ -306,11 +318,11 @@ Master may be off. Hold L3 + R3 for one second (one rumble pulse = on). Also che
 
 ### The menu will not open
 
-Hold L2, then press OPTIONS. The menu opens and closes the same way.
+Hold L2, then press OPTIONS (on Xbox: hold LT, then press Menu). The menu opens and closes the same way.
 
 ### Settings are not saving
 
-Settings save when the menu closes. Close it with Circle or L2 + OPTIONS before turning the controller off.
+Settings save when the menu closes. Close it with Circle (B on Xbox) or L2 + OPTIONS before turning the controller off.
 
 ### Reporting a bug
 

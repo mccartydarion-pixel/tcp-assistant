@@ -69,7 +69,7 @@ export function welcomeGuide(guide: WelcomeGuide, channels: WelcomeChannels, tri
     case 'licence':
       return [
         '**Getting your licence**',
-        '`1` Load T.C.P on your Cronus Zen and press **X** on the lock screen to see your five-digit number.',
+        '`1` Load T.C.P on your Cronus Zen and press **X** (**A** on Xbox) on the lock screen to see your five-digit number.',
         `\`2\` Go to <#${channels.licence}> and press **Generate**, then type in your number.`,
         '`3` Enter the six-digit code you get back on the Zen.',
         '',
@@ -79,7 +79,7 @@ export function welcomeGuide(guide: WelcomeGuide, channels: WelcomeChannels, tri
       return [
         '**Getting the script**',
         `Download T.C.P from <#${channels.download}>, then load it onto your Cronus Zen with Zen Studio.`,
-        'Open the menu on the Zen by holding **L2** and pressing **OPTIONS**.',
+        'Open the menu on the Zen by holding **L2** and pressing **OPTIONS** (**LT** + **Menu** on Xbox).',
       ].join('\n');
     case 'settings':
       return [

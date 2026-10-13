@@ -391,7 +391,7 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
     .setDescription(
       [
         trialGranted ? `Welcome! You have a **${env.LICENSE_TRIAL_DAYS}-day** free trial.\n` : '',
-        'Enter the code on your Zen: Up/Down changes a digit, Left/Right moves along, X confirms.',
+        'Enter the code on your Zen: Up/Down changes a digit, Left/Right moves along, X confirms (A on an Xbox controller).',
         '',
         `This code lasts **${TIER_USES[tier]} power-ups** of the script. After that the Zen shows a new number; come back and press **Generate** again.`,
       ].join('\n'),

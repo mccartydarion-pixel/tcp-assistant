@@ -56,7 +56,7 @@ export class KnowledgeService {
     // ADS profiles are a real feature, so only recoil-side legacy terms get this answer.
     if (/\bphase\b|pattern speed|recoil pattern|v scale|h scale|recoil profile|weapon profile/i.test(question)) {
       return {
-        content: 'T.C.P. v2.0 has no recoil phases, patterns or weapon profiles. Recoil uses one Vertical and Horizontal value for the whole burst. (ADS profiles are different: there are two, swapped with L2 + SHARE.)',
+        content: 'T.C.P. v2.0 has no recoil phases, patterns or weapon profiles. Recoil uses one Vertical and Horizontal value for the whole burst. (ADS profiles are different: there are two, swapped on the ADS Profile page, or with L2 + SHARE on a PlayStation controller.)',
         confidence: 'HIGH',
         sources: sections,
         escalationRecommended: false,

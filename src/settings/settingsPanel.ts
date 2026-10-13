@@ -177,7 +177,7 @@ export function applyGuide(fields: { name: string; value: string }[]): string {
   if (lines.length === 0) return 'This card has no values to apply.';
   const inGame = byName.get('DayZ in-game sensitivity');
   return [
-    '**On your Zen:** hold L2 + OPTIONS to open the menu, LEFT/RIGHT to the page, UP/DOWN to set the value (hold X for steps of 10), then Circle to save.',
+    '**On your Zen:** hold L2 + OPTIONS (LT + Menu on Xbox) to open the menu, LEFT/RIGHT to the page, UP/DOWN to set the value (hold X/A for steps of 10), then Circle/B to save.',
     '',
     ...lines,
     '',
