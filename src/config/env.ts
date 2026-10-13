@@ -21,6 +21,7 @@ const envSchema = z.object({
   // 'false' turns the feature off; anything else (or unset) leaves it on.
   LICENSE_REMINDERS: z.string().default('true'),
   WELCOME_GREET: z.string().default('true'),
+  WELCOME_MEMBER_INTENT: z.string().default('true'),
   LICENSE_MEMBER_ROLE_ID: z.string().optional(),
   LICENSE_TRIAL_DAYS: z.coerce.number().int().min(1).max(3650).default(14),
   LICENSE_MAX_CODES: z.coerce.number().int().min(1).default(3),

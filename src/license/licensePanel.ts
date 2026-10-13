@@ -62,7 +62,7 @@ export function buildLicensePanel() {
       [
         'Unlock your copy of **Tactical Competitive Pro**.',
         '',
-        '**1.** Load the script on your Cronus Zen and press X. The screen shows a five-digit number.',
+        '**1.** Load the script on your Cronus Zen and press X (A on an Xbox controller). The screen shows a five-digit number.',
         '**2.** Press **Generate** below and type that number in.',
         '**3.** Enter the six-digit code you get back on the Zen.',
         '',

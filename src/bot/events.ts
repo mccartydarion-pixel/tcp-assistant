@@ -12,7 +12,7 @@ import { handleLicenseInteraction } from '../license/licensePanel.js';
 import { handleAnnounceInteraction } from '../owner/announcer.js';
 import { handleSettingsInteraction } from '../settings/settingsPanel.js';
 import { handleBugInteraction } from '../bugs/bugReports.js';
-import { greetNewMember, handleWelcomeInteraction } from '../welcome/welcome.js';
+import { greetFromJoinMessage, greetMember, handleWelcomeInteraction, isMemberEventsActive } from '../welcome/welcome.js';
 import { reportUnanswered } from '../ai/unanswered.js';
 
 export function registerEvents(
@@ -69,9 +69,10 @@ export function registerEvents(
 
     if (message.author.bot) return;
 
-    // Discord's own "joined the server" message: greet the new member (its author) and stop there.
+    // Discord's own "joined the server" message: greet the new member (its author) unless the Server
+    // Members Intent already did, and stop there.
     if (message.type === MessageType.UserJoin) {
-      await greetNewMember(message);
+      await greetFromJoinMessage(message);
       return;
     }
 
@@ -152,6 +153,12 @@ export function registerEvents(
         logger.error({ err: replyError }, '[TCP Discord ERROR] Missing SendMessages permission or reply failed');
       }
     }
+  });
+
+  // Only delivered when the Server Members Intent is on.
+  client.on(Events.GuildMemberAdd, async (member) => {
+    if (!isMemberEventsActive() || member.guild.id !== env.DISCORD_GUILD_ID) return;
+    await greetMember(client, member.user);
   });
 
   client.on(Events.ChannelCreate, async (channel) => {

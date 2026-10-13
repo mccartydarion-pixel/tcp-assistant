@@ -9,7 +9,7 @@ process.env.DISCORD_CLIENT_ID ??= 'test-client';
 process.env.DISCORD_GUILD_ID ??= 'test-guild';
 const { reminderDue, reminderText } = await import('../src/license/reminders.js');
 const { readBugForm, buildBugCard, withStatus, reporterOf, cooldownMinutesLeft } = await import('../src/bugs/bugReports.js');
-const { availableGuides, welcomeGuide } = await import('../src/welcome/welcome.js');
+const { availableGuides, welcomeGuide, wantsMemberEvents, isMemberEventsActive, setMemberEventsActive } = await import('../src/welcome/welcome.js');
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = 1_700_000_000_000;
@@ -105,6 +105,18 @@ describe('welcome guide', () => {
   it('offers only the guides whose channels are set, and always Help', () => {
     expect(availableGuides({})).toEqual(['help']);
     expect(availableGuides({ licence: '1', download: '2', settings: '3', rules: '4' })).toEqual(['licence', 'download', 'settings', 'help', 'rules']);
+  });
+
+  it('only asks Discord for the Server Members Intent when there is a welcome channel', () => {
+    // No WELCOME_CHANNEL_ID in the test environment, so no privileged intent is requested.
+    expect(wantsMemberEvents()).toBe(false);
+  });
+
+  it('records which way new members are being noticed', () => {
+    expect(isMemberEventsActive()).toBe(false);
+    setMemberEventsActive(true);
+    expect(isMemberEventsActive()).toBe(true);
+    setMemberEventsActive(false);
   });
 
   it('links the right channels in each guide', () => {

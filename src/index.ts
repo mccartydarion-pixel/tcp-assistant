@@ -1,11 +1,11 @@
 import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
-import { Client, Events, GatewayIntentBits } from 'discord.js';
+import { Client, Events, GatewayCloseCodes, GatewayIntentBits } from 'discord.js';
 import { initializeDatabase } from './database/client.js';
 import { AssistantService } from './ai/assistantService.js';
 import { KnowledgeService } from './knowledge/knowledgeService.js';
 import { isOpenAiConfigured } from './services/openai.js';
-import { createCommands, type BotStatus } from './bot/commands/index.js';
+import { createCommands, type BotStatus, type Command } from './bot/commands/index.js';
 import { registerCommands } from './bot/registerCommands.js';
 import { registerEvents } from './bot/events.js';
 import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
@@ -13,11 +13,8 @@ import { ConversationMemory } from './ai/conversationMemory.js';
 import { ensureLicensePanel } from './license/licensePanel.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
 import { ensureBugPanel } from './bugs/bugReports.js';
-import { ensureWelcomePanel } from './welcome/welcome.js';
+import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './welcome/welcome.js';
 
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
-});
 const knowledge = new KnowledgeService();
 const assistant = new AssistantService(knowledge);
 const specialIntentRouter = new SpecialIntentRouter();
@@ -30,11 +27,69 @@ const status: BotStatus = {
   startedAt: Date.now(),
 };
 
-client.commands = new Map();
+// How long to wait for Discord to confirm the connection before carrying on anyway.
+const READY_TIMEOUT_MS = 60_000;
 
-async function validateGuildConfiguration(): Promise<void> {
-  // Right after login the cache only holds a placeholder for the server (its ID, no name), so ask
-  // Discord for the full details instead of returning that placeholder.
+function createClient(commands: Command[], withMembers: boolean): Client {
+  const intents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent];
+  // Server Members Intent: lets the bot see members joining, for the welcome greeting. It is privileged,
+  // so Discord refuses the connection unless it is switched on in the Developer Portal.
+  if (withMembers) intents.push(GatewayIntentBits.GuildMembers);
+  const client = new Client({ intents });
+  client.commands = new Map(commands.map((command) => [command.data.name, command]));
+  registerEvents(client, assistant, specialIntentRouter, conversationMemory);
+  client.once(Events.ClientReady, (readyClient) => {
+    logger.info(`[TCP Discord] Logged in as ${readyClient.user.tag}`);
+    logger.info(`[TCP Discord] Logged-in bot ID: ${readyClient.user.id}`);
+    logger.info('T.C.P. Assistant ONLINE');
+  });
+  return client;
+}
+
+function isDisallowedIntents(error: unknown): boolean {
+  const details = error as { code?: unknown; message?: unknown } | undefined;
+  return details?.code === 'DisallowedIntents' || /disallowed intents|not enabled or whitelisted/i.test(String(details?.message ?? ''));
+}
+
+/**
+ * Logs in and waits for Discord to confirm. If the Server Members Intent was asked for and Discord refuses
+ * it (it is off in the Developer Portal), logs why and connects again without it, so the bot stays up.
+ */
+async function connect(commands: Command[], withMembers: boolean): Promise<Client> {
+  const client = createClient(commands, withMembers);
+  const outcome = new Promise<'ready' | 'refused' | 'timeout'>((resolve) => {
+    client.once(Events.ClientReady, () => resolve('ready'));
+    client.on(Events.ShardDisconnect, (event) => {
+      if (event.code === GatewayCloseCodes.DisallowedIntents) resolve('refused');
+    });
+    setTimeout(() => resolve('timeout'), READY_TIMEOUT_MS);
+  });
+
+  let refused = false;
+  try {
+    await client.login(env.DISCORD_TOKEN);
+    refused = (await outcome) === 'refused';
+  } catch (error) {
+    if (!withMembers || !isDisallowedIntents(error)) throw error;
+    refused = true;
+  }
+
+  if (refused) {
+    if (!withMembers) throw new Error('Discord refused the connection: a privileged intent is not enabled.');
+    logger.error(
+      '[TCP Discord ERROR] Discord refused the Server Members Intent. Switch on "Server Members Intent" under Bot in the Discord Developer Portal. Connecting without it; new members are greeted from Discord\'s join messages instead.',
+    );
+    await client.destroy();
+    return connect(commands, false);
+  }
+
+  setMemberEventsActive(withMembers);
+  logger.info(withMembers ? '[TCP Welcome] Server Members Intent on: new members are greeted as they join.' : '[TCP Welcome] Greeting new members from Discord\'s join messages.');
+  return client;
+}
+
+async function validateGuildConfiguration(client: Client): Promise<void> {
+  // Ask Discord for the full server details rather than any placeholder in the cache.
   const guild = await client.guilds.fetch({ guild: env.DISCORD_GUILD_ID, force: true });
   logger.info(`[TCP Discord] Guild found: ${guild.name}`);
 
@@ -96,12 +151,10 @@ async function start(): Promise<void> {
   logger.info(isOpenAiConfigured() ? '[TCP AI] OpenAI configured.' : '[TCP AI ERROR] OPENAI_API_KEY missing.');
 
   const commands = createCommands(assistant, knowledge, status, specialIntentRouter, conversationMemory);
-  client.commands = new Map(commands.map((command) => [command.data.name, command]));
   status.commandsLoaded = commands.length;
   logger.info(`[TCP Commands] Loaded ${commands.length} commands.`);
-  registerEvents(client, assistant, specialIntentRouter, conversationMemory);
-  await client.login(env.DISCORD_TOKEN);
-  await validateGuildConfiguration();
+  const client = await connect(commands, wantsMemberEvents());
+  await validateGuildConfiguration(client);
   status.commandsRegistered = await registerCommands(commands);
   logger.info('[TCP Ticket] Ticket Assistant: READY');
   await ensureLicensePanel(client);
@@ -109,12 +162,6 @@ async function start(): Promise<void> {
   await ensureBugPanel(client);
   await ensureWelcomePanel(client);
 }
-
-client.once(Events.ClientReady, (readyClient) => {
-  logger.info(`[TCP Discord] Logged in as ${readyClient.user.tag}`);
-  logger.info(`[TCP Discord] Logged-in bot ID: ${readyClient.user.id}`);
-  logger.info('T.C.P. Assistant ONLINE');
-});
 
 start().catch((error) => {
   logger.error({ err: error }, '[TCP Startup ERROR] Application initialization failed');

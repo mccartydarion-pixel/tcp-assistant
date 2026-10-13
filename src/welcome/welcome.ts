@@ -1,12 +1,27 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Client, type Interaction, type Message } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Client, type Interaction, type Message, type User } from 'discord.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { ensurePanel, fetchSendableChannel } from '../bot/panels.js';
 
-// A "Start here" panel in WELCOME_CHANNEL_ID, and a greeting there for each new member, both with buttons
-// that each give a short private guide. New members are noticed from Discord's own "joined the server"
-// message, which arrives with the bot's normal message access, so no extra Discord permission is needed.
+// A "Start here" panel in WELCOME_CHANNEL_ID, and a greeting there for each new member that pings them,
+// both with buttons that each give a short private guide. New members are seen through the Server Members
+// Intent when Discord allows it (memberEventsActive); otherwise from Discord's own "joined the server"
+// message. Only one of the two greets, so nobody is welcomed twice.
 const PREFIX = 'tcp-welcome:';
+let memberEventsActive = false;
+
+/** Whether to ask Discord for the Server Members Intent: only when greetings are wanted at all. */
+export function wantsMemberEvents(): boolean {
+  return Boolean(env.WELCOME_CHANNEL_ID) && env.WELCOME_GREET !== 'false' && env.WELCOME_MEMBER_INTENT !== 'false';
+}
+
+export function setMemberEventsActive(active: boolean): void {
+  memberEventsActive = active;
+}
+
+export function isMemberEventsActive(): boolean {
+  return memberEventsActive;
+}
 export const WELCOME_MARKER = `${PREFIX}help`;
 const WELCOME_COLOUR = 0xe8352b;
 
@@ -120,21 +135,27 @@ export async function ensureWelcomePanel(client: Client): Promise<void> {
   await ensurePanel(client, env.WELCOME_CHANNEL_ID, WELCOME_MARKER, buildWelcomePanel(), 'welcome');
 }
 
-/** Greets a member who just joined, given Discord's own "joined the server" message. */
-export async function greetNewMember(message: Message): Promise<void> {
-  if (!env.WELCOME_CHANNEL_ID || env.WELCOME_GREET === 'false' || message.author.bot) return;
+/** Posts the welcome greeting in WELCOME_CHANNEL_ID, pinging the new member. */
+export async function greetMember(client: Client, user: Pick<User, 'id' | 'bot'>): Promise<void> {
+  if (!env.WELCOME_CHANNEL_ID || env.WELCOME_GREET === 'false' || user.bot) return;
   try {
-    const channel = await fetchSendableChannel(message.client, env.WELCOME_CHANNEL_ID);
+    const channel = await fetchSendableChannel(client, env.WELCOME_CHANNEL_ID);
     if (!channel) return;
     await channel.send({
-      content: `Welcome to **T.C.P**, <@${message.author.id}>! Press a button below to get started.`,
+      content: `Welcome to **T.C.P**, <@${user.id}>! Press a button below to get started.`,
       components: [guideButtons(welcomeChannels())],
-      allowedMentions: { users: [message.author.id] },
+      allowedMentions: { users: [user.id] },
     });
-    logger.info(`[TCP Welcome] Greeted ${message.author.id}`);
+    logger.info(`[TCP Welcome] Greeted ${user.id}`);
   } catch (error) {
     logger.warn({ err: error }, '[TCP Welcome] Could not greet a new member');
   }
+}
+
+/** Discord's own "joined the server" message: used only when the Server Members Intent is not active. */
+export async function greetFromJoinMessage(message: Message): Promise<void> {
+  if (memberEventsActive) return;
+  await greetMember(message.client, message.author);
 }
 
 export async function handleWelcomeInteraction(interaction: Interaction): Promise<boolean> {

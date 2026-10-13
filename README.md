@@ -55,6 +55,7 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `WELCOME_CHANNEL_ID` (optional; the channel for the Start here panel and new-member greetings)
 - `RULES_CHANNEL_ID` (optional; adds a Rules button to the welcome guide)
 - `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
+- `WELCOME_MEMBER_INTENT` (optional, default true; `false` stops the bot asking for the Server Members Intent)
 - `LICENSE_REMINDERS` (optional, default true; `false` stops expiry reminder DMs)
 - `LICENSE_TRIAL_DAYS` (optional, default 14; length of the free trial granted on first generate)
 - `LICENSE_MAX_CODES` (optional, default 3; new codes each member may generate per day)
@@ -130,7 +131,9 @@ With `BUG_REPORT_CHANNEL_ID` set, the bot posts a **Report a bug** panel there. 
 
 ## Welcome
 
-With `WELCOME_CHANNEL_ID` set, the bot posts a **Start here** panel with buttons for private guides (Get my licence, Download, Settings, Get help, Rules; each only when its channel is set). It also greets each new member in that channel with the same buttons. New members are noticed from Discord's own "joined the server" message, so the server's **System Messages Channel** must have *Send a random welcome message when someone joins* switched on (Server Settings → Overview). No privileged gateway intent is needed.
+With `WELCOME_CHANNEL_ID` set, the bot posts a **Start here** panel with buttons for private guides (Get my licence, Download, Settings, Get help, Rules; each only when its channel is set). It also greets each new member in that channel, pinging them, with the same buttons.
+
+New members are seen through Discord's **Server Members Intent**, which must be switched on in the Discord Developer Portal (your application → Bot → Privileged Gateway Intents → Server Members Intent). The bot only asks for it when a welcome channel is set and greetings are on. If Discord refuses it because it is still off in the portal, the bot logs an error saying so and connects again without it, so it stays online; it then greets from Discord's own "joined the server" message instead, which needs *Send a random welcome message when someone joins* on in Server Settings → Overview. Only one of the two greets, so nobody is welcomed twice. The startup log says which is in use.
 
 ## Unanswered questions
 
