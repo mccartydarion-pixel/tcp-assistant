@@ -12,6 +12,7 @@ import { handleLicenseInteraction } from '../license/licensePanel.js';
 import { handleAnnounceInteraction } from '../owner/announcer.js';
 import { handleSettingsInteraction } from '../settings/settingsPanel.js';
 import { handleBugInteraction } from '../bugs/bugReports.js';
+import { handleReviewInteraction } from '../reviews/reviews.js';
 import { greetFromJoinMessage, greetMember, handleWelcomeInteraction, isMemberEventsActive } from '../welcome/welcome.js';
 import { reportUnanswered } from '../ai/unanswered.js';
 
@@ -30,6 +31,7 @@ export function registerEvents(
           (await handleAnnounceInteraction(interaction)) ||
           (await handleSettingsInteraction(interaction)) ||
           (await handleBugInteraction(interaction)) ||
+          (await handleReviewInteraction(interaction)) ||
           (await handleWelcomeInteraction(interaction));
       } catch (error) {
         logger.error({ err: error }, '[TCP Panels ERROR] Interaction failed');

@@ -13,6 +13,7 @@ import { ConversationMemory } from './ai/conversationMemory.js';
 import { ensureLicensePanel } from './license/licensePanel.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
 import { ensureBugPanel } from './bugs/bugReports.js';
+import { ensureReviewPanel } from './reviews/reviews.js';
 import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './welcome/welcome.js';
 
 const knowledge = new KnowledgeService();
@@ -113,6 +114,8 @@ async function validateGuildConfiguration(client: Client): Promise<void> {
     LOG_CHANNEL_ID: env.LOG_CHANNEL_ID,
     BUG_REPORT_CHANNEL_ID: env.BUG_REPORT_CHANNEL_ID,
     ANNOUNCEMENT_CHANNEL_ID: env.ANNOUNCEMENT_CHANNEL_ID,
+    REVIEW_CHANNEL_ID: env.REVIEW_CHANNEL_ID,
+    REVIEW_VOICE_CHANNEL_ID: env.REVIEW_VOICE_CHANNEL_ID,
   })) {
     if (!channelId) continue;
     try {
@@ -160,6 +163,7 @@ async function start(): Promise<void> {
   await ensureLicensePanel(client);
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
+  await ensureReviewPanel(client);
   await ensureWelcomePanel(client);
 }
 

@@ -54,6 +54,8 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `SETTINGS_CHANNEL_ID` (optional; the channel where members share their T.C.P setups)
 - `WELCOME_CHANNEL_ID` (optional; the channel for the Start here panel and new-member greetings)
 - `RULES_CHANNEL_ID` (optional; adds a Rules button to the welcome guide)
+- `REVIEW_CHANNEL_ID` (optional; the channel for the review panel and posted reviews)
+- `REVIEW_VOICE_CHANNEL_ID` (optional; a voice channel the bot renames to show the star rating)
 - `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
 - `WELCOME_MEMBER_INTENT` (optional, default true; `false` stops the bot asking for the Server Members Intent)
 - `LICENSE_REMINDERS` (optional, default true; `false` stops expiry reminder DMs)
@@ -128,6 +130,16 @@ Once an hour the bot checks subscriptions and DMs each member whose trial or sub
 ## Bug reports
 
 With `BUG_REPORT_CHANNEL_ID` set, the bot posts a **Report a bug** panel there. A member picks the feature and build, fills in a summary, what happened, what was expected, steps to reproduce and (optionally) version and settings, previews it and submits. The card is posted in that channel with status buttons (Investigating, Fixed, Can't reproduce, Reopen) that only the owner can use; the reporter gets a DM when the status changes. One report per member every five minutes.
+
+## Reviews and the star rating
+
+With `REVIEW_CHANNEL_ID` set, the bot posts a **Leave a review** panel there. A member picks 1 to 5 stars, writes a review (a headline is optional) and it is posted in that channel as a card. Each member has one review: leaving another replaces the old card, so the average counts everyone once. A member can update their review once every ten minutes. Every card has a **Remove** button that only the owner can use, which takes the review down and out of the average.
+
+The panel shows the average, the number of reviews and how many gave each star count, and moves back to the bottom of the channel after each review. Members only need to see the channel; the bot posts there, so you can deny them Send Messages.
+
+**Rating in the channel list.** Set `REVIEW_VOICE_CHANNEL_ID` to a voice channel and the bot renames it to show the rating, for example `⭐⭐⭐⭐⭐ 4.8 (23 reviews)`: the stars are the average rounded to whole stars. It is renamed at startup and after each review or removal. Discord allows only two renames per channel every ten minutes, so the bot renames at most once every five minutes and always uses the rating at that moment; a burst of reviews shows up within five minutes. Create the voice channel yourself, give the bot **Manage Channels** on it, and deny @everyone **Connect** so it works as a sign rather than a room.
+
+Reviews are stored in Postgres when `DATABASE_URL` is a Postgres address (the `reviews` table), otherwise in the local SQLite file, which a redeploy clears. The bot needs View Channel, Send Messages, Embed Links and Read Message History in the review channel.
 
 ## Welcome
 

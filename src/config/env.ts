@@ -18,6 +18,8 @@ const envSchema = z.object({
   SETTINGS_CHANNEL_ID: z.string().optional(),
   WELCOME_CHANNEL_ID: z.string().optional(),
   RULES_CHANNEL_ID: z.string().optional(),
+  REVIEW_CHANNEL_ID: z.string().optional(),
+  REVIEW_VOICE_CHANNEL_ID: z.string().optional(),
   // 'false' turns the feature off; anything else (or unset) leaves it on.
   LICENSE_REMINDERS: z.string().default('true'),
   WELCOME_GREET: z.string().default('true'),
