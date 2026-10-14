@@ -14,6 +14,7 @@ import { ensureLicensePanel } from './license/licensePanel.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
 import { ensureBugPanel } from './bugs/bugReports.js';
 import { ensureReviewPanel } from './reviews/reviews.js';
+import { ensureGamePanels } from './games/gameScripts.js';
 import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './welcome/welcome.js';
 
 const knowledge = new KnowledgeService();
@@ -164,6 +165,7 @@ async function start(): Promise<void> {
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);
+  await ensureGamePanels(client);
   await ensureWelcomePanel(client);
 }
 

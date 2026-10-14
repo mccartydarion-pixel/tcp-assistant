@@ -45,7 +45,7 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `BUG_REPORT_CHANNEL_ID` (optional)
 - `LOG_CHANNEL_ID` (optional)
 - `ANNOUNCEMENT_CHANNEL_ID` (optional)
-- `DOWNLOAD_CHANNEL_ID` (optional)
+- `DOWNLOAD_CHANNEL_ID` (optional; only used when no games are listed in `src/games/gameScripts.ts`)
 - `FAQ_CHANNEL_ID` (optional)
 - `LICENSE_CHANNEL_ID` (optional; the channel that holds the licence generator panel)
 - `LICENSE_SECRET` (needed for the generator; six comma-separated numbers that must match the key built into the script)
@@ -130,6 +130,14 @@ Once an hour the bot checks subscriptions and DMs each member whose trial or sub
 ## Bug reports
 
 With `BUG_REPORT_CHANNEL_ID` set, the bot posts a **Report a bug** panel there. A member picks the feature and build, fills in a summary, what happened, what was expected, steps to reproduce and (optionally) version and settings, previews it and submits. The card is posted in that channel with status buttons (Investigating, Fixed, Can't reproduce, Reopen) that only the owner can use; the reporter gets a DM when the status changes. One report per member every five minutes.
+
+## Game script showcases
+
+Each game T.C.P supports has its own channel with a showcase: an embed with the T.C.P banner (`assets/tcp-banner.png`), what the script does, a **Download** link button and a **How to install** button that gives private install steps. The games are listed in `GAME_SCRIPTS` in `src/games/gameScripts.ts`, each with its channel ID, download link and wording; DayZ is the first. To add a game, add an entry there and redeploy.
+
+On startup the bot posts each showcase in its channel. It keeps a fingerprint of the wording in the install button's ID, so a redeploy leaves an unchanged showcase alone, and replaces the old one (deleting it and posting the new one) only when the wording, link or banner changed. The bot needs View Channel, Send Messages, Embed Links, Attach Files and Read Message History in each game channel; members only need to see it.
+
+The welcome guide's **Download** button lists these channels. `DOWNLOAD_CHANNEL_ID` is only used when `GAME_SCRIPTS` is empty.
 
 ## Reviews and the star rating
 

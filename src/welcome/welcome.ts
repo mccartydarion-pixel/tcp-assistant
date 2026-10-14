@@ -2,6 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Client
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { ensurePanel, fetchSendableChannel } from '../bot/panels.js';
+import { GAME_SCRIPTS } from '../games/gameScripts.js';
 
 // A "Start here" panel in WELCOME_CHANNEL_ID, and a greeting there for each new member that pings them,
 // both with buttons that each give a short private guide. New members are seen through the Server Members
@@ -30,6 +31,8 @@ export type WelcomeGuide = 'licence' | 'download' | 'settings' | 'help' | 'rules
 export interface WelcomeChannels {
   licence?: string;
   download?: string;
+  /** Each game's own download channel; used instead of `download` when there are any. */
+  games?: { game: string; channelId: string }[];
   settings?: string;
   bugs?: string;
   rules?: string;
@@ -39,6 +42,7 @@ export function welcomeChannels(): WelcomeChannels {
   return {
     licence: env.LICENSE_CHANNEL_ID,
     download: env.DOWNLOAD_CHANNEL_ID,
+    games: GAME_SCRIPTS.map((script) => ({ game: script.game, channelId: script.channelId })),
     settings: env.SETTINGS_CHANNEL_ID,
     bugs: env.BUG_REPORT_CHANNEL_ID,
     rules: env.RULES_CHANNEL_ID,
@@ -49,7 +53,7 @@ export function welcomeChannels(): WelcomeChannels {
 export function availableGuides(channels: WelcomeChannels): WelcomeGuide[] {
   const guides: WelcomeGuide[] = [];
   if (channels.licence) guides.push('licence');
-  if (channels.download) guides.push('download');
+  if (channels.games?.length || channels.download) guides.push('download');
   if (channels.settings) guides.push('settings');
   guides.push('help');
   if (channels.rules) guides.push('rules');
@@ -78,7 +82,12 @@ export function welcomeGuide(guide: WelcomeGuide, channels: WelcomeChannels, tri
     case 'download':
       return [
         '**Getting the script**',
-        `Download T.C.P from <#${channels.download}>, then load it onto your Cronus Zen with Zen Studio.`,
+        ...(channels.games?.length
+          ? [
+              'Each game has its own channel with the download link and install steps:',
+              ...channels.games.map((entry) => `• **${entry.game}**: <#${entry.channelId}>`),
+            ]
+          : [`Download T.C.P from <#${channels.download}>, then load it onto your Cronus Zen with Zen Studio.`]),
         'Open the menu on the Zen by holding **L2** and pressing **OPTIONS** (**LT** + **Menu** on Xbox).',
       ].join('\n');
     case 'settings':
