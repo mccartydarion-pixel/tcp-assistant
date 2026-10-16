@@ -77,7 +77,7 @@ The menu has 26 pages, in this order:
 5. Automatic Aim (on/off)
 6. Follow Lean (on/off)
 7. Lean Spam (four items: on/off, Fire Only, Direction, Lean Time)
-8. Drop Shot (six items: on/off, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)
+8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)
 9. Hair Triggers (on/off)
 10. Vertical Recoil
 11. Horizontal Recoil
@@ -121,7 +121,7 @@ The menu has 26 pages, in this order:
 | Left Time / Right Time | 40 to 600 ms | 180 |
 | Strafe Amount | 10 to 100 | 100 |
 
-On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Drop on Fire, Hair Triggers and Motion Intel are off. Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE.
+On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off. Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE. Drop Shot is on, but with Double Tap and Drop on Fire both off it does nothing until you switch one of them on.
 
 ## Anti-Recoil
 
@@ -249,9 +249,9 @@ Holding L1 or R1 yourself pauses it. Leaning also moves your own sights, so if y
 
 ### Drop Shot and Crouch Shot
 
-Drop Shot changes your stance during a fight.
+Drop Shot changes your stance during a fight. It has two triggers, Double Tap and Drop on Fire. Both are off by default, so Drop Shot does nothing until you switch one of them on.
 
-- **Double tap Circle** (within about a quarter second) to go prone. Always available while Drop Shot is on.
+- **Double Tap** (default off): two Circle presses within 280 ms drop you prone. It is off by default because a quick Circle double tap in DayZ is crouch then stand, which players do on purpose. With it off, your Circle presses reach the game untouched.
 - **Drop on Fire** (default off): drops the moment you aim and fire together.
 - **Stance** (default PRONE): PRONE goes prone; CROUCH crouches instead (a crouch shot). Stance only affects Drop on Fire; the double tap always goes prone.
 - **Stand Up After** (default on): after a drop on fire, stands you back up when you let go of L2, or when you have stopped firing for 0.4 seconds.

@@ -25,6 +25,11 @@ const aliasMap: Record<string, string> = {
   profiles: 'ADS Profiles',
   dropshot: 'Drop Shot',
   crouchshot: 'Crouch Shot',
+  // Double Tap is an item of Drop Shot, not a heading of its own; keep the words and add the heading.
+  'double tap': 'Drop Shot Double Tap',
+  'double-tap': 'Drop Shot Double Tap',
+  doubletap: 'Drop Shot Double Tap',
+  'double tapping': 'Drop Shot Double Tap',
   moonwalk: 'Auto Movement',
   adz: 'Anti Deadzone',
   mie: 'Motion Intel',

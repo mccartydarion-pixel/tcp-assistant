@@ -128,6 +128,45 @@ describe('Turn Strength', () => {
   });
 });
 
+// The Circle double tap used to be always on with Drop Shot. Since 2026-10-14 it is its own Double Tap
+// switch, off by default (a quick Circle double tap is crouch then stand in DayZ), so the doc must not say
+// it is always available.
+describe('Drop Shot', () => {
+  const content = (heading: string) => chunks.find((chunk) => chunk.heading === heading)?.content ?? '';
+  const section = content('Drop Shot and Crouch Shot');
+
+  it.each([
+    'double tap circle goes prone',
+    'double tap circle makes me go prone',
+    'why do i go prone when i double tap circle',
+    // Without the retriever's double tap aliases most of these went to Menu Pages, Turn Strength or the defaults.
+    'double tap not working',
+    'how do I turn on double tap',
+    'how do i turn off double tap',
+    'double tap prone',
+    'my double tap stopped working after the update',
+    'is double tap on by default',
+    'double-tap to prone stopped working',
+    'doubletap prone?',
+    'double tapping circle does nothing',
+  ])('"%s" finds Drop Shot, as typed and as the bot searches', async (question) => {
+    expect(await topHeading(question)).toBe('Drop Shot and Crouch Shot');
+    const botQuery = buildRetrievalQuery(question, extractQuestionDetails(question));
+    expect((await retriever.search(botQuery, 1))[0]?.chunk.heading).toBe('Drop Shot and Crouch Shot');
+  });
+
+  it('says Double Tap is off by default and Drop Shot does nothing until a trigger is on', () => {
+    expect(section).toContain('**Double Tap** (default off): two Circle presses within 280 ms drop you prone.');
+    expect(section).toContain('With it off, your Circle presses reach the game untouched.');
+    expect(section).toContain('Both are off by default, so Drop Shot does nothing until you switch one of them on.');
+    expect(section).not.toMatch(/always available/i);
+  });
+
+  it('lists Double Tap on the menu page and with the defaults', () => {
+    expect(content('Menu Pages')).toContain('8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)');
+    expect(content('Defaults and ranges')).toContain('Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off.');
+  });
+});
 
 describe('canned answers', () => {
   it('does not tell players ADS profiles are a legacy setting', async () => {
