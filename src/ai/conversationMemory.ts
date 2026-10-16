@@ -1,5 +1,5 @@
 import type { ConversationTurn } from './promptBuilder.js';
-import type { UserQuestionDetails } from './question.js';
+import { clampScale, type UserQuestionDetails } from './question.js';
 
 export type FollowUpIntent = 'ACKNOWLEDGEMENT' | 'TESTING' | 'TEST_RESULT' | 'MORE_HELP' | 'RESOLVED' | 'CONFUSED' | null;
 
@@ -17,9 +17,27 @@ export interface TuningState {
   lastRecommendation?: string;
   previousVertical?: number;
   previousHorizontal?: number;
+  /**
+   * T.C.P Premium: a Weapon Workshop slot with a recorded pull is selected, so the recorded pull fires and
+   * Vertical and Horizontal Recoil are locked. That gun is tuned with Scale Y and Scale X instead.
+   */
+  onRecordedPull?: boolean;
+  /** The Workshop slot the player named, W1 to W4. */
+  workshopSlot?: string;
+  /** The recorded pull as the home screen shows it on a pull (V28 H4), kept apart from Vertical and Horizontal. */
+  pullVertical?: number;
+  pullHorizontal?: number;
+  /** Workshop Scale Y (up/down strength) and Scale X (sideways), 50 to 150%, default 100. */
+  scaleY?: number;
+  scaleX?: number;
+  previousScaleY?: number;
+  previousScaleX?: number;
   waitingForTestResult?: boolean;
   resolved?: boolean;
 }
+
+/** What belongs to one Workshop slot, dropped when the player names a different slot. */
+const SLOT_FIELDS = ['scaleY', 'scaleX', 'previousScaleY', 'previousScaleX', 'pullVertical', 'pullHorizontal'] as const;
 
 export interface ConversationSession {
   key: string;
@@ -95,6 +113,7 @@ export class ConversationMemory {
       optic: details.optic ?? previous.optic,
       distanceMeters: details.distance ?? previous.distanceMeters,
     });
+    updateRecordedPull(previous, details);
     if (details.symptom === 'upward_climb') previous.currentSymptom = 'CLIMBING';
     if (details.symptom === 'left_pull') previous.currentSymptom = 'DRIFTING_LEFT';
     if (details.symptom === 'right_pull') previous.currentSymptom = 'DRIFTING_RIGHT';
@@ -142,6 +161,10 @@ export class ConversationMemory {
         }
         session.tuning.horizontal = nextHorizontal;
       }
+      const scaleYRecommendation = recommendation.match(/\bscale\s*y\s+(?:(?:to|at)\s+)?(\d+(?:\.\d+)?)/i);
+      if (scaleYRecommendation?.[1]) setScale(session.tuning, 'scaleY', 'previousScaleY', Number(scaleYRecommendation[1]));
+      const scaleXRecommendation = recommendation.match(/\bscale\s*x\s+(?:(?:to|at)\s+)?(\d+(?:\.\d+)?)/i);
+      if (scaleXRecommendation?.[1]) setScale(session.tuning, 'scaleX', 'previousScaleX', Number(scaleXRecommendation[1]));
       console.info(`[TCP Session] Waiting for test result: ${session.key}`);
     }
   }
@@ -149,6 +172,37 @@ export class ConversationMemory {
   reset(guildId: string, channelId: string, userId: string): void {
     this.sessions.delete(this.key(guildId, channelId, userId));
   }
+}
+
+/**
+ * The Workshop part of a question: whether the recorded pull fires, the slot, Scale Y/X (with their previous
+ * values, as for Vertical), and on a pull the home screen's V and H as the pull, never as Vertical/Horizontal.
+ */
+function updateRecordedPull(state: TuningState, details: UserQuestionDetails): void {
+  if (details.workshopSlot !== undefined) {
+    if (state.workshopSlot !== undefined && state.workshopSlot !== details.workshopSlot) {
+      for (const field of SLOT_FIELDS) delete state[field];
+    }
+    state.workshopSlot = details.workshopSlot;
+  }
+  if (details.recordedPull !== undefined) state.onRecordedPull = details.recordedPull;
+  if (details.recordedPull === false) {
+    delete state.pullVertical;
+    delete state.pullHorizontal;
+  }
+  if (details.scaleY !== undefined) setScale(state, 'scaleY', 'previousScaleY', details.scaleY);
+  if (details.scaleX !== undefined) setScale(state, 'scaleX', 'previousScaleX', details.scaleX);
+  if (state.onRecordedPull) {
+    if (details.screenVertical !== undefined) state.pullVertical = details.screenVertical;
+    if (details.screenHorizontal !== undefined) state.pullHorizontal = details.screenHorizontal;
+  }
+}
+
+function setScale(state: TuningState, field: 'scaleY' | 'scaleX', previousField: 'previousScaleY' | 'previousScaleX', value: number): void {
+  const next = clampScale(value);
+  const current = state[field];
+  if (current !== undefined && current !== next) state[previousField] = current;
+  state[field] = next;
 }
 
 export function detectFollowUpIntent(question: string): FollowUpIntent {

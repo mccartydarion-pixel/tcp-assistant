@@ -3,6 +3,7 @@ import { isOpenAiConfigured, openai } from '../services/openai.js';
 import { logger } from '../utils/logger.js';
 import { buildTCPPrompt, type ConversationTurn } from './promptBuilder.js';
 import type { FollowUpIntent, TuningState } from './conversationMemory.js';
+import { recordedPullReply } from './pullFollowUp.js';
 import { extractQuestionDetails, normalizeUserQuestion } from './question.js';
 import { buildRetrievalQuery } from './retrievalQuery.js';
 import { extractUnansweredMarker } from './unansweredMarker.js';
@@ -51,10 +52,15 @@ export class AssistantService {
     if (followUpIntent === 'TESTING') {
       return fixed('Sounds good. Keep the weapon, optic, and distance the same for the test. When you are done, tell me if it still climbs, pulls down, or feels centered.');
     }
+    // On a recorded Workshop pull, Vertical and Horizontal Recoil are locked: those replies tune Scale Y.
+    const pullReply = recordedPullReply(followUpIntent, tuningState);
+    if (pullReply) {
+      return fixed(pullReply);
+    }
     if (followUpIntent === 'RESOLVED') {
       return fixed('Perfect. Save that value. We can tune Horizontal or ADS separately if you need to.');
     }
-    if (followUpIntent === 'TEST_RESULT' && tuningState.vertical !== undefined) {
+    if (followUpIntent === 'TEST_RESULT' && tuningState.vertical !== undefined && !tuningState.onRecordedPull) {
       if (tuningState.currentSymptom === 'CLIMBING') {
         return fixed(`Since ${tuningState.vertical} is still climbing, try ${tuningState.vertical + 1} next. Keep Horizontal unchanged so we are testing one variable.`);
       }

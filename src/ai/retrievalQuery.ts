@@ -9,6 +9,8 @@ export function buildRetrievalQuery(question: string, details: UserQuestionDetai
     tuningState.currentSymptom,
     tuningState.vertical !== undefined ? `vertical ${tuningState.vertical}` : undefined,
     tuningState.horizontal !== undefined ? `horizontal ${tuningState.horizontal}` : undefined,
+    tuningState.onRecordedPull ? 'recorded pull' : undefined,
+    tuningState.onRecordedPull && tuningState.scaleY !== undefined ? `scale y ${tuningState.scaleY}` : undefined,
     tuningState.weapon,
     tuningState.optic,
     tuningState.distanceMeters !== undefined ? `${tuningState.distanceMeters}m` : undefined,
