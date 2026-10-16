@@ -13,7 +13,7 @@ import { reportUnanswered } from '../../ai/unanswered.js';
 import { answerMessages, notice, tcpEmbed } from '../embeds.js';
 import { serverMapFor } from '../../server/serverMap.js';
 import { ticketAudience } from '../../tickets/ticketSystem.js';
-import { handleReleaseCommand, handleTraceCommand } from '../../premium/premium.js';
+import { handleReleaseCommand, handleSyncCommand, handleTraceCommand } from '../../premium/premium.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -60,6 +60,12 @@ export function createCommands(
         .setName('trace')
         .setDescription('Owner: find out whose copy a leaked Premium script is')
         .addAttachmentOption((option) => option.setName('file').setDescription('The leaked .gpc file').setRequired(true)),
+    )
+    .addSubcommand((command) =>
+      command
+        .setName('sync')
+        .setDescription('Owner: give a paying member the Elite welcome: role, script by DM, welcome post')
+        .addUserOption((option) => option.setName('member').setDescription('Who to sync (leave empty for yourself)').setRequired(false)),
     );
 
   return [
@@ -73,6 +79,10 @@ export function createCommands(
         }
         if (subcommand === 'trace') {
           await handleTraceCommand(interaction);
+          return;
+        }
+        if (subcommand === 'sync') {
+          await handleSyncCommand(interaction);
           return;
         }
         if (subcommand === 'help') {

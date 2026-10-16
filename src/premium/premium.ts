@@ -222,16 +222,31 @@ export function findOwners(text: string, marks: MarkRecord[]): MarkRecord[] {
  * recorded, and a retry must not add days twice.
  */
 export async function onPremiumPaid(client: Client, discordUserId: string, first: boolean): Promise<void> {
+  await welcomeElite(client, discordUserId, first);
+}
+
+/** What a welcome did, for /tcp sync. */
+interface WelcomeResult {
+  inServer: boolean;
+  hasRole: boolean;
+  scriptSent: boolean;
+  welcomePosted: boolean;
+}
+
+async function welcomeElite(client: Client, discordUserId: string, first: boolean): Promise<WelcomeResult> {
+  const result: WelcomeResult = { inServer: false, hasRole: false, scriptSent: false, welcomePosted: false };
   try {
     const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
     const member = await guild.members.fetch(discordUserId).catch(() => null);
+    result.inServer = member !== null;
     const role = eliteRole(guild);
     if (member && role && !member.roles.cache.has(role.id)) {
       await member.roles.add(role, 'T.C.P Premium payment').catch((error: unknown) =>
         logger.warn({ err: error }, `[TCP Premium] Could not give ${role.name}; check Manage Roles and that the bot's role sits above it.`),
       );
     }
-    if (!first) return;
+    result.hasRole = Boolean(member && role && member.roles.cache.has(role.id));
+    if (!first) return result;
 
     let delivered = false;
     if (current) {
@@ -239,6 +254,7 @@ export async function onPremiumPaid(client: Client, discordUserId: string, first
         const user = member?.user ?? (await client.users.fetch(discordUserId));
         await user.send(premiumFileMessage(await personalCopy(discordUserId), env.LICENSE_CHANNEL_ID));
         delivered = true;
+        result.scriptSent = true;
       } catch (error) {
         logger.info({ err: error }, `[TCP Premium] Could not DM the script to ${discordUserId}`);
       }
@@ -256,14 +272,50 @@ export async function onPremiumPaid(client: Client, discordUserId: string, first
 
     const channel = eliteWelcomeChannel(guild);
     if (channel && member) {
-      await channel
+      result.welcomePosted = await channel
         .send(eliteWelcomeMessage({ id: member.id, displayName: member.displayName, avatarURL: member.displayAvatarURL() }, role?.name ?? null, env.LICENSE_CHANNEL_ID))
-        .catch((error: unknown) => logger.warn({ err: error }, '[TCP Premium] Could not post in the elite welcome channel'));
+        .then(() => true)
+        .catch((error: unknown) => {
+          logger.warn({ err: error }, '[TCP Premium] Could not post in the elite welcome channel');
+          return false;
+        });
     }
     logger.info(`[TCP Premium] Welcomed ${discordUserId} (script ${delivered ? 'sent' : 'not sent'}, role ${role ? 'given' : 'not found'})`);
   } catch (error) {
     logger.error({ err: error }, `[TCP Premium ERROR] Could not finish welcoming ${discordUserId}`);
   }
+  return result;
+}
+
+/**
+ * /tcp sync: the owner runs the first-payment welcome again for a member (themselves by default): the Elite
+ * role, the script by DM and the post in the elite welcome channel. For members who paid before the welcome
+ * existed, or whose DM or role failed. Other members need a live subscription.
+ */
+export async function handleSyncCommand(interaction: ChatInputCommandInteraction): Promise<void> {
+  if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
+    await interaction.reply({ ...notice('Only the owner can use this command.', { tone: 'danger' }), ephemeral: true });
+    return;
+  }
+  await interaction.deferReply({ ephemeral: true });
+  const target = interaction.options.getUser('member') ?? interaction.user;
+  if (target.id !== interaction.user.id && !(await isSubscriber(target.id))) {
+    await interaction.editReply(
+      notice(`<@${target.id}> has no live T.C.P Premium subscription, so they were not welcomed. To give access by hand, use **Add days** on the owner panel.`, {
+        title: 'Not synced',
+        tone: 'warning',
+      }),
+    );
+    return;
+  }
+  const result = await welcomeElite(interaction.client, target.id, true);
+  const role = eliteRoleName(interaction.client);
+  const lines = [
+    result.inServer ? (result.hasRole ? `✅ Has the **${role}** role.` : `❌ Could not give the **${role}** role: check Manage Roles and that the bot's role sits above it.`) : '❌ Not in the server.',
+    result.scriptSent ? '✅ Premium script sent by DM.' : current ? '❌ Script not sent: their DMs are closed. They can press **Download Premium**.' : '❌ Script not sent: none uploaded yet (`/tcp release`).',
+    result.welcomePosted ? '✅ Welcome posted in the elite welcome channel.' : '❌ No welcome posted: the elite welcome channel was not found, or the bot cannot post there.',
+  ];
+  await interaction.editReply({ ...notice(lines.join('\n'), { title: `Synced ${target.username}`, tone: 'success' }), allowedMentions: { parse: [] } });
 }
 
 /** The subscription ended: take the Elite role away. Their licence days still run out as normal. */
