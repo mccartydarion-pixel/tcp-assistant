@@ -31,6 +31,7 @@ import { startReminderLoop } from './reminders.js';
 import { ensurePanel } from '../bot/panels.js';
 import { notice } from '../bot/embeds.js';
 import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
+import { paymentButtons, paymentsEnabled, priceText, renewsAutomatically, subscriptionSummary } from '../payments/stripeBilling.js';
 
 const PREFIX = 'tcp-license:';
 export const LICENSE_BUTTON_ID = `${PREFIX}generate`;
@@ -72,13 +73,47 @@ export function buildLicensePanel() {
         '',
         `New here? Pressing **Generate** gives you a free **${env.LICENSE_TRIAL_DAYS}-day** trial automatically.`,
         'Press **My licence** any time to see how many days you have left.',
+        ...(paymentsEnabled()
+          ? [
+              '',
+              `**T.C.P Premium${priceText() ? `: ${priceText()}` : ''}.** Press **Subscribe** to keep playing after your trial. Every payment adds days to your licence automatically; cancel any time with **Manage subscription**.`,
+            ]
+          : []),
       ].join('\n'),
     );
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId(LICENSE_BUTTON_ID).setLabel('Generate').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId(MY_LICENCE_ID).setLabel('My licence').setStyle(ButtonStyle.Secondary),
   );
-  return { embeds: [embed], components: [row] };
+  const payments = paymentButtons();
+  return { embeds: [embed], components: payments ? [row, payments] : [row] };
+}
+
+/** How a member renews: Subscribe when payments are on, else a ticket. */
+function renewHint(): string {
+  return paymentsEnabled() ? 'Press **Subscribe** on the licence panel to renew.' : 'Open a support ticket to renew.';
+}
+
+/**
+ * Adds paid days to a member's licence (a Stripe payment) and gives them the member role. Returns the new
+ * end of their access, or null when the licence records are not open yet (Stripe then retries).
+ */
+export async function grantPaidDays(client: Client, discordUserId: string, days: number): Promise<number | null> {
+  if (!store) return null;
+  const now = Date.now();
+  const expiresAt = extendExpiry(await store.getExpiry(discordUserId), days, now);
+  await store.setExpiry(discordUserId, expiresAt);
+  logger.info(`[TCP License] Payment added ${days} days for ${discordUserId}`);
+  if (env.LICENSE_MEMBER_ROLE_ID) {
+    try {
+      const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
+      const member = await guild.members.fetch(discordUserId);
+      if (!member.roles.cache.has(env.LICENSE_MEMBER_ROLE_ID)) await member.roles.add(env.LICENSE_MEMBER_ROLE_ID, 'T.C.P Premium payment');
+    } catch (error) {
+      logger.warn({ err: error }, '[TCP License] Could not give the member role after a payment (left the server, or Manage Roles missing).');
+    }
+  }
+  return expiresAt;
 }
 
 export function buildAdminPanel() {
@@ -130,6 +165,8 @@ export async function ensureLicensePanel(client: Client): Promise<void> {
         trialDays: env.LICENSE_TRIAL_DAYS,
         guildId: env.DISCORD_GUILD_ID,
         licenceChannelId: env.LICENSE_CHANNEL_ID,
+        renewsAutomatically,
+        canSubscribe: paymentsEnabled,
       });
     }
     if (opened.kind === 'sqlite' && env.NODE_ENV === 'production') {
@@ -302,11 +339,13 @@ export async function memberLicenceEmbed(userId: string, heading: string): Promi
     now,
     trialDays: env.LICENSE_TRIAL_DAYS,
     isOwner: Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID,
+    renewHint: renewHint(),
   });
+  const payment = await subscriptionSummary(userId);
   return new EmbedBuilder()
     .setTitle(`${heading}: ${summary.title}`)
     .setColor(summary.active ? PANEL_COLOUR : 0x868e96)
-    .setDescription(summary.lines.join('\n'));
+    .setDescription([...summary.lines, ...(payment ? ['', `**Subscription:** ${payment}`] : [])].join('\n'));
 }
 
 /** Handles the licence panels' buttons, menus and forms. Returns true when the interaction was one of ours. */
@@ -323,7 +362,11 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   if (interaction.isButton() && interaction.customId === MY_LICENCE_ID) {
     await interaction.deferReply({ ephemeral: true });
     const embed = await memberLicenceEmbed(interaction.user.id, 'Your licence');
-    await interaction.editReply({ embeds: embed ? [embed] : notice('The licence generator is not set up yet.', { tone: 'muted' }).embeds });
+    const payments = paymentButtons();
+    await interaction.editReply({
+      embeds: embed ? [embed] : notice('The licence generator is not set up yet.', { tone: 'muted' }).embeds,
+      components: payments ? [payments] : [],
+    });
     return true;
   }
 
@@ -377,12 +420,14 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   const tier = isOwner ? 5 : tierForDaysLeft(days);
   if (tier === null) {
     logger.info(`[TCP License] Refused ${userId}: no active subscription`);
-    await interaction.editReply(
-      notice('Your T.C.P. trial or subscription has ended, so no new code can be generated. Open a support ticket to renew.', {
+    const payments = paymentButtons();
+    await interaction.editReply({
+      ...notice(`Your T.C.P. trial or subscription has ended, so no new code can be generated. ${renewHint()}`, {
         title: 'Subscription ended',
         tone: 'muted',
       }),
-    );
+      components: payments ? [payments] : [],
+    });
     return true;
   }
 

@@ -60,6 +60,7 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `TICKET_LOG_CHANNEL_ID` (optional; private channel for ticket opened/closed logs and transcripts; `LOG_CHANNEL_ID` when unset)
 - `TICKET_PANEL_CHANNEL_ID` (optional; where the Open a ticket panel goes; without it the ticket buttons are on the help channel panel)
 - `PLAYSTATION_ROLE_ID`, `XBOX_ROLE_ID` (optional; roles given by Get started; without them the bot uses, or creates, roles named PlayStation and Xbox)
+- `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` (optional; T.C.P Premium payments, see below)
 - `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
 - `WELCOME_MEMBER_INTENT` (optional, default true; `false` stops the bot asking for the Server Members Intent)
 - `LICENSE_REMINDERS` (optional, default true; `false` stops expiry reminder DMs)
@@ -164,6 +165,26 @@ With `WELCOME_CHANNEL_ID` set, the bot posts a **Start here** panel with a **Get
 Each new member gets a welcome card in that channel that pings them, shows their member number and has **Get started** and **Rules** buttons. **Get started** asks two questions privately (PlayStation or Xbox; do they have T.C.P on their Zen yet), gives them a PlayStation or Xbox role, and shows a checklist worded for their controller with links to the right channels. The roles come from `PLAYSTATION_ROLE_ID` / `XBOX_ROLE_ID`, or roles with those names, or are created; the bot needs **Manage Roles** and its own role above them. Choosing the other controller later swaps the role.
 
 New members are seen through Discord's **Server Members Intent**, which must be switched on in the Discord Developer Portal (your application → Bot → Privileged Gateway Intents → Server Members Intent). The bot only asks for it when a welcome channel is set and greetings are on. If Discord refuses it because it is still off in the portal, the bot logs an error saying so and connects again without it, so it stays online; it then greets from Discord's own "joined the server" message instead, which needs *Send a random welcome message when someone joins* on in Server Settings → Overview. Only one of the two greets, so nobody is welcomed twice. The startup log says which is in use.
+
+## Payments (T.C.P Premium through Stripe)
+
+With `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` set, the licence panel gets **Subscribe** (showing the live price, for example "Subscribe · $7.00/month") and **Manage subscription** buttons; they also appear under **My licence**, in Licence & codes tickets, and when a member's access has ended.
+
+- **Subscribe** opens a Stripe Checkout page made for that member's Discord account (it is in `client_reference_id` and the subscription's metadata), so the payment finds its way back without anyone typing an ID. Members never enter card details in Discord.
+- Every paid invoice for a new or renewing subscription adds its billing period's days (30 or 31 for monthly) to the member's licence, the same as the owner's **Add days**, and gives `LICENSE_MEMBER_ROLE_ID`. The member gets a DM receipt and `LOG_CHANNEL_ID` gets a log line. Mid-period plan changes add nothing.
+- **Manage subscription** opens Stripe's Customer Portal: cancel, resume, change card, invoices. A cancelled subscription stops renewing and the remaining days simply run out.
+- Failed payments, cancellations, refunds and chargebacks are logged to `LOG_CHANNEL_ID`. Refunds and chargebacks do not take days away; use **End access** if they should.
+- Members whose subscription renews by itself get no expiry reminder DMs; everyone else's reminders point at **Subscribe**.
+- The bot only acts on events Stripe signed (checked with `STRIPE_WEBHOOK_SECRET`), and handles each event once, so Stripe's retries never add days twice. Records are in the `stripe_subscriptions` and `stripe_events` tables (Postgres when `DATABASE_URL` is one).
+
+**Setting it up** (use Stripe's test mode first: test keys and a test price, and pay with Stripe's test cards):
+1. In Stripe, create a product (for example "T.C.P Premium") with a recurring monthly price. Put its price ID (`price_...`) in `STRIPE_PRICE_ID`.
+2. Put the secret key (`sk_test_...`, later `sk_live_...`) in `STRIPE_SECRET_KEY`. A restricted key works too if it can write Checkout Sessions, Customer Portal sessions and read Prices, Charges, Customers and Subscriptions.
+3. Give the Railway service a public domain (Settings → Networking → Generate Domain). The bot listens on `PORT` for `POST /stripe/webhook` (and `GET /health`).
+4. In Stripe → Developers → Webhooks, add an endpoint `https://<your-domain>/stripe/webhook` with the events `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded` and `charge.dispute.created`. Put its signing secret (`whsec_...`) in `STRIPE_WEBHOOK_SECRET`.
+5. In Stripe → Settings → Billing → Customer portal, turn on cancelling subscriptions and updating payment methods, and save.
+
+The startup log says whether Stripe is ready and in test or live mode. Test and live mode have separate keys, prices and webhook secrets; switch all three together.
 
 ## Help channel
 

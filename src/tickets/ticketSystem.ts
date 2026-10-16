@@ -32,6 +32,7 @@ import { extractQuestionDetails } from '../ai/question.js';
 import { reportUnanswered } from '../ai/unanswered.js';
 import { memberLicenceEmbed } from '../license/licensePanel.js';
 import { serverMapFor } from '../server/serverMap.js';
+import { paymentButtons } from '../payments/stripeBilling.js';
 import { createTicketStore, type TicketRecord, type TicketStore } from './ticketStore.js';
 import {
   TICKET_TYPES,
@@ -466,7 +467,8 @@ async function createTicket(interaction: ModalSubmitInteraction, type: TicketTyp
 
     if (type.kind === 'licence') {
       const licence = await memberLicenceEmbed(user.id, 'Licence');
-      if (licence) await channel.send({ embeds: [licence] });
+      const payments = paymentButtons();
+      if (licence) await channel.send({ embeds: [licence], components: payments ? [payments] : [] });
     }
     if (type.assistantFirst) await firstLook(channel, user, assistantQuestion(type, answers));
   } finally {

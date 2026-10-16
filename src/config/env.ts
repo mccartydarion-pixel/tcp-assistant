@@ -29,6 +29,11 @@ const envSchema = z.object({
   // Roles given by the Get started setup; found or created by name when unset.
   PLAYSTATION_ROLE_ID: z.string().optional(),
   XBOX_ROLE_ID: z.string().optional(),
+  // Stripe payments for T.C.P Premium. The secret key (sk_live_ or sk_test_), the recurring price members
+  // subscribe to (price_...), and the signing secret of the webhook endpoint (whsec_...).
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PRICE_ID: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
   // 'false' turns the feature off; anything else (or unset) leaves it on.
   LICENSE_REMINDERS: z.string().default('true'),
   WELCOME_GREET: z.string().default('true'),

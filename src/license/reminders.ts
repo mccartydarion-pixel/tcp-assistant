@@ -23,16 +23,25 @@ export function reminderDue(expiresAt: number, now: number): ReminderKind | null
   return null;
 }
 
-export function reminderText(kind: ReminderKind, days: number, onTrial: boolean, renewLink?: string): { title: string; description: string } {
+export function reminderText(
+  kind: ReminderKind,
+  days: number,
+  onTrial: boolean,
+  renewLink?: string,
+  canSubscribe = false,
+): { title: string; description: string } {
   const what = onTrial ? 'free trial' : 'subscription';
   const title = kind === 'final' ? `Your T.C.P ${what} ends today` : `Your T.C.P ${what} ends in ${days} days`;
+  const howToRenew = canSubscribe
+    ? 'press **Subscribe** on the licence panel; each monthly payment adds days automatically.'
+    : 'open a support ticket in the T.C.P server to renew.';
   const description = [
     kind === 'final'
       ? `Your ${what} runs out within the next day.`
       : `Your ${what} runs out in **${days} days**.`,
     'When it ends, your Zen will ask for a new code and the bot can only give you one once you have renewed.',
     '',
-    `**To keep playing:** open a support ticket in the T.C.P server to renew.${renewLink ? ` You can check your days any time with **My licence** here: ${renewLink}` : ''}`,
+    `**To keep playing:** ${howToRenew}${renewLink ? ` You can check your days any time with **My licence** here: ${renewLink}` : ''}`,
   ].join('\n');
   return { title, description };
 }
@@ -40,7 +49,15 @@ export function reminderText(kind: ReminderKind, days: number, onTrial: boolean,
 export function startReminderLoop(
   client: Client,
   store: LicenseStore,
-  options: { ownerId?: string; trialDays: number; guildId: string; licenceChannelId?: string },
+  options: {
+    ownerId?: string;
+    trialDays: number;
+    guildId: string;
+    licenceChannelId?: string;
+    /** Members who need no reminder: their subscription renews by itself. */
+    renewsAutomatically?: (discordUserId: string) => Promise<boolean>;
+    canSubscribe?: () => boolean;
+  },
 ): void {
   const renewLink = options.licenceChannelId ? `https://discord.com/channels/${options.guildId}/${options.licenceChannelId}` : undefined;
   let running = false;
@@ -54,7 +71,8 @@ export function startReminderLoop(
         if (row.discordUserId === options.ownerId) continue;
         const kind = reminderDue(row.expiresAt, now);
         if (!kind || (await store.hasReminder(row.discordUserId, kind, row.expiresAt))) continue;
-        const text = reminderText(kind, daysLeft(row.expiresAt, now), isOnTrial(row, options.trialDays), renewLink);
+        if (options.renewsAutomatically && (await options.renewsAutomatically(row.discordUserId))) continue;
+        const text = reminderText(kind, daysLeft(row.expiresAt, now), isOnTrial(row, options.trialDays), renewLink, options.canSubscribe?.() ?? false);
         try {
           const user = await client.users.fetch(row.discordUserId);
           await user.send({ embeds: [new EmbedBuilder().setTitle(text.title).setDescription(text.description).setColor(REMINDER_COLOUR)] });

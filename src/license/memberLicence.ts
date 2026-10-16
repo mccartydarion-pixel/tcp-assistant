@@ -11,6 +11,8 @@ export interface MemberLicenceInput {
   now: number;
   trialDays: number;
   isOwner: boolean;
+  /** How to renew, for an ended subscription. Defaults to opening a ticket. */
+  renewHint?: string;
 }
 
 /** What the "My licence" button tells a member about their own subscription. */
@@ -29,7 +31,7 @@ export function describeMemberLicence(input: MemberLicenceInput): { title: strin
   if (days <= 0 || input.expiresAt === null) {
     const lines = input.expiresAt === null ? [] : [`Your access ended <t:${Math.floor(input.expiresAt / 1000)}:D>.`];
     if (input.hadTrial) lines.push('Your free trial has been used.');
-    lines.push('Open a support ticket to renew.');
+    lines.push(input.renewHint ?? 'Open a support ticket to renew.');
     return { title: 'Subscription ended', lines, active: false };
   }
   const tier = tierForDaysLeft(days);
