@@ -60,7 +60,7 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `TICKET_LOG_CHANNEL_ID` (optional; private channel for ticket opened/closed logs and transcripts; `LOG_CHANNEL_ID` when unset)
 - `TICKET_PANEL_CHANNEL_ID` (optional; where the Open a ticket panel goes; without it the ticket buttons are on the help channel panel)
 - `PLAYSTATION_ROLE_ID`, `XBOX_ROLE_ID` (optional; roles given by Get started; without them the bot uses, or creates, roles named PlayStation and Xbox)
-- `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` (optional; T.C.P Premium payments, see below)
+- `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` (optional; T.C.P Premium payments, see below), `STRIPE_YEARLY_PRICE_ID` (optional; a yearly price of the same product, adds a **Yearly** button)
 - `ELITE_ROLE_ID`, `ELITE_WELCOME_CHANNEL_ID` (optional; the role paying members get and the channel they are welcomed in; without them the bot uses a role named Elite Supporter and a text channel with "elite" and "welcome" in its name)
 - `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
 - `WELCOME_MEMBER_INTENT` (optional, default true; `false` stops the bot asking for the Server Members Intent)
@@ -174,7 +174,9 @@ New members are seen through Discord's **Server Members Intent**, which must be 
 With `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` set, the licence panel gets **Subscribe** (showing the live price, for example "Subscribe · $7.00/month") and **Manage subscription** buttons; they also appear under **My licence**, in Licence & codes tickets, and when a member's access has ended.
 
 - **Subscribe** opens a Stripe Checkout page made for that member's Discord account (it is in `client_reference_id` and the subscription's metadata), so the payment finds its way back without anyone typing an ID. Members never enter card details in Discord.
-- Every paid invoice for a new or renewing subscription adds its billing period's days (30 or 31 for monthly) to the member's licence, the same as the owner's **Add days**, and gives `LICENSE_MEMBER_ROLE_ID`. The member gets a DM receipt and `LOG_CHANNEL_ID` gets a log line. Mid-period plan changes add nothing.
+- **Yearly** (with `STRIPE_YEARLY_PRICE_ID`, a yearly price of the same product): the same Checkout for the yearly price; the button shows it, for example "Yearly · $70.00/year". Someone already subscribed who presses Subscribe or Yearly gets the portal instead, never a second subscription.
+- Every paid invoice for a new or renewing subscription adds its billing period's days (30 or 31 for monthly, 365 for yearly) to the member's licence, the same as the owner's **Add days**, and gives `LICENSE_MEMBER_ROLE_ID`. The member gets a DM receipt and `LOG_CHANNEL_ID` gets a log line.
+- **Switching plan** in the portal (turn on *Customers can switch plans* in Stripe's Customer portal settings with both prices, prorations invoiced at once, and downgrades scheduled for the end of the period): monthly to yearly is billed at once (the yearly price less a credit for the unused month), and the bot extends the licence to the end of the new yearly period rather than adding a year on top, since the credit already paid for the rest of the month. Yearly to monthly then happens at the end of the paid year. Plan-change invoices made only of proration lines, or paid entirely by credit, add nothing.
 - **Manage subscription** opens Stripe's Customer Portal: cancel, resume, change card, invoices. A cancelled subscription stops renewing and the remaining days simply run out.
 - Failed payments, cancellations, refunds and chargebacks are logged to `LOG_CHANNEL_ID`. Refunds and chargebacks do not take days away; use **End access** if they should.
 - Members whose subscription renews by itself get no expiry reminder DMs; everyone else's reminders point at **Subscribe**.

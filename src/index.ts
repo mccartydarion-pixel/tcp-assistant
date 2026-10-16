@@ -10,7 +10,7 @@ import { registerCommands } from './bot/registerCommands.js';
 import { registerEvents } from './bot/events.js';
 import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
 import { ConversationMemory } from './ai/conversationMemory.js';
-import { ensureLicensePanel, grantPaidDays, refreshLicensePanel } from './license/licensePanel.js';
+import { ensureLicensePanel, grantPaidDays, grantPaidUntil, refreshLicensePanel } from './license/licensePanel.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
 import { ensureBugPanel } from './bugs/bugReports.js';
 import { ensureReviewPanel } from './reviews/reviews.js';
@@ -181,6 +181,7 @@ async function start(): Promise<void> {
   await initPremium(client, { isSubscriber: hasLiveSubscription, onUploaded: () => refreshLicensePanel(client) });
   await initPayments(client, {
     grantDays: (discordUserId, days) => grantPaidDays(client, discordUserId, days),
+    grantUntil: (discordUserId, until) => grantPaidUntil(client, discordUserId, until),
     onPaid: (discordUserId, first) => onPremiumPaid(client, discordUserId, first),
     onEnded: (discordUserId) => onPremiumEnded(client, discordUserId),
   });

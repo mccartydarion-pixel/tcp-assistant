@@ -46,6 +46,23 @@ export function describeSubscription(record: SubscriptionRecord | null): string 
   return 'Ended. Press **Subscribe** to start again.';
 }
 
+/** True for an invoice line that settles a plan change (credit for unused time, or a charge for the rest of a period). */
+export function isProrationLine(line: { parent?: { subscription_item_details?: { proration: boolean } | null; invoice_item_details?: { proration: boolean } | null } | null }): boolean {
+  return Boolean(line.parent?.subscription_item_details?.proration || line.parent?.invoice_item_details?.proration);
+}
+
+/** The DM a member gets when they switch plan (monthly to yearly) and the new plan's period is paid. */
+export function planChangeReceipt(addedDays: number, expiresAt: number, planLabel: string): { title: string; description: string } {
+  const until = `<t:${Math.floor(expiresAt / 1000)}:D>`;
+  return {
+    title: 'Your T.C.P plan changed',
+    description: [
+      planLabel ? `You are now on **${planLabel}**.` : 'Your new plan is active.',
+      addedDays > 0 ? `**${addedDays} days** added to your licence. It now runs until ${until}.` : `Your licence runs until ${until}.`,
+    ].join('\n'),
+  };
+}
+
 /** The DM a member gets when a payment goes through. */
 export function paymentReceipt(days: number, expiresAt: number, firstPayment: boolean, licenceChannelId?: string): { title: string; description: string } {
   const until = `<t:${Math.floor(expiresAt / 1000)}:D>`;
@@ -56,7 +73,7 @@ export function paymentReceipt(days: number, expiresAt: number, firstPayment: bo
       licenceChannelId
         ? `Need a code for your Zen? Press **Generate** in <#${licenceChannelId}>.`
         : 'Need a code for your Zen? Press **Generate** on the licence panel.',
-      firstPayment ? 'Each monthly payment adds more days automatically. Cancel any time with **Manage subscription**.' : '',
+      firstPayment ? 'Each renewal adds more days automatically. Cancel any time with **Manage subscription**.' : '',
     ]
       .filter(Boolean)
       .join('\n'),

@@ -5,19 +5,24 @@ import { logger } from '../utils/logger.js';
 import { fetchSendableChannel } from '../bot/panels.js';
 import { notice, tcpEmbed, type Tone } from '../bot/embeds.js';
 import { createPaymentStore, type PaymentStore } from './paymentStore.js';
-import { describeSubscription, formatPrice, isLive, paymentReceipt, periodDays, type SubscriptionRecord } from './paymentRules.js';
+import { describeSubscription, formatPrice, isLive, isProrationLine, paymentReceipt, periodDays, planChangeReceipt, type SubscriptionRecord } from './paymentRules.js';
 import { premiumAvailable, premiumDownloadButton } from '../premium/premium.js';
 
-// T.C.P Premium through Stripe: a monthly subscription. Members press Subscribe and pay on a Stripe
-// Checkout page made for their Discord account; every paid invoice adds its period's days to their licence.
+// T.C.P Premium through Stripe: a monthly subscription, and optionally a yearly one (STRIPE_YEARLY_PRICE_ID).
+// Members press Subscribe (or Yearly) and pay on a Stripe Checkout page made for their Discord account; every
+// paid invoice adds its period's days to their licence, and a switch from monthly to yearly in the portal
+// extends the licence to the end of the new yearly period.
 // Manage subscription opens Stripe's own portal (cancel, change card). The bot never sees card details: it
 // only reacts to the signed events Stripe sends to /stripe/webhook. Refunds and disputes are flagged to the
 // owner, who decides whether to end access.
 const PREFIX = 'tcp-pay:';
 const SUBSCRIBE_ID = `${PREFIX}subscribe`;
+const SUBSCRIBE_YEARLY_ID = `${PREFIX}subscribe-yearly`;
 const MANAGE_ID = `${PREFIX}manage`;
 
 export type GrantDays = (discordUserId: string, days: number) => Promise<number | null>;
+/** Extends a licence to at least the given time; the new end and the whole days added, or null when the records are closed. */
+export type GrantUntil = (discordUserId: string, until: number) => Promise<{ expiresAt: number; addedDays: number } | null>;
 
 /** What else happens around a payment: the premium script, the Elite role and welcome (premium.ts). */
 export interface PaymentHooks {
@@ -28,9 +33,11 @@ export interface PaymentHooks {
 let stripe: Stripe | null = null;
 let store: PaymentStore | null = null;
 let grantDays: GrantDays | null = null;
+let grantUntil: GrantUntil | null = null;
 let hooks: PaymentHooks = {};
 let client: Client | null = null;
 let priceLabel = '';
+let yearlyLabel = '';
 
 /** Whether members can subscribe: Stripe keys and the price are set, and the records are open. */
 export function paymentsEnabled(): boolean {
@@ -50,18 +57,25 @@ export function priceText(): string {
   return priceLabel;
 }
 
+/** "$70.00/year" when the yearly plan is on, else empty. */
+export function yearlyPriceText(): string {
+  return yearlyLabel;
+}
+
 /** For tests: a Stripe client and records without reaching Stripe or a database. */
-export function usePaymentsForTests(deps: { stripe: Stripe; store: PaymentStore; grantDays: GrantDays } & PaymentHooks): void {
+export function usePaymentsForTests(deps: { stripe: Stripe; store: PaymentStore; grantDays: GrantDays; grantUntil?: GrantUntil } & PaymentHooks): void {
   stripe = deps.stripe;
   store = deps.store;
   grantDays = deps.grantDays;
+  grantUntil = deps.grantUntil ?? null;
   hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded };
   client = null;
 }
 
-export async function initPayments(discord: Client, deps: { grantDays: GrantDays } & PaymentHooks): Promise<void> {
+export async function initPayments(discord: Client, deps: { grantDays: GrantDays; grantUntil?: GrantUntil } & PaymentHooks): Promise<void> {
   client = discord;
   grantDays = deps.grantDays;
+  grantUntil = deps.grantUntil ?? null;
   hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded };
   if (!paymentsConfigured()) {
     logger.info('[TCP Payments] STRIPE_SECRET_KEY or STRIPE_PRICE_ID not set; payments are off.');
@@ -76,9 +90,18 @@ export async function initPayments(discord: Client, deps: { grantDays: GrantDays
     const price = await stripe.prices.retrieve(env.STRIPE_PRICE_ID!);
     priceLabel = formatPrice(price.unit_amount, price.currency, price.recurring?.interval, price.recurring?.interval_count ?? 1);
     if (!price.recurring) logger.warn('[TCP Payments] STRIPE_PRICE_ID is a one-off price; Subscribe expects a monthly (recurring) price.');
+    if (env.STRIPE_YEARLY_PRICE_ID) {
+      try {
+        const yearly = await stripe.prices.retrieve(env.STRIPE_YEARLY_PRICE_ID);
+        if (yearly.recurring) yearlyLabel = formatPrice(yearly.unit_amount, yearly.currency, yearly.recurring.interval, yearly.recurring.interval_count);
+        else logger.warn('[TCP Payments] STRIPE_YEARLY_PRICE_ID is a one-off price, so the Yearly button is off.');
+      } catch (error) {
+        logger.warn({ err: error }, '[TCP Payments] Could not load STRIPE_YEARLY_PRICE_ID, so the Yearly button is off.');
+      }
+    }
     // Secret keys are sk_live_/sk_test_, restricted keys rk_live_/rk_test_.
     const mode = /^[sr]k_live_/.test(env.STRIPE_SECRET_KEY!) ? 'live' : 'test';
-    logger.info(`[TCP Payments] Stripe ready (${mode} mode, ${priceLabel || 'price'}); records (${opened.kind}).`);
+    logger.info(`[TCP Payments] Stripe ready (${mode} mode, ${[priceLabel || 'price', yearlyLabel].filter(Boolean).join(' or ')}); records (${opened.kind}).`);
   } catch (error) {
     stripe = null;
     logger.error({ err: error }, '[TCP Payments ERROR] Could not reach Stripe or open the payment records; payments are off. Check STRIPE_SECRET_KEY and STRIPE_PRICE_ID.');
@@ -90,6 +113,7 @@ export function paymentButtons(): ActionRowBuilder<ButtonBuilder> | null {
   if (!paymentsEnabled()) return null;
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId(SUBSCRIBE_ID).setLabel(subscribeLabel()).setStyle(ButtonStyle.Primary),
+    ...(yearlyLabel ? [new ButtonBuilder().setCustomId(SUBSCRIBE_YEARLY_ID).setLabel(`Yearly · ${yearlyLabel}`).setStyle(ButtonStyle.Primary)] : []),
     new ButtonBuilder().setCustomId(MANAGE_ID).setLabel('Manage subscription').setStyle(ButtonStyle.Secondary),
     ...(premiumAvailable() ? [premiumDownloadButton()] : []),
   );
@@ -145,7 +169,9 @@ export async function handlePaymentInteraction(interaction: Interaction): Promis
   const userId = interaction.user.id;
   const record = await store.getByUser(userId);
 
-  if (interaction.customId === MANAGE_ID || (interaction.customId === SUBSCRIBE_ID && isLive(record))) {
+  const subscribing = interaction.customId === SUBSCRIBE_ID || interaction.customId === SUBSCRIBE_YEARLY_ID;
+  // Someone already subscribed gets the portal, never a second subscription; they switch plan there.
+  if (interaction.customId === MANAGE_ID || (subscribing && isLive(record))) {
     if (!record) {
       await interaction.editReply({
         ...notice("You don't have a subscription yet. Press **Subscribe** to start one.", { tone: 'muted' }),
@@ -161,7 +187,9 @@ export async function handlePaymentInteraction(interaction: Interaction): Promis
           description: [
             describeSubscription(record),
             '',
-            'Cancel, change your card or see your invoices on Stripe. This link is just for you and works for a short time.',
+            yearlyLabel
+              ? 'Switch between monthly and yearly, cancel, change your card or see your invoices on Stripe. This link is just for you and works for a short time.'
+              : 'Cancel, change your card or see your invoices on Stripe. This link is just for you and works for a short time.',
           ].join('\n'),
         }),
       ],
@@ -171,9 +199,10 @@ export async function handlePaymentInteraction(interaction: Interaction): Promis
   }
 
   // Subscribe: a Checkout page made for this member, so the payment finds its way back to their licence.
+  const yearly = interaction.customId === SUBSCRIBE_YEARLY_ID && Boolean(yearlyLabel);
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    line_items: [{ price: env.STRIPE_PRICE_ID!, quantity: 1 }],
+    line_items: [{ price: yearly ? env.STRIPE_YEARLY_PRICE_ID! : env.STRIPE_PRICE_ID!, quantity: 1 }],
     client_reference_id: userId,
     metadata: { discord_user_id: userId },
     subscription_data: { metadata: { discord_user_id: userId, discord_username: interaction.user.username } },
@@ -183,13 +212,17 @@ export async function handlePaymentInteraction(interaction: Interaction): Promis
     ...(record?.customerId ? { customer: record.customerId } : {}),
   });
   if (!session.url) throw new Error('Stripe returned a checkout session without a URL');
-  logger.info(`[TCP Payments] Checkout started for ${userId}`);
+  logger.info(`[TCP Payments] Checkout started for ${userId} (${yearly ? 'yearly' : 'monthly'})`);
   await interaction.editReply({
     embeds: [
       tcpEmbed({
         title: 'T.C.P Premium',
         description: [
-          priceLabel ? `**${priceLabel}**, renews automatically. Cancel any time.` : 'A monthly subscription that renews automatically. Cancel any time.',
+          yearly
+            ? `**${yearlyLabel}**, renews automatically each year. Cancel any time.`
+            : priceLabel
+              ? `**${priceLabel}**, renews automatically. Cancel any time.`
+              : 'A monthly subscription that renews automatically. Cancel any time.',
           '',
           'Every payment adds days to your licence straight away; you will get a DM when it does.',
           'Then press **Generate** on the licence panel for your code.',
@@ -275,6 +308,10 @@ async function onCheckoutCompleted(session: Stripe.Checkout.Session): Promise<vo
 }
 
 async function onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
+  if (invoice.billing_reason === 'subscription_update') {
+    await onPlanChangePaid(invoice);
+    return;
+  }
   if (invoice.billing_reason !== 'subscription_create' && invoice.billing_reason !== 'subscription_cycle') return;
   const details = invoice.parent?.subscription_details ?? null;
   const customerId = idOf(invoice.customer);
@@ -315,6 +352,45 @@ async function onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
     'success',
   );
   await hooks.onPaid?.(discordUserId, first).catch((error: unknown) => logger.error({ err: error }, '[TCP Payments ERROR] After-payment step failed'));
+}
+
+/**
+ * A plan change paid at once: switching from monthly to yearly bills the new yearly period straight away (less
+ * a credit for the unused month). The licence is extended to the end of that period, so the member is not
+ * paid twice for the days the credit covered. A change made of credits and proration lines only (or paid
+ * for entirely by credit) adds nothing; a switch back to monthly is set to happen at the end of the year.
+ */
+async function onPlanChangePaid(invoice: Stripe.Invoice): Promise<void> {
+  const plan = invoice.lines.data.find((line) => line.period && !isProrationLine(line));
+  if (!plan || invoice.amount_paid <= 0) return;
+  const details = invoice.parent?.subscription_details ?? null;
+  const customerId = idOf(invoice.customer);
+  const discordUserId = await memberFor(details?.metadata, customerId);
+  const amount = formatPrice(invoice.amount_paid, invoice.currency);
+  if (!discordUserId) {
+    await ownerLog('Plan change from an unknown member', `Invoice ${invoice.id} (${amount}) has no Discord account attached. Add their days by hand.`, 'danger');
+    return;
+  }
+  const granted = grantUntil ? await grantUntil(discordUserId, plan.period.end * 1000) : null;
+  if (!granted) throw new Error('The licence records are not open, so the plan change could not extend the licence');
+  logger.info(`[TCP Payments] ${discordUserId} changed plan and paid ${amount}; ${granted.addedDays} days added`);
+
+  // The licence is extended: nothing below may fail the event, or Stripe's retry would run it again.
+  try {
+    const existing = await store!.getByUser(discordUserId);
+    if (existing) await store!.save({ ...existing, status: 'active', currentPeriodEnd: plan.period.end, updatedAt: Date.now() });
+  } catch (error) {
+    logger.error({ err: error }, `[TCP Payments ERROR] The licence was extended for ${discordUserId}, but the subscription record could not be saved`);
+  }
+  const yearlyPlan = plan.pricing?.price_details?.price === env.STRIPE_YEARLY_PRICE_ID;
+  const receipt = planChangeReceipt(granted.addedDays, granted.expiresAt, yearlyPlan ? `the yearly plan (${yearlyLabel})` : '');
+  await dm(discordUserId, receipt.title, receipt.description, 'success');
+  await ownerLog(
+    'Plan changed',
+    `<@${discordUserId}> paid ${amount} to change plan${yearlyPlan ? ' to yearly' : ''}: ${granted.addedDays} days added, licence runs until <t:${Math.floor(granted.expiresAt / 1000)}:D>.`,
+    'success',
+  );
+  await hooks.onPaid?.(discordUserId, false).catch((error: unknown) => logger.error({ err: error }, '[TCP Payments ERROR] After-payment step failed'));
 }
 
 async function onInvoiceFailed(invoice: Stripe.Invoice): Promise<void> {

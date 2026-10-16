@@ -34,6 +34,8 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PRICE_ID: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Optional yearly price of the same product (price_...); adds a Yearly button next to Subscribe.
+  STRIPE_YEARLY_PRICE_ID: z.string().optional(),
   // Paying members get this role and are welcomed in this channel. When unset, the bot uses a role named
   // "Elite Supporter" and a text channel with "elite" and "welcome" in its name.
   ELITE_ROLE_ID: z.string().optional(),

@@ -30,7 +30,7 @@ import { startReminderLoop } from './reminders.js';
 import { ensurePanel } from '../bot/panels.js';
 import { notice } from '../bot/embeds.js';
 import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
-import { paymentButtons, paymentsEnabled, priceText, renewsAutomatically, subscriptionSummary } from '../payments/stripeBilling.js';
+import { paymentButtons, paymentsEnabled, priceText, renewsAutomatically, subscriptionSummary, yearlyPriceText } from '../payments/stripeBilling.js';
 import { eliteRoleName, isEliteMember, setEliteRole } from '../premium/premium.js';
 
 const PREFIX = 'tcp-license:';
@@ -79,7 +79,7 @@ export function buildLicensePanel() {
         ...(paymentsEnabled()
           ? [
               '',
-              `**T.C.P Premium${priceText() ? `: ${priceText()}` : ''}.** Press **Subscribe** to become an Elite Supporter: you get the role, the Premium script in your DMs and your codes. Every payment adds days to your licence automatically; cancel any time with **Manage subscription**.`,
+              `**T.C.P Premium${priceText() ? `: ${[priceText(), yearlyPriceText()].filter(Boolean).join(' or ')}` : ''}.** Press **Subscribe**${yearlyPriceText() ? ' (or **Yearly**)' : ''} to become an Elite Supporter: you get the role, the Premium script in your DMs and your codes. Every payment adds days to your licence automatically; cancel any time with **Manage subscription**.`,
             ]
           : []),
       ].join('\n'),
@@ -107,16 +107,36 @@ export async function grantPaidDays(client: Client, discordUserId: string, days:
   const expiresAt = extendExpiry(await store.getExpiry(discordUserId), days, now);
   await store.setExpiry(discordUserId, expiresAt);
   logger.info(`[TCP License] Payment added ${days} days for ${discordUserId}`);
-  if (env.LICENSE_MEMBER_ROLE_ID) {
-    try {
-      const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
-      const member = await guild.members.fetch(discordUserId);
-      if (!member.roles.cache.has(env.LICENSE_MEMBER_ROLE_ID)) await member.roles.add(env.LICENSE_MEMBER_ROLE_ID, 'T.C.P Premium payment');
-    } catch (error) {
-      logger.warn({ err: error }, '[TCP License] Could not give the member role after a payment (left the server, or Manage Roles missing).');
-    }
-  }
+  await giveLicensedRole(client, discordUserId);
   return expiresAt;
+}
+
+/** After a payment: the role in LICENSE_MEMBER_ROLE_ID, if set. Best effort. */
+async function giveLicensedRole(client: Client, discordUserId: string): Promise<void> {
+  if (!env.LICENSE_MEMBER_ROLE_ID) return;
+  try {
+    const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
+    const member = await guild.members.fetch(discordUserId);
+    if (!member.roles.cache.has(env.LICENSE_MEMBER_ROLE_ID)) await member.roles.add(env.LICENSE_MEMBER_ROLE_ID, 'T.C.P Premium payment');
+  } catch (error) {
+    logger.warn({ err: error }, '[TCP License] Could not give the member role after a payment (left the server, or Manage Roles missing).');
+  }
+}
+
+/**
+ * Extends a member's licence to at least the given time (a plan change paid in Stripe) and gives them the
+ * member role. The new end and the whole days added, or null when the licence records are not open yet.
+ */
+export async function grantPaidUntil(client: Client, discordUserId: string, until: number): Promise<{ expiresAt: number; addedDays: number } | null> {
+  if (!store) return null;
+  const now = Date.now();
+  const current = await store.getExpiry(discordUserId);
+  const from = Math.max(now, current ?? now);
+  if (until <= from) return { expiresAt: Math.max(current ?? now, until), addedDays: 0 };
+  await store.setExpiry(discordUserId, until);
+  logger.info(`[TCP License] Plan change extended ${discordUserId} to ${new Date(until).toISOString()}`);
+  await giveLicensedRole(client, discordUserId);
+  return { expiresAt: until, addedDays: Math.round((until - from) / DAY_MS) };
 }
 
 export function buildAdminPanel() {
