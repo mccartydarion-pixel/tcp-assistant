@@ -176,6 +176,6 @@ describe('canned answers', () => {
 
   it('still explains that recoil patterns do not exist', async () => {
     const answer = await new KnowledgeService().buildAnswer('where is the recoil pattern setting');
-    expect(answer.content).toMatch(/no recoil phases, patterns or weapon profiles/i);
+    expect(answer.content).toMatch(/no recoil phases or patterns/i);
   });
 });

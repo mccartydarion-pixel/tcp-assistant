@@ -53,10 +53,11 @@ export class KnowledgeService {
       };
     }
 
-    // ADS profiles are a real feature, so only recoil-side legacy terms get this answer.
+    // ADS profiles are a real feature, so only recoil-side legacy terms get this answer. A per-gun pull is
+    // real too, but only as the Weapon Workshop in T.C.P Premium.
     if (/\bphase\b|pattern speed|recoil pattern|v scale|h scale|recoil profile|weapon profile/i.test(question)) {
       return {
-        content: 'T.C.P. v2.0 has no recoil phases, patterns or weapon profiles. Recoil uses one Vertical and Horizontal value for the whole burst. (ADS profiles are different: there are two, swapped on the ADS Profile page, or with L2 + SHARE on a PlayStation controller.)',
+        content: 'T.C.P. v2.0 has no recoil phases or patterns: recoil is one steady Vertical and Horizontal pull for the whole burst. The free version uses one Vertical and Horizontal for every gun. T.C.P Premium also has the Weapon Workshop: four gun slots, each storing one steady pull you record yourself on the Zen, fired instead of Vertical and Horizontal while that slot is selected. (ADS profiles are different: there are two, swapped on the ADS Profile page, or with L2 + SHARE on a PlayStation controller.)',
         confidence: 'HIGH',
         sources: sections,
         escalationRecommended: false,

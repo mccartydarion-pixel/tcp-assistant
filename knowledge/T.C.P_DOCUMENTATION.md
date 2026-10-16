@@ -4,7 +4,7 @@ This is the authoritative reference for T.C.P. Assistant. It describes T.C.P ver
 
 ## Overview
 
-T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a 26-page menu on the Zen's OLED screen.
+T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a 26-page menu on the Zen's OLED screen (27 pages in T.C.P Premium).
 
 It does four main jobs:
 
@@ -13,14 +13,16 @@ It does four main jobs:
 - **Movement and utility**: Auto Run, Automatic Aim, Follow Lean, Lean Spam, Drop Shot / Crouch Shot, Auto Movement (moonwalk) and more.
 - **Controller tweaks**: Hair Triggers, Deadzone and Anti Deadzone.
 
+T.C.P Premium also has the **Weapon Workshop**: a recoil pull you record yourself for each of up to four guns (see Weapon Workshop (Premium)).
+
 T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server latency and stamina effects that no script can remove. It makes recoil and aiming more consistent; the player still has to aim.
 
 ### Versions
 
 There are two ways to get T.C.P:
 
-- **Free version** on the Cronus marketplace. It has every feature and no lock.
-- **Licensed version** from the T.C.P Discord. It has the same features and needs an unlock code from the Discord (see Licence and Unlock Codes).
+- **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop, and no lock.
+- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month; new members get a free 14-day trial). It has everything in the free version plus the Weapon Workshop, and needs an unlock code from the Discord (see Licence and Unlock Codes).
 
 ## Getting Started
 
@@ -41,7 +43,7 @@ Button names in this guide are PlayStation names. See Xbox controllers below for
 - **Change a value**: UP and DOWN. Holding UP or DOWN repeats after a short delay.
 - **Change a value faster**: hold X while pressing UP or DOWN to move in steps of 10.
 - **Switch something on or off**: X.
-- **Move between items on a multi-item page** (Lean Spam, Drop Shot, Auto Movement): L1 and R1.
+- **Move between items on a multi-item page** (Lean Spam, Drop Shot, Auto Movement, and the Workshop in Premium): L1 and R1.
 - **Save and exit**: press Circle, or close the menu with L2 + OPTIONS. Settings are saved when the menu closes.
 
 ### Xbox controllers
@@ -56,7 +58,7 @@ One difference: the ADS profile swap (L2 + SHARE) is PlayStation only. On Xbox, 
 
 ### Master on and off
 
-Hold **L3 + R3** for one second to switch the whole script on or off. The controller rumbles once for on and twice for off. A quick L3 + R3 press still reaches the game; only a deliberate hold toggles the script. When Master is off, T.C.P does not touch the controller at all.
+Hold **L3 + R3** for one second to switch the whole script on or off. The controller rumbles (buzzes) once for on and twice for off. A quick L3 + R3 press still reaches the game; only a deliberate hold toggles the script. When Master is off, T.C.P does not touch the controller at all. The hold only works with the menu closed; with the menu open, switch Master on its own page (the first page, where the menu opens) with X.
 
 ### ADS profile swap
 
@@ -64,7 +66,7 @@ Press **L2 + SHARE** to swap between ADS profile 1 and profile 2. One rumble pul
 
 ### Factory reset
 
-Inside the menu, hold **L1 + R1 + X** for two seconds. Every setting goes back to its default. A licence code that has already been entered is not affected.
+Inside the menu, hold **L1 + R1 + X** for two seconds. Every setting goes back to its default. A licence code that has already been entered is not affected. In T.C.P Premium, your Weapon Workshop recordings are kept too; only the Weapon slot goes back to OFF.
 
 ## Menu Pages
 
@@ -96,6 +98,8 @@ The menu has 26 pages, in this order:
 24. Steady Hold
 25. Auto Movement (six items: on/off, Stop on ADS, Do 180, Left Time, Right Time, Strafe Amount)
 26. Motion Intel (on/off)
+
+T.C.P Premium adds a 27th page, **Workshop** (six items: Weapon, Gun, Record, Scale Y, Scale X, Clear), after Motion Intel. The menu opens on Master, so LEFT once from there goes straight to it. Every other page keeps its number. The free version has no Workshop page.
 
 ### Defaults and ranges
 
@@ -132,7 +136,7 @@ Anti-recoil works while you fire: R2 held together with L2 (aiming down sights).
 - **Vertical Recoil** (default 25) is how hard the script pulls down while you fire. Higher means more pull.
 - **Horizontal Recoil** (default 3) is the sideways pull. Positive pushes the aim right and negative pushes it left; set it against your gun's sideways drift (gun drifts right: lower it; drifts left: raise it).
 
-These two are the whole recoil baseline. Despite the names, they are the script's counter-pull, not how much the gun kicks. The pull is the same for the whole burst. There are no weapon profiles, recoil patterns or phase settings in the current version.
+These two are the whole recoil baseline. Despite the names, they are the script's counter-pull, not how much the gun kicks. The pull is the same for the whole burst. There are no recoil patterns or phase settings. The free version uses one Vertical/Horizontal pair for every gun; T.C.P Premium can also store a recorded pull for each gun in the Weapon Workshop (see Weapon Workshop (Premium)).
 
 **Important:** the right Vertical value depends on your in-game aiming sensitivity. The correction is a fixed stick amount, so if you raise DayZ's own vertical aim sensitivity, the same Vertical value pulls further and you need a lower one. Always check your in-game sensitivity before tuning Vertical.
 
@@ -168,7 +172,7 @@ Lower it (try around 40) if the gun climbs when you steer or track mid-burst. Ke
 
 ### Hip Fire Recoil
 
-Hip Fire Recoil (default 0, off) lets anti-recoil work when you fire without aiming (R2 alone). The value is a percentage of your normal Vertical and Horizontal. Note that with it on, the script also pulls the stick whenever you press R2 without L2, including melee and driving.
+Hip Fire Recoil (default 0, off) lets anti-recoil work when you fire without aiming (R2 alone). The value is a percentage of your normal Vertical and Horizontal (or of the recorded pull, when a Weapon Workshop slot with one is selected in T.C.P Premium). Note that with it on, the script also pulls the stick whenever you press R2 without L2, including melee and driving.
 
 ### Calibrate Recoil
 
@@ -179,6 +183,104 @@ Calibrate Recoil sets Vertical and Horizontal for you:
 3. Three rumble pulses mean it has saved new Vertical and Horizontal values. They show on the home screen.
 
 A tap or a burst shorter than one second is ignored and calibration stays armed. Run it two or three times for the best result. It measures the pull that kept the gun on target, so it only works if you actually hold the gun steady.
+
+In T.C.P Premium, Calibrate Recoil cannot be switched on while a Weapon Workshop slot with a recorded pull is selected (the hint says PULL IN USE), because that pull replaces Vertical and Horizontal.
+
+## Weapon Workshop (Premium)
+
+### What the Weapon Workshop is and who has it
+
+The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T.C.P Discord. It is not in the free marketplace version. It stores a recoil pull for each of your guns. You record it yourself on the Zen: aim at a mark on a wall and fire three full magazines. T.C.P measures the steady Vertical and Horizontal pull that gun needed and saves it in a weapon slot. While that slot is selected, T.C.P fires the recorded pull instead of your Vertical and Horizontal Recoil.
+
+- **Four slots**, W1 to W4. Any gun can go in any slot.
+- Each slot holds **one steady pull** (a Vertical and a Horizontal value) for one gun. It is not a recoil pattern: DayZ gives every shot of a magazine the same expected kick, so one steady pull is what a gun needs.
+- **Weapon OFF** (the default): T.C.P fires your Vertical and Horizontal Recoil exactly as before.
+- Where it is: the last menu page, **Workshop** (page 27/27). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
+- **Premium only.** T.C.P Premium is the licensed version from the Discord: $7 a month, unlocked with a code from the licence channel (see Licence and Unlock Codes). New members get a free 14-day trial. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest download from the download channel (licensed downloads from before the Workshop do not have it).
+- You can use it with a PlayStation or an Xbox controller; it works the same on both. Button names here are PlayStation first, Xbox in brackets.
+
+### Workshop: recording step by step
+
+Before you start: Master and Anti-Recoil on, your normal in-game sensitivity and attachments, and a wall with a small mark to aim at.
+
+1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its six items.
+2. **Weapon** (1/6): UP/DOWN to pick a slot, W1 to W4. The other five items appear once a slot is picked.
+3. **Gun** (2/6): pick the gun you are holding. T.C.P uses it to know how long a full magazine lasts. The gun list: M4-A1, M16-A2, KA-M, KA-74, KAS-74U, KA-101, LAR, AUR AX, VIKHR, SVAL, VSS, BIZON, SG5-K, USG-45, LE-MAS, and OTHER for a gun that is not listed. The slots start out as W1 M4-A1, W2 KA-M, W3 LAR and W4 VIKHR.
+4. **Record** (3/6): press X (A). Two short buzzes mean it is ARMED. Close the menu with Circle (B).
+5. **Fire a full magazine**: aim with L2 (LT) first, then hold R2 (RT). Keep the crosshair on the mark with the right stick and let go when the gun stops firing. The screen shows REC and a progress bar.
+6. **Do it three times.** Three short buzzes mean the spray counted (SPRAY 1/3, 2/3). After the first counted spray the gun already fires the up/down pull it measured, so sprays 2 and 3 should feel nearly right; reload and fire again within about 20 seconds. Three long buzzes mean COMPLETE: the pull is saved. The screen shows the pull (for example V28 H4) and how consistent your three sprays were: TIGHT, GOOD or LOOSE.
+
+Taps and bursts shorter than one second are ignored while recording: no buzz, nothing on the screen.
+
+### Workshop: switching slots and using a recording
+
+- **Leave Weapon on the slot you recorded.** The home screen shows the slot and gun (for example W1 M4-A1) and a **PULL** badge: the recorded pull fires when you shoot. A **STD** badge means that slot has no pull yet, so your Vertical and Horizontal Recoil fire.
+- **Change slots when you change guns**: open the Workshop and press UP/DOWN on Weapon (one short buzz per change). Slots only change in the menu, and T.C.P cannot see which gun you hold.
+- **Weapon OFF** takes you back to your normal Vertical and Horizontal Recoil.
+- While a slot with a pull is selected, Vertical Recoil and Horizontal Recoil are locked: UP/DOWN buzzes and the hint says PULL: SCALE Y or PULL: SCALE X. Adjust that gun with Scale Y and Scale X instead, or set Weapon OFF.
+
+### Workshop: Scale Y and Scale X
+
+Scale Y and Scale X (50 to 150%, default 100) adjust a recorded pull without recording again. What fires is the recorded pull times the Scale.
+
+- **Scale Y** is the up/down strength. Gun still climbs: raise it. Aim gets pulled down: lower it.
+- **Scale X** is the sideways strength.
+- Change them in small steps and fire a few bursts between changes.
+- Use Scale Y and Scale X for a recorded gun, not Vertical and Horizontal Recoil: those are locked while a slot with a pull is selected (the hint says PULL: SCALE Y or PULL: SCALE X).
+- They only work on a slot with a pull. On an empty slot UP/DOWN buzzes and the hint says RECORD FIRST.
+- Clearing a slot puts its Scale Y and Scale X back to 100.
+
+### Workshop: redo, clear and the four slots
+
+- **Redo**: on a slot that already has a pull, the Record item shows REDO with the consistency (for example GOOD +-1.8). Arm it and record three sprays again; the new pull replaces the old one when the session completes. Redo after you change your in-game sensitivity or your attachments.
+- **REDO ONCE**: if you see this on the Record item or the COMPLETE screen, record that slot one more time (a REDO). It means one more recording should make the pull more accurate.
+- **Clear**: go to Clear (6/6) and hold X (A) for one second until the bar fills. Four short buzzes mean it is cleared, and Scale Y and Scale X go back to 100. On an empty slot X gives one long buzz and the hint says NOTHING TO CLEAR.
+- **Four slots, any guns.** The same gun in two slots is fine, for example with different attachments or optics.
+- Recordings are saved through power-off. A factory reset (L1 + R1 + X in the menu) keeps your recordings; it only sets Weapon back to OFF.
+
+### Workshop messages
+
+What the recorder card or the Workshop page says, and the fix:
+
+- **The card's big label** says what the recorder is doing: **ARMED** (waiting for a spray; AIM AT MARK, or REPLACES on a slot that already has a pull, and FIRE A MAG; if Drop on Fire or Lean Spam is switched on, a pause mark with DROP, LEAN or DROP+LEAN shows they are paused), **REC** (measuring a spray; KEEP AIMING, UNTIL EMPTY), **ACCEPTED** (the spray counted: SPRAY 1/3 or 2/3 and that spray's pull), **DISCARDED** (the spray was thrown out; the lines under it say why, see the list below), **COMPLETE** (pull saved) and **STOPPED** (nothing saved). On the Workshop page, Record shows READY on an empty slot, Weapon shows STD V/H when your Vertical and Horizontal fire (no pull), and Clear shows EMPTY once a slot has no pull.
+- **TOO SHORT / FULL MAG**: the spray was too short to measure. Fire a full magazine.
+- **TOO SHORT / HOLD LONGER**: you let go too soon after the last shot. Keep holding R2 (RT) for a moment after the gun stops (mostly the SVAL and VSS).
+- **TOO SHORT / 20+ RND MAG** (VSS): its own 10-round magazine is too short to measure. Use a 20- or 30-round magazine.
+- **STICK MOVED / FIRE AGAIN**: the stick moved too much (tracking sideways or a big sweep). Hold the mark steady and fire again. If it keeps happening on an empty slot while you hold still, the gun needs more sideways pull than your Horizontal Recoil: set Horizontal closer first.
+- **STICK MOVED / VERTICAL UP**: you had to pull the stick far down to hold the mark, so the gun needs more than your Vertical Recoil gives. Raise Vertical Recoil and record again. **SCALE Y UP** is the same when re-recording a slot with a pull: raise Scale Y.
+- **OFF PATTERN**: this spray did not match your first one closely enough. Fire again the same way: full magazine, steady on the mark.
+- **AIM FIRST**: you pulled R2 (RT) before L2 (LT). Aim down sights (ADS) first, then fire.
+- **AIM LOST**: you let go of L2 (LT) early in the spray (within its first second) while still holding R2 (RT). Keep aiming down sights (ADS) until the gun stops.
+- **CANCELLED**: you opened the menu during a spray. The recorder is still armed; fire again. It does not buzz and does not count toward stopping the session.
+- **STOPPED / NOT SAVED**: the session stopped and nothing was saved, after too many thrown-out sprays (two STICK MOVED, or three thrown out for any reason except CANCELLED, without a counted spray in between) or 90 seconds without a counted spray (TIMED OUT). Arm Record again.
+- **PULL: SCALE Y / PULL: SCALE X** (Vertical or Horizontal Recoil page): locked while a pull fires. Use Scale Y or Scale X, or set Weapon OFF.
+- **PULL IN USE** (Calibrate Recoil page): Calibrate is not available while a pull fires.
+- **RECORD FIRST** (Scale Y or Scale X): the slot has no pull yet. Record it first.
+- **MASTER IS OFF** (Record): Master is off. Press RIGHT once to go to the Master page (it wraps round from the Workshop), press X (A) to turn it on, then LEFT once back to the Workshop and arm again. Or close the menu, hold L3 + R3 (LS + RS) for one second, and come back; the hold does nothing while the menu is open.
+- **NOTHING TO CLEAR** (Clear): the slot is already empty.
+- **REDO ONCE**: one more recording of this slot should make it more accurate. Do one REDO.
+
+### Workshop buzzes
+
+The controller rumbles to tell you what the recorder is doing:
+
+- **2 short**: recorder armed.
+- **1 short**: during a spray, it has lasted long enough to count. Otherwise: you stopped the session, or changed something that ends it (nothing saved), or changed slot.
+- **3 short**: spray counted.
+- **3 long**: session complete, pull saved.
+- **1 long**: spray thrown out (the screen says why; only the first in a row buzzes, and CANCELLED never does), or something is not allowed, for example X on Record with Master off.
+- **2 long**: session stopped, nothing saved.
+- **4 short**: slot cleared.
+
+### Workshop: notes on recording
+
+- While the recorder is armed, Drop on Fire and Lean Spam pause (going prone or leaning moves your view). They work again when the session ends.
+- Opening the menu during a spray cancels that spray (CANCELLED); the recorder stays armed.
+- These end a recording and save nothing (one short buzz): X (A) on Record again, changing the Weapon slot, the Gun, Vertical or Horizontal Recoil, Scale Y or Scale X, or switching on Calibrate Recoil. Clear and Master off end it too.
+- Before recording an empty slot, set Vertical Recoil roughly right for that gun. A gun far stronger than your Vertical can end in STICK MOVED / VERTICAL UP.
+- VSS: record with a 20- or 30-round magazine. SVAL and VSS: hold R2 (RT) a moment after the last shot.
+- The recording measures what the game received from T.C.P and your thumb together, so hold the mark as steadily as you can.
+- Changing your in-game sensitivity or attachments changes what a gun needs: REDO that slot.
 
 ## ADS Accuracy 2.0
 
@@ -279,7 +381,7 @@ Deadzone (0 to 30, default 0 = off) ignores small right-stick movements near the
 
 ### Anti Deadzone
 
-Anti Deadzone (0 to 40, default 0 = off) skips over DayZ's own deadzone, so small stick movements register instead of doing nothing and then jumping. Raise it until the aim starts creeping on its own, then go back one step. It also strengthens the recoil pull, so retune Vertical and Horizontal after changing it.
+Anti Deadzone (0 to 40, default 0 = off) skips over DayZ's own deadzone, so small stick movements register instead of doing nothing and then jumping. Raise it until the aim starts creeping on its own, then go back one step. It also strengthens the recoil pull, so retune Vertical and Horizontal after changing it (for a recorded Weapon Workshop slot, Scale Y and Scale X, or a REDO).
 
 ### Motion Intel
 
@@ -291,19 +393,19 @@ Always change one setting at a time, in small steps, and test a few bursts betwe
 
 ### Before you tune: check in-game sensitivity
 
-Most "it feels wrong" problems start with DayZ's own controller sensitivity, not the script. If your in-game vertical and horizontal aiming sensitivities are very different (for example vertical 1 and horizontal 5), aiming will feel uneven no matter what the script is set to. Bring them closer together first. If you change in-game vertical sensitivity, retune Vertical Recoil afterwards.
+Most "it feels wrong" problems start with DayZ's own controller sensitivity, not the script. If your in-game vertical and horizontal aiming sensitivities are very different (for example vertical 1 and horizontal 5), aiming will feel uneven no matter what the script is set to. Bring them closer together first. If you change in-game vertical sensitivity, retune Vertical Recoil afterwards (in T.C.P Premium, also REDO any Weapon Workshop slot you have recorded).
 
 ### Gun climbs during a burst
 
-Vertical Recoil is too low. Raise it 1 or 2 at a time. Or run Calibrate Recoil. If it only climbs while you move the stick (tracking or steering), lower Turn Strength instead.
+Vertical Recoil is too low. Raise it 1 or 2 at a time. Or run Calibrate Recoil. If it only climbs while you move the stick (tracking or steering), lower Turn Strength instead. With a recorded pull selected in the Weapon Workshop (Premium), Vertical Recoil is locked: raise Scale Y instead.
 
 ### Aim gets pulled down / sinks
 
-Vertical Recoil is too high. Lower it 1 or 2 at a time. If it only sinks while you pull down yourself, that is normal behaviour and you do not need to pull as hard. If it only drags down when switching targets (flicking to a new target) and you have lowered Turn Strength, raise Turn Strength back toward 100.
+Vertical Recoil is too high. Lower it 1 or 2 at a time. If it only sinks while you pull down yourself, that is normal behaviour and you do not need to pull as hard. If it only drags down when switching targets (flicking to a new target) and you have lowered Turn Strength, raise Turn Strength back toward 100. With a recorded pull selected in the Weapon Workshop (Premium), lower Scale Y instead.
 
 ### Gun drifts left or right
 
-If the gun drifts right, lower Horizontal Recoil a little (toward negative); if it drifts left, raise it. Small changes; values of 0 to 5 are common. DayZ recoil also has a random sideways part no script can cancel.
+If the gun drifts right, lower Horizontal Recoil a little (toward negative); if it drifts left, raise it. Small changes; values of 0 to 5 are common. DayZ recoil also has a random sideways part no script can cancel. With a recorded pull selected in the Weapon Workshop (Premium), Horizontal Recoil is locked: adjust Scale X instead, which makes the recorded sideways pull (the H on the home screen) stronger or weaker, or REDO that slot.
 
 ### Hard to stay on target while shooting
 
@@ -319,7 +421,7 @@ Easing is too high. Lower it. Also check Steady Hold is 0 to 2.
 
 ### Small movements do nothing, then the aim jumps
 
-DayZ's deadzone is swallowing small movements. Raise Anti Deadzone a little, then retune Vertical and Horizontal.
+DayZ's deadzone is swallowing small movements. Raise Anti Deadzone a little, then retune Vertical and Horizontal (for a recorded Weapon Workshop slot, Scale Y and Scale X, or a REDO).
 
 ### Aim moves when the stick is at rest
 
@@ -349,7 +451,7 @@ Drawing busy animations on the Zen's screen can briefly interrupt audio passing 
 
 ## Licence and Unlock Codes
 
-The licensed version from the Discord is locked until it is unlocked with a code. The free marketplace version has no lock.
+The licensed version from the Discord (T.C.P Premium) is locked until it is unlocked with a code. The free marketplace version has no lock.
 
 ### How to unlock
 
@@ -391,7 +493,7 @@ The bot sends you a direct message three days before your trial or subscription 
 
 - **"Your trial or subscription has ended"**: the subscription has expired. Open a support ticket to renew.
 - **"Generated codes in the last day ... limit"**: a member can generate codes for up to three new numbers per day. Asking again for the same number does not count.
-- **Code does not work**: make sure the number typed into Discord is exactly the one on the Zen, and re-enter the code carefully.
+- **Code not working**: make sure the number typed into Discord is exactly the one on the Zen, and re-enter the code carefully.
 
 ## Getting Help on Discord
 
@@ -410,7 +512,7 @@ New members: press **Get started** in the welcome channel. Pick your controller 
 ## Limits
 
 - T.C.P cannot remove DayZ's random recoil, weapon sway, stamina effects, latency or desync.
-- One Vertical/Horizontal pair is used for every gun; there are no weapon profiles. Different guns may need different values.
-- The script cannot see your stance or which gun you hold.
+- There are no recoil patterns or phases. The free version uses one Vertical/Horizontal pair for every gun, and different guns may need different values. T.C.P Premium can store a recorded pull for up to four guns in the Weapon Workshop.
+- The script cannot see your stance or which gun you hold. In the Workshop you pick the slot yourself.
 - With Hip Fire Recoil above 0, R2 alone also pulls the stick, including melee and driving.
 - Results depend on DayZ's own controller sensitivity settings.
