@@ -244,7 +244,7 @@ Scale Y and Scale X (50 to 150%, default 100) adjust a recorded pull without rec
 ### Workshop: redo, clear and the four slots
 
 - **Redo**: on a slot that already has a pull, the Record item shows REDO with the consistency (for example GOOD +-1.8). Arm it and record three sprays again; the new pull replaces the old one when the session completes. Redo after you change your in-game sensitivity or your attachments.
-- **REDO ONCE**: if you see this on the Record item or the COMPLETE screen, record that slot one more time (a REDO). It means one more recording should make the pull more accurate.
+- **REDO ONCE**: if you see this on the Record item or the COMPLETE screen, record that slot one more time (a REDO). It means the session started far from what the gun needed (often a gun that kicks much harder or softer than your Vertical Recoil, or the short SVAL and VSS magazines), so one more recording should make the pull more accurate.
 - **Clear**: go to Clear (6/6) and hold X (A) for one second until the bar fills. Four short buzzes mean it is cleared, and Scale Y and Scale X go back to 100. On an empty slot X gives one long buzz and the hint says NOTHING TO CLEAR.
 - **Four slots, any guns.** The same gun in two slots is fine, for example with different attachments or optics.
 - Recordings are saved through power-off. A factory reset (L1 + R1 + X in the menu) keeps your recordings; it only sets Weapon back to OFF.
@@ -257,6 +257,7 @@ What the recorder card or the Workshop page says, and the fix:
 - **TOO SHORT / FULL MAG**: the spray was too short to measure. Fire a full magazine.
 - **TOO SHORT / HOLD LONGER**: you let go too soon after the last shot. Keep holding R2 (RT) for a moment after the gun stops (mostly the SVAL and VSS).
 - **TOO SHORT / 20+ RND MAG** (VSS): its own 10-round magazine is too short to measure. Use a 20- or 30-round magazine.
+- **HOLD LONGER / 20+ RND MAG** (VSS): you let go too soon after the last shot. Hold R2 (RT) a moment after the gun stops, and record with a 20- or 30-round magazine.
 - **STICK MOVED / FIRE AGAIN**: the stick moved too much (tracking sideways or a big sweep). Hold the mark steady and fire again. If it keeps happening on an empty slot while you hold still, the gun needs more sideways pull than your Horizontal Recoil: set Horizontal closer first.
 - **STICK MOVED / VERTICAL UP**: you had to pull the stick far down to hold the mark, so the gun needs more than your Vertical Recoil gives. Raise Vertical Recoil and record again. **SCALE Y UP** is the same when re-recording a slot with a pull: raise Scale Y.
 - **OFF PATTERN**: this spray did not match your first one closely enough. Fire again the same way: full magazine, steady on the mark.
@@ -268,6 +269,7 @@ What the recorder card or the Workshop page says, and the fix:
 - **PULL IN USE** (Calibrate Recoil page): Calibrate is not available while a pull fires.
 - **RECORD FIRST** (Scale Y or Scale X): the slot has no pull yet. Record it first.
 - **MASTER IS OFF** (Record): Master is off. Press RIGHT once to go to the Master page (it wraps round from the Workshop), press X (A) to turn it on, then LEFT once back to the Workshop and arm again. Or close the menu, hold L3 + R3 (LS + RS) for one second, and come back; the hold does nothing while the menu is open.
+- **ANTI RECOIL OFF** (Record): Anti-Recoil is switched off, so nothing can be recorded. Turn it on on the Anti-Recoil page (page 2) and arm again.
 - **NOTHING TO CLEAR** (Clear): the slot is already empty.
 - **REDO ONCE**: one more recording of this slot should make it more accurate. Do one REDO.
 
@@ -287,11 +289,11 @@ The controller rumbles to tell you what the recorder is doing:
 
 - While the recorder is armed, Drop on Fire and Lean Spam pause (going prone or leaning moves your view). They work again when the session ends.
 - Opening the menu during a spray cancels that spray (CANCELLED); the recorder stays armed.
-- These end a recording and save nothing (one short buzz): X (A) on Record again, changing the Weapon slot, the Gun, Vertical or Horizontal Recoil, Scale Y or Scale X, or switching on Calibrate Recoil. Clear and Master off end it too.
+- These end a recording and save nothing (one short buzz): X (A) on Record again, changing the Weapon slot, the Gun, Vertical or Horizontal Recoil, Scale Y or Scale X, Anti Deadzone, switching Anti-Recoil off, or switching on Calibrate Recoil. Clear and Master off end it too.
 - Before recording an empty slot, set Vertical Recoil roughly right for that gun. A gun far stronger than your Vertical can end in STICK MOVED / VERTICAL UP.
 - VSS: record with a 20- or 30-round magazine. SVAL and VSS: hold R2 (RT) a moment after the last shot.
 - The recording measures what the game received from T.C.P and your thumb together, so hold the mark as steadily as you can.
-- Changing your in-game sensitivity or attachments changes what a gun needs: REDO that slot.
+- Changing your in-game sensitivity or attachments changes what a gun needs: REDO that slot. Changing Anti Deadzone makes every recorded pull reach the game stronger or weaker: REDO the slots, or adjust their Scale Y and Scale X.
 
 ## ADS Accuracy 2.0
 

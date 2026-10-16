@@ -287,3 +287,17 @@ describe('Workshop in the prompt and canned answers', () => {
     expect(answer.content).toContain('The free version uses one Vertical and Horizontal for every gun.');
   });
 });
+
+// The last polish round of the Workshop (2026-10-16): new card states and the settings that end a session.
+describe('Workshop round 7 wording', () => {
+  const content = (heading: string) => chunks.find((chunk) => chunk.heading === heading)?.content ?? '';
+  it('lists the new messages and what ends a recording', () => {
+    const messages = content('Workshop messages');
+    expect(messages).toContain('**ANTI RECOIL OFF** (Record)');
+    expect(messages).toContain('**HOLD LONGER / 20+ RND MAG** (VSS)');
+    expect(content('Workshop: redo, clear and the four slots')).toContain('the session started far from what the gun needed');
+    const notes = content('Workshop: notes on recording');
+    expect(notes).toContain('Anti Deadzone, switching Anti-Recoil off, or switching on Calibrate Recoil');
+    expect(notes).toContain('Changing Anti Deadzone makes every recorded pull reach the game stronger or weaker');
+  });
+});
