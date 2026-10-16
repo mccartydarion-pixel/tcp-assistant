@@ -53,7 +53,7 @@ export class AssistantService {
       return fixed('Sounds good. Keep the weapon, optic, and distance the same for the test. When you are done, tell me if it still climbs, pulls down, or feels centered.');
     }
     // On a recorded Workshop pull, Vertical and Horizontal Recoil are locked: those replies tune Scale Y.
-    const pullReply = recordedPullReply(followUpIntent, tuningState);
+    const pullReply = recordedPullReply(followUpIntent, tuningState, details);
     if (pullReply) {
       return fixed(pullReply);
     }

@@ -32,12 +32,26 @@ export interface TuningState {
   scaleX?: number;
   previousScaleY?: number;
   previousScaleX?: number;
+  /**
+   * What the player's tests of Scale Y showed on this slot: the highest value that still climbed and the lowest
+   * that pulled down. The balance point is between them, so the fixed replies never suggest a value outside.
+   */
+  scaleYClimbs?: number;
+  scaleYPullsDown?: number;
   waitingForTestResult?: boolean;
   resolved?: boolean;
 }
 
+type Symptom = NonNullable<TuningState['currentSymptom']>;
+
 /** What belongs to one Workshop slot, dropped when the player names a different slot. */
-const SLOT_FIELDS = ['scaleY', 'scaleX', 'previousScaleY', 'previousScaleX', 'pullVertical', 'pullHorizontal'] as const;
+const SLOT_FIELDS = ['scaleY', 'scaleX', 'previousScaleY', 'previousScaleX', 'pullVertical', 'pullHorizontal', 'scaleYClimbs', 'scaleYPullsDown'] as const;
+
+/** What a REDO makes out of date: the slot gets a new pull, so earlier tests of Scale Y no longer apply. */
+const PULL_TEST_FIELDS = ['previousScaleY', 'scaleYClimbs', 'scaleYPullsDown', 'pullVertical', 'pullHorizontal'] as const;
+
+// The player says the slot was recorded again.
+const REDONE = /\b(?:redid|re-?did|re-?recorded|did\s+(?:a|the)\s+redo|after\s+(?:the|a)\s+redo|redo\s+(?:is\s+)?(?:done|complete|finished)|recorded\s+(?:it|that\s+slot|the\s+slot|w[1-4])\s+again)\b/i;
 
 export interface ConversationSession {
   key: string;
@@ -94,7 +108,7 @@ export class ConversationMemory {
   }
 
   updateFromQuestion(session: ConversationSession, details: UserQuestionDetails, question: string): FollowUpIntent {
-    const followUp = detectFollowUpIntent(question);
+    let followUp = detectFollowUpIntent(question);
     const previous = session.tuning;
     if (details.vertical !== undefined && previous.vertical !== undefined && details.vertical !== previous.vertical) {
       previous.previousVertical = previous.vertical;
@@ -113,19 +127,17 @@ export class ConversationMemory {
       optic: details.optic ?? previous.optic,
       distanceMeters: details.distance ?? previous.distanceMeters,
     });
-    updateRecordedPull(previous, details);
-    if (details.symptom === 'upward_climb') previous.currentSymptom = 'CLIMBING';
-    if (details.symptom === 'left_pull') previous.currentSymptom = 'DRIFTING_LEFT';
-    if (details.symptom === 'right_pull') previous.currentSymptom = 'DRIFTING_RIGHT';
-    if (details.symptom === 'unstable_micro_aim') previous.currentSymptom = 'SHAKY';
-    if (followUp === 'TEST_RESULT') {
-      if (/still\s+(?:going\s+)?up|climb|upward/i.test(question)) previous.currentSymptom = 'CLIMBING';
-      else if (/pull(?:ing)?\s+down/i.test(question)) previous.currentSymptom = 'PULLING_DOWN';
-      else if (/pull(?:ing)?\s+left/i.test(question)) previous.currentSymptom = 'DRIFTING_LEFT';
-      else if (/pull(?:ing)?\s+right/i.test(question)) previous.currentSymptom = 'DRIFTING_RIGHT';
-      else if (/shaky|unstable/i.test(question)) previous.currentSymptom = 'SHAKY';
-      else if (/better|centered|stable/i.test(question)) previous.currentSymptom = 'STABLE';
+    updateRecordedPull(previous, details, question);
+    // On a recorded pull, once a change has been suggested, the plain answers to "does it still climb, pull down,
+    // or feel centered?" ("it still climbs", "it pulls down now", "feels centered") are test results too. Off a
+    // pull detectFollowUpIntent alone decides, as before.
+    if ((followUp === null || followUp === 'ACKNOWLEDGEMENT') && previous.onRecordedPull && previous.waitingForTestResult && testResultSymptom(question)) {
+      followUp = 'TEST_RESULT';
     }
+    let reported = detailSymptom(details.symptom);
+    if (followUp === 'TEST_RESULT') reported = testResultSymptom(question) ?? reported;
+    if (reported) previous.currentSymptom = reported;
+    if (reported && previous.onRecordedPull) updateScaleYTests(previous, reported);
     if (followUp === 'RESOLVED') {
       previous.resolved = true;
       previous.waitingForTestResult = false;
@@ -165,6 +177,8 @@ export class ConversationMemory {
       if (scaleYRecommendation?.[1]) setScale(session.tuning, 'scaleY', 'previousScaleY', Number(scaleYRecommendation[1]));
       const scaleXRecommendation = recommendation.match(/\bscale\s*x\s+(?:(?:to|at)\s+)?(\d+(?:\.\d+)?)/i);
       if (scaleXRecommendation?.[1]) setScale(session.tuning, 'scaleX', 'previousScaleX', Number(scaleXRecommendation[1]));
+      // At either end of Scale Y's range the fixed replies send the player to REDO the slot: its pull changes.
+      if (/\bREDO that slot\b/i.test(answer)) forgetPullTests(session.tuning);
       console.info(`[TCP Session] Waiting for test result: ${session.key}`);
     }
   }
@@ -178,7 +192,7 @@ export class ConversationMemory {
  * The Workshop part of a question: whether the recorded pull fires, the slot, Scale Y/X (with their previous
  * values, as for Vertical), and on a pull the home screen's V and H as the pull, never as Vertical/Horizontal.
  */
-function updateRecordedPull(state: TuningState, details: UserQuestionDetails): void {
+function updateRecordedPull(state: TuningState, details: UserQuestionDetails, question: string): void {
   if (details.workshopSlot !== undefined) {
     if (state.workshopSlot !== undefined && state.workshopSlot !== details.workshopSlot) {
       for (const field of SLOT_FIELDS) delete state[field];
@@ -190,8 +204,12 @@ function updateRecordedPull(state: TuningState, details: UserQuestionDetails): v
     delete state.pullVertical;
     delete state.pullHorizontal;
   }
+  if (REDONE.test(question)) forgetPullTests(state);
   if (details.scaleY !== undefined) setScale(state, 'scaleY', 'previousScaleY', details.scaleY);
   if (details.scaleX !== undefined) setScale(state, 'scaleX', 'previousScaleX', details.scaleX);
+  // "from 100 to 110": the player said what it was before.
+  if (details.previousScaleY !== undefined) state.previousScaleY = details.previousScaleY;
+  if (details.previousScaleX !== undefined) state.previousScaleX = details.previousScaleX;
   if (state.onRecordedPull) {
     if (details.screenVertical !== undefined) state.pullVertical = details.screenVertical;
     if (details.screenHorizontal !== undefined) state.pullHorizontal = details.screenHorizontal;
@@ -203,6 +221,46 @@ function setScale(state: TuningState, field: 'scaleY' | 'scaleX', previousField:
   const current = state[field];
   if (current !== undefined && current !== next) state[previousField] = current;
   state[field] = next;
+}
+
+function forgetPullTests(state: TuningState): void {
+  for (const field of PULL_TEST_FIELDS) delete state[field];
+}
+
+/**
+ * Keeps the range the balance point is in: a value that climbs raises the bottom of it, one that pulls down
+ * lowers the top. A report on the wrong side of a bound (it climbs at or above a value that pulled down) means
+ * something changed, so that bound is dropped.
+ */
+function updateScaleYTests(state: TuningState, symptom: Symptom): void {
+  const value = state.scaleY;
+  if (value === undefined) return;
+  if (symptom === 'CLIMBING') {
+    if (state.scaleYPullsDown !== undefined && state.scaleYPullsDown <= value) delete state.scaleYPullsDown;
+    state.scaleYClimbs = Math.max(state.scaleYClimbs ?? value, value);
+  } else if (symptom === 'PULLING_DOWN') {
+    if (state.scaleYClimbs !== undefined && state.scaleYClimbs >= value) delete state.scaleYClimbs;
+    state.scaleYPullsDown = Math.min(state.scaleYPullsDown ?? value, value);
+  }
+}
+
+function detailSymptom(symptom: string | undefined): Symptom | undefined {
+  if (symptom === 'upward_climb') return 'CLIMBING';
+  if (symptom === 'left_pull') return 'DRIFTING_LEFT';
+  if (symptom === 'right_pull') return 'DRIFTING_RIGHT';
+  if (symptom === 'unstable_micro_aim') return 'SHAKY';
+  return undefined;
+}
+
+/** The symptom a test result reports ("still climbing", "it pulls down now", "feels centred"). Not "Stable Core". */
+function testResultSymptom(question: string): Symptom | undefined {
+  if (/still\s+(?:going\s+)?up|climb|upward/i.test(question)) return 'CLIMBING';
+  if (/pull(?:s|ing)?\s+down/i.test(question)) return 'PULLING_DOWN';
+  if (/pull(?:s|ing)?\s+left/i.test(question)) return 'DRIFTING_LEFT';
+  if (/pull(?:s|ing)?\s+right/i.test(question)) return 'DRIFTING_RIGHT';
+  if (/shaky|unstable/i.test(question)) return 'SHAKY';
+  if (/better|cent(?:er|r)ed|stable(?!\s+core)/i.test(question)) return 'STABLE';
+  return undefined;
 }
 
 export function detectFollowUpIntent(question: string): FollowUpIntent {
