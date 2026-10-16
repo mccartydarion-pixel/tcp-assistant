@@ -6,6 +6,7 @@ import { fetchSendableChannel } from '../bot/panels.js';
 import { notice, tcpEmbed, type Tone } from '../bot/embeds.js';
 import { createPaymentStore, type PaymentStore } from './paymentStore.js';
 import { describeSubscription, formatPrice, isLive, paymentReceipt, periodDays, type SubscriptionRecord } from './paymentRules.js';
+import { premiumAvailable, premiumDownloadButton } from '../premium/premium.js';
 
 // T.C.P Premium through Stripe: a monthly subscription. Members press Subscribe and pay on a Stripe
 // Checkout page made for their Discord account; every paid invoice adds its period's days to their licence.
@@ -18,9 +19,16 @@ const MANAGE_ID = `${PREFIX}manage`;
 
 export type GrantDays = (discordUserId: string, days: number) => Promise<number | null>;
 
+/** What else happens around a payment: the premium script, the Elite role and welcome (premium.ts). */
+export interface PaymentHooks {
+  onPaid?: (discordUserId: string, first: boolean) => Promise<void>;
+  onEnded?: (discordUserId: string) => Promise<void>;
+}
+
 let stripe: Stripe | null = null;
 let store: PaymentStore | null = null;
 let grantDays: GrantDays | null = null;
+let hooks: PaymentHooks = {};
 let client: Client | null = null;
 let priceLabel = '';
 
@@ -43,16 +51,18 @@ export function priceText(): string {
 }
 
 /** For tests: a Stripe client and records without reaching Stripe or a database. */
-export function usePaymentsForTests(deps: { stripe: Stripe; store: PaymentStore; grantDays: GrantDays }): void {
+export function usePaymentsForTests(deps: { stripe: Stripe; store: PaymentStore; grantDays: GrantDays } & PaymentHooks): void {
   stripe = deps.stripe;
   store = deps.store;
   grantDays = deps.grantDays;
+  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded };
   client = null;
 }
 
-export async function initPayments(discord: Client, deps: { grantDays: GrantDays }): Promise<void> {
+export async function initPayments(discord: Client, deps: { grantDays: GrantDays } & PaymentHooks): Promise<void> {
   client = discord;
   grantDays = deps.grantDays;
+  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded };
   if (!paymentsConfigured()) {
     logger.info('[TCP Payments] STRIPE_SECRET_KEY or STRIPE_PRICE_ID not set; payments are off.');
     return;
@@ -66,7 +76,9 @@ export async function initPayments(discord: Client, deps: { grantDays: GrantDays
     const price = await stripe.prices.retrieve(env.STRIPE_PRICE_ID!);
     priceLabel = formatPrice(price.unit_amount, price.currency, price.recurring?.interval, price.recurring?.interval_count ?? 1);
     if (!price.recurring) logger.warn('[TCP Payments] STRIPE_PRICE_ID is a one-off price; Subscribe expects a monthly (recurring) price.');
-    logger.info(`[TCP Payments] Stripe ready (${env.STRIPE_SECRET_KEY!.startsWith('sk_live') ? 'live' : 'test'} mode, ${priceLabel || 'price'}); records (${opened.kind}).`);
+    // Secret keys are sk_live_/sk_test_, restricted keys rk_live_/rk_test_.
+    const mode = /^[sr]k_live_/.test(env.STRIPE_SECRET_KEY!) ? 'live' : 'test';
+    logger.info(`[TCP Payments] Stripe ready (${mode} mode, ${priceLabel || 'price'}); records (${opened.kind}).`);
   } catch (error) {
     stripe = null;
     logger.error({ err: error }, '[TCP Payments ERROR] Could not reach Stripe or open the payment records; payments are off. Check STRIPE_SECRET_KEY and STRIPE_PRICE_ID.');
@@ -79,7 +91,18 @@ export function paymentButtons(): ActionRowBuilder<ButtonBuilder> | null {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId(SUBSCRIBE_ID).setLabel(subscribeLabel()).setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(MANAGE_ID).setLabel('Manage subscription').setStyle(ButtonStyle.Secondary),
+    ...(premiumAvailable() ? [premiumDownloadButton()] : []),
   );
+}
+
+/** Whether this member pays for T.C.P Premium right now (active, or a payment being retried). */
+export async function hasLiveSubscription(discordUserId: string): Promise<boolean> {
+  if (!store) return false;
+  try {
+    return isLive(await store.getByUser(discordUserId));
+  } catch {
+    return false;
+  }
 }
 
 /** Whether this member's subscription will renew by itself: no expiry reminder needed. */
@@ -265,19 +288,25 @@ async function onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
   const days = periodDays(line?.period.start, line?.period.end);
   const expiresAt = grantDays ? await grantDays(discordUserId, days) : null;
   if (expiresAt === null) throw new Error('The licence records are not open, so the paid days could not be added');
+  logger.info(`[TCP Payments] ${discordUserId} paid ${amount}; ${days} days added`);
 
-  const subscriptionId = idOf(details?.subscription);
-  const existing = await store!.getByUser(discordUserId);
-  await store!.save({
-    discordUserId,
-    customerId: customerId ?? existing?.customerId ?? '',
-    subscriptionId: subscriptionId ?? existing?.subscriptionId ?? null,
-    status: 'active',
-    cancelAtPeriodEnd: existing?.cancelAtPeriodEnd ?? false,
-    currentPeriodEnd: line?.period.end ?? existing?.currentPeriodEnd ?? null,
-    updatedAt: Date.now(),
-  });
+  // The days are added: nothing below may fail the event, or Stripe's retry would add them a second time.
   const first = invoice.billing_reason === 'subscription_create';
+  try {
+    const subscriptionId = idOf(details?.subscription);
+    const existing = await store!.getByUser(discordUserId);
+    await store!.save({
+      discordUserId,
+      customerId: customerId ?? existing?.customerId ?? '',
+      subscriptionId: subscriptionId ?? existing?.subscriptionId ?? null,
+      status: 'active',
+      cancelAtPeriodEnd: existing?.cancelAtPeriodEnd ?? false,
+      currentPeriodEnd: line?.period.end ?? existing?.currentPeriodEnd ?? null,
+      updatedAt: Date.now(),
+    });
+  } catch (error) {
+    logger.error({ err: error }, `[TCP Payments ERROR] Days were added for ${discordUserId}, but the subscription record could not be saved`);
+  }
   const receipt = paymentReceipt(days, expiresAt, first, env.LICENSE_CHANNEL_ID);
   await dm(discordUserId, receipt.title, receipt.description, 'success');
   await ownerLog(
@@ -285,7 +314,7 @@ async function onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
     `<@${discordUserId}> paid ${amount}: ${days} days added, licence runs until <t:${Math.floor(expiresAt / 1000)}:D>.`,
     'success',
   );
-  logger.info(`[TCP Payments] ${discordUserId} paid ${amount}; ${days} days added`);
+  await hooks.onPaid?.(discordUserId, first).catch((error: unknown) => logger.error({ err: error }, '[TCP Payments ERROR] After-payment step failed'));
 }
 
 async function onInvoiceFailed(invoice: Stripe.Invoice): Promise<void> {
@@ -311,6 +340,7 @@ async function onSubscriptionChanged(subscription: Stripe.Subscription, deleted:
     if (before?.status === 'canceled') return;
     await dm(discordUserId, 'Your T.C.P subscription has ended', 'It will not renew. Your licence keeps any days it already has. Press **Subscribe** on the licence panel any time to come back.', 'muted');
     await ownerLog('Subscription ended', `<@${discordUserId}>'s subscription has ended.`, 'muted');
+    await hooks.onEnded?.(discordUserId).catch((error: unknown) => logger.error({ err: error }, '[TCP Payments ERROR] Subscription-ended step failed'));
     return;
   }
   if (after.cancelAtPeriodEnd && !before?.cancelAtPeriodEnd) {

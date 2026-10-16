@@ -61,6 +61,7 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `TICKET_PANEL_CHANNEL_ID` (optional; where the Open a ticket panel goes; without it the ticket buttons are on the help channel panel)
 - `PLAYSTATION_ROLE_ID`, `XBOX_ROLE_ID` (optional; roles given by Get started; without them the bot uses, or creates, roles named PlayStation and Xbox)
 - `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` (optional; T.C.P Premium payments, see below)
+- `ELITE_ROLE_ID`, `ELITE_WELCOME_CHANNEL_ID` (optional; the role paying members get and the channel they are welcomed in; without them the bot uses a role named Elite Supporter and a text channel with "elite" and "welcome" in its name)
 - `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
 - `WELCOME_MEMBER_INTENT` (optional, default true; `false` stops the bot asking for the Server Members Intent)
 - `LICENSE_REMINDERS` (optional, default true; `false` stops expiry reminder DMs)
@@ -185,6 +186,19 @@ With `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` set, the licence panel gets **Sub
 5. In Stripe → Settings → Billing → Customer portal, turn on cancelling subscriptions and updating payment methods, and save.
 
 The startup log says whether Stripe is ready and in test or live mode. Test and live mode have separate keys, prices and webhook secrets; switch all three together.
+
+### Premium script and the Elite role
+
+On a member's **first** payment the bot also:
+- DMs them the Premium script (`Tactical Competitive Pro Release.gpc`) with install steps;
+- gives them the **Elite Supporter** role (`ELITE_ROLE_ID`, or a role with that name);
+- welcomes them, with a ping, in the elite welcome channel (`ELITE_WELCOME_CHANNEL_ID`, or a text channel with "elite" and "welcome" in its name).
+
+Renewals only make sure they still have the role. When the subscription ends (cancelled and run out, or deleted in Stripe) the role is taken away; their licence days still run out as normal. If their DMs are closed, or no script is uploaded yet, `LOG_CHANNEL_ID` says so. Subscribers (and the owner) also get a **Download Premium** button on the licence panel, under **My licence** and in Licence & codes tickets, which sends the current script privately.
+
+**The script is never in this repository**, which is public. The owner uploads it in Discord with `/tcp release` and attaches the file; it is stored in the `premium_files` table (Postgres when `DATABASE_URL` is one). Only the **scrambled** release is accepted (`python tools/make_play_build.py --license --scramble` in the script project): the readable release, which contains the real licence key, and the debug, play and free builds are refused. `/tcp release` with no file shows which script is live and its fingerprint. Upload again whenever there is a new build; Download Premium always gives the latest.
+
+The bot needs **Manage Roles**, with its own role above Elite Supporter, and Send Messages and Embed Links in the elite welcome channel. It will not hand out a role that has moderator permissions. The startup log names the Elite role and channel it found, or says "not found".
 
 ## Help channel
 

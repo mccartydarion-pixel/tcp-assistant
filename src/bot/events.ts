@@ -24,6 +24,7 @@ import {
 } from '../welcome/welcome.js';
 import { handleHelpInteraction, handleHelpMessage, isHelpMessage } from '../help/helpChannel.js';
 import { handlePaymentInteraction } from '../payments/stripeBilling.js';
+import { handlePremiumInteraction } from '../premium/premium.js';
 import { reportUnanswered } from '../ai/unanswered.js';
 import { answerMessages, notice, tcpEmbed } from './embeds.js';
 import {
@@ -49,6 +50,7 @@ export function registerEvents(
         // Each panel claims only the components whose IDs carry its own prefix.
         (await handleTicketInteraction(interaction)) ||
           (await handlePaymentInteraction(interaction)) ||
+          (await handlePremiumInteraction(interaction)) ||
           (await handleHelpInteraction(interaction)) ||
           (await handleLicenseInteraction(interaction)) ||
           (await handleAnnounceInteraction(interaction)) ||

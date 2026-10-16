@@ -2,7 +2,6 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionFlagsBits,
   type ButtonInteraction,
   type Client,
   type Guild,
@@ -18,6 +17,7 @@ import { GAME_SCRIPTS } from '../games/gameScripts.js';
 import { notice, tcpEmbed } from '../bot/embeds.js';
 import { serverGuideFieldsWithin, visibleChannels } from '../server/serverMap.js';
 import { ticketsEnabled } from '../tickets/ticketSystem.js';
+import { isSafeSelfRole } from '../bot/roles.js';
 
 // The welcome channel: a "Start here" panel (with a Server guide that keeps itself up to date) and a welcome
 // card for each new member that pings them. Both have a Get started button: two questions (controller, and
@@ -223,32 +223,7 @@ function stepTwo(platform: Platform) {
   };
 }
 
-/** Permissions a role handed out by a button must never carry. */
-const UNSAFE_PERMISSIONS = [
-  PermissionFlagsBits.Administrator,
-  PermissionFlagsBits.ManageGuild,
-  PermissionFlagsBits.ManageRoles,
-  PermissionFlagsBits.ManageChannels,
-  PermissionFlagsBits.ManageMessages,
-  PermissionFlagsBits.ManageThreads,
-  PermissionFlagsBits.ManageWebhooks,
-  PermissionFlagsBits.ManageNicknames,
-  PermissionFlagsBits.ManageEvents,
-  PermissionFlagsBits.ManageGuildExpressions,
-  PermissionFlagsBits.KickMembers,
-  PermissionFlagsBits.BanMembers,
-  PermissionFlagsBits.ModerateMembers,
-  PermissionFlagsBits.MentionEveryone,
-  PermissionFlagsBits.ViewAuditLog,
-  PermissionFlagsBits.MoveMembers,
-  PermissionFlagsBits.MuteMembers,
-  PermissionFlagsBits.DeafenMembers,
-];
-
-/** Whether members may give themselves this role: not a bot's or integration's role, and no moderator powers. */
-export function isSafeSelfRole(role: Pick<Role, 'managed' | 'permissions'>): boolean {
-  return !role.managed && !role.permissions.any(UNSAFE_PERMISSIONS);
-}
+export { isSafeSelfRole };
 
 /**
  * The platform role: the configured one, else one with that name, else (when create is set) a new one.

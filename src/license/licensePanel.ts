@@ -145,6 +145,12 @@ export function buildAdminPanel() {
 }
 
 /** Opens the licence records and posts the member and owner panels unless ours are already there. */
+/** Redraws the member panel, for example after a Premium upload adds Download Premium. Never posts a new one. */
+export async function refreshLicensePanel(client: Client): Promise<void> {
+  if (!env.LICENSE_CHANNEL_ID || !store) return;
+  await ensurePanel(client, env.LICENSE_CHANNEL_ID, LICENSE_BUTTON_ID, buildLicensePanel(), 'generator', { postIfMissing: false });
+}
+
 export async function ensureLicensePanel(client: Client): Promise<void> {
   if (!env.LICENSE_CHANNEL_ID) {
     logger.info('[TCP License] LICENSE_CHANNEL_ID not set; licence generator disabled.');

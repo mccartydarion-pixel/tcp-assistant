@@ -13,6 +13,7 @@ import { reportUnanswered } from '../../ai/unanswered.js';
 import { answerMessages, notice, tcpEmbed } from '../embeds.js';
 import { serverMapFor } from '../../server/serverMap.js';
 import { ticketAudience } from '../../tickets/ticketSystem.js';
+import { handleReleaseCommand } from '../../premium/premium.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -45,6 +46,14 @@ export function createCommands(
         .setName('ask')
         .setDescription('Ask a T.C.P. technical question')
         .addStringOption((option) => option.setName('question').setDescription('Your question').setRequired(true)),
+    )
+    .addSubcommand((command) =>
+      command
+        .setName('release')
+        .setDescription('Owner: upload the Premium script, or see which one is live')
+        .addAttachmentOption((option) =>
+          option.setName('file').setDescription('Tactical Competitive Pro Release.gpc (the scrambled build)').setRequired(false),
+        ),
     );
 
   return [
@@ -52,6 +61,10 @@ export function createCommands(
       data: tcp,
       async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
+        if (subcommand === 'release') {
+          await handleReleaseCommand(interaction);
+          return;
+        }
         if (subcommand === 'help') {
           await interaction.reply({ embeds: [helpEmbed()], ephemeral: true });
           return;

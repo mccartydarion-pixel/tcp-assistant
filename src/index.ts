@@ -10,7 +10,7 @@ import { registerCommands } from './bot/registerCommands.js';
 import { registerEvents } from './bot/events.js';
 import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
 import { ConversationMemory } from './ai/conversationMemory.js';
-import { ensureLicensePanel, grantPaidDays } from './license/licensePanel.js';
+import { ensureLicensePanel, grantPaidDays, refreshLicensePanel } from './license/licensePanel.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
 import { ensureBugPanel } from './bugs/bugReports.js';
 import { ensureReviewPanel } from './reviews/reviews.js';
@@ -19,7 +19,8 @@ import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './
 import { setBrandIcon } from './bot/embeds.js';
 import { initTickets } from './tickets/ticketSystem.js';
 import { ensureHelpPanel, initHelpChannel } from './help/helpChannel.js';
-import { initPayments, paymentsConfigured } from './payments/stripeBilling.js';
+import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
+import { initPremium, onPremiumEnded, onPremiumPaid } from './premium/premium.js';
 import { startHttpServer } from './server/httpServer.js';
 
 const knowledge = new KnowledgeService();
@@ -175,8 +176,13 @@ async function start(): Promise<void> {
   await validateGuildConfiguration(client);
   status.commandsRegistered = await registerCommands(commands);
   logger.info('[TCP Ticket] Ticket Assistant: READY');
-  // Before the licence panel, so it shows Subscribe with the live price.
-  await initPayments(client, { grantDays: (discordUserId, days) => grantPaidDays(client, discordUserId, days) });
+  // Before the licence panel, so it shows Subscribe with the live price and Download Premium.
+  await initPremium(client, { isSubscriber: hasLiveSubscription, onUploaded: () => refreshLicensePanel(client) });
+  await initPayments(client, {
+    grantDays: (discordUserId, days) => grantPaidDays(client, discordUserId, days),
+    onPaid: (discordUserId, first) => onPremiumPaid(client, discordUserId, first),
+    onEnded: (discordUserId) => onPremiumEnded(client, discordUserId),
+  });
   if (paymentsConfigured()) startHttpServer(env.PORT);
   await ensureLicensePanel(client);
   await initTickets(client, { assistant, memory: conversationMemory });
