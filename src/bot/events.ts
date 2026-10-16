@@ -1,4 +1,4 @@
-import { Events, MessageType, type Client, type Message } from 'discord.js';
+import { Events, MessageType, type Client, type GuildBasedChannel, type Message } from 'discord.js';
 import type { AssistantService } from '../ai/assistantService.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
@@ -14,8 +14,26 @@ import { handleSettingsInteraction } from '../settings/settingsPanel.js';
 import { handleBugInteraction } from '../bugs/bugReports.js';
 import { handleReviewInteraction } from '../reviews/reviews.js';
 import { handleGameInteraction } from '../games/gameScripts.js';
-import { greetFromJoinMessage, greetMember, handleWelcomeInteraction, isMemberEventsActive } from '../welcome/welcome.js';
+import {
+  greetFromJoinMessage,
+  greetMember,
+  handleWelcomeInteraction,
+  isMemberEventsActive,
+  newcomerFromMember,
+  scheduleServerGuideRefresh,
+} from '../welcome/welcome.js';
+import { handleHelpInteraction, handleHelpMessage, isHelpMessage } from '../help/helpChannel.js';
 import { reportUnanswered } from '../ai/unanswered.js';
+import { answerMessages, notice, tcpEmbed } from './embeds.js';
+import {
+  handleTicketChannelDeleted,
+  handleTicketInteraction,
+  isAssistantQuietInTicket,
+  noteOwnerInTicket,
+  ticketAudience,
+} from '../tickets/ticketSystem.js';
+import { isTicketTopic } from '../tickets/ticketRules.js';
+import { serverMapFor } from '../server/serverMap.js';
 
 export function registerEvents(
   client: Client,
@@ -28,7 +46,9 @@ export function registerEvents(
     if (interaction.isButton() || interaction.isModalSubmit() || interaction.isUserSelectMenu() || interaction.isStringSelectMenu()) {
       try {
         // Each panel claims only the components whose IDs carry its own prefix.
-        (await handleLicenseInteraction(interaction)) ||
+        (await handleTicketInteraction(interaction)) ||
+          (await handleHelpInteraction(interaction)) ||
+          (await handleLicenseInteraction(interaction)) ||
           (await handleAnnounceInteraction(interaction)) ||
           (await handleSettingsInteraction(interaction)) ||
           (await handleBugInteraction(interaction)) ||
@@ -37,9 +57,14 @@ export function registerEvents(
           (await handleWelcomeInteraction(interaction));
       } catch (error) {
         logger.error({ err: error }, '[TCP Panels ERROR] Interaction failed');
-        const response = { content: 'Something went wrong. Please try again.', ephemeral: true };
-        if (interaction.deferred || interaction.replied) await interaction.followUp(response);
-        else await interaction.reply(response);
+        const response = { ...notice('Something went wrong. Please try again.', { tone: 'danger' }), ephemeral: true };
+        // The interaction may have expired too (Discord allows 3 seconds); then there is no one to tell.
+        try {
+          if (interaction.deferred || interaction.replied) await interaction.followUp(response);
+          else await interaction.reply(response);
+        } catch (replyError) {
+          logger.warn({ err: replyError }, '[TCP Panels] Could not report the failure to the member');
+        }
       }
       return;
     }
@@ -51,9 +76,13 @@ export function registerEvents(
       await command.execute(interaction);
     } catch (error) {
       logger.error({ err: error }, '[TCP Discord ERROR] Command execution failed');
-      const response = { content: 'Something went wrong while handling that command.', ephemeral: true };
-      if (interaction.deferred || interaction.replied) await interaction.editReply(response);
-      else await interaction.reply(response);
+      const response = { ...notice('Something went wrong while handling that command.', { tone: 'danger' }), ephemeral: true };
+      try {
+        if (interaction.deferred || interaction.replied) await interaction.editReply(response);
+        else await interaction.reply(response);
+      } catch (replyError) {
+        logger.warn({ err: replyError }, '[TCP Discord] Could not report the command failure');
+      }
     }
   });
 
@@ -79,6 +108,15 @@ export function registerEvents(
       await greetFromJoinMessage(message);
       return;
     }
+    // Other system messages (thread created, thread renamed, pins...) carry a member as author but are not questions.
+    if (message.system) return;
+
+    // The help channel and its threads: every question is answered there, no @mention needed.
+    if (isHelpMessage(message)) {
+      const fromOwner = Boolean(env.OWNER_USER_ID) && message.author.id === env.OWNER_USER_ID;
+      await handleHelpMessage(message, fromOwner, isMentioned);
+      return;
+    }
 
     const isTicket = isSupportTicketChannel(message);
 
@@ -93,6 +131,8 @@ export function registerEvents(
 
     const isOwner = Boolean(env.OWNER_USER_ID) && message.author.id === env.OWNER_USER_ID;
     if (isOwner) {
+      // The owner writing in a T.C.P ticket takes it over; the assistant steps back.
+      if (isTicket) await noteOwnerInTicket(message.channelId);
       if (specialIntentRouter.isEscalated(guildId, message.channelId)) {
         specialIntentRouter.markOwnerJoined(guildId, message.channelId);
         logger.info(`[TCP Escalation] Owner joined conversation: ${message.channelId}`);
@@ -110,7 +150,9 @@ export function registerEvents(
 
     try {
       if (!question) {
-        await message.reply('How can I help with T.C.P.?');
+        // A screenshot posted on its own, or a bare message in a ticket, is for the owner, not a prompt to ask again.
+        if (isTicket || message.attachments.size > 0) return;
+        await message.reply(notice('How can I help with T.C.P.? Ask me anything about the script, your licence or this server.'));
         return;
       }
 
@@ -132,27 +174,32 @@ export function registerEvents(
       logger.info('[TCP Escalation] Intent: NONE');
 
       if (isTicket && specialIntentRouter.isEscalated(guildId, message.channelId) && /^hello(?:[!?. ]*)$/i.test(question)) {
-        await message.reply("I'm still here. The owner has already been notified. You can leave any additional details about the issue while you're waiting.");
+        await message.reply(notice("I'm still here. The owner has already been notified; leave any extra details about the issue while you wait.", { tone: 'muted' }));
         return;
       }
 
-      if (route === 'TICKET' && specialIntentRouter.isOwnerHandling(guildId, message.channelId)) return;
+      // In a T.C.P ticket the assistant stays quiet once the owner has it, and in licence and payment tickets,
+      // unless the member @mentions it (TICKET_MENTION).
+      if (route === 'TICKET' && (specialIntentRouter.isOwnerHandling(guildId, message.channelId) || (await isAssistantQuietInTicket(message.channelId)))) return;
 
       if (route === 'TICKET' || route === 'TICKET_MENTION') logger.info('[TCP Ticket] Routing to T.C.P. Assistant');
 
       logger.info('[TCP AI] Request started');
       const session = memory.getOrCreate(guildId, message.channelId, message.author.id, isTicket);
       const followUpIntent = memory.updateFromQuestion(session, extractQuestionDetails(question), question);
-      const result = await assistant.answerDetailed(question, session.turns, botId, session.tuning, followUpIntent);
+      // Channels the asker and whoever reads the answer can both see: the ticket's member in a ticket, else everyone.
+      const audience = isTicket && message.guild ? await ticketAudience(message.guild, message.channelId) : null;
+      const serverMap = serverMapFor(message.guild, message.member, audience);
+      const result = await assistant.answerDetailed(question, session.turns, botId, session.tuning, followUpIntent, serverMap);
       memory.record(session, question, result.text);
-      await message.reply(result.text);
+      await replyWithAnswer(message, result.text);
       if (result.unanswered) {
         await reportUnanswered(client, { question, userId: message.author.id, where: message.url, sources: result.sources });
       }
     } catch (error) {
       logger.error({ err: error }, '[TCP Discord ERROR] Message processing failed');
       try {
-        await message.reply('T.C.P. Assistant hit an error processing that message.');
+        await message.reply(notice('Sorry, I hit an error with that message. Please try again in a moment.', { tone: 'danger' }));
       } catch (replyError) {
         logger.error({ err: replyError }, '[TCP Discord ERROR] Missing SendMessages permission or reply failed');
       }
@@ -162,22 +209,58 @@ export function registerEvents(
   // Only delivered when the Server Members Intent is on.
   client.on(Events.GuildMemberAdd, async (member) => {
     if (!isMemberEventsActive() || member.guild.id !== env.DISCORD_GUILD_ID) return;
-    await greetMember(client, member.user);
+    await greetMember(client, newcomerFromMember(member));
   });
 
   client.on(Events.ChannelCreate, async (channel) => {
+    refreshGuideFor(client, channel);
     if (!('parentId' in channel) || channel.parentId !== env.SUPPORT_CATEGORY_ID || !channel.isTextBased()) return;
+    // T.C.P's own tickets post their own opening message.
+    if ('topic' in channel && isTicketTopic(channel.topic)) return;
     logger.info(`[TCP Ticket] New support channel detected: ${channel.id}`);
     try {
-      await channel.send("**T.C.P. Support Assistant**\n\nI'll help troubleshoot your issue before owner review.\n\nPlease describe the problem you're having.");
+      await channel.send({
+        embeds: [
+          tcpEmbed({
+            title: 'T.C.P. Support Assistant',
+            description: "I'll help troubleshoot your issue before the owner reviews it.\n\nPlease describe the problem you're having.",
+          }),
+        ],
+      });
     } catch (error) {
       logger.error({ err: error }, '[TCP Ticket ERROR] Welcome message failed');
     }
   });
 
+  client.on(Events.ChannelDelete, async (channel) => {
+    if (!channel.isDMBased()) refreshGuideFor(client, channel);
+    await handleTicketChannelDeleted(channel.id);
+  });
+
+  // Renames, moves, topic and permission changes all show in the Server guide.
+  client.on(Events.ChannelUpdate, (_old, channel) => {
+    if (!channel.isDMBased()) refreshGuideFor(client, channel);
+  });
+
   logger.info('[TCP Events] interactionCreate loaded');
   logger.info('[TCP Events] messageCreate loaded');
   logger.info('[TCP Events] channelCreate loaded');
+}
+
+/** A channel in the server changed: refresh the Server guide, except for ticket channels, which it never shows. */
+function refreshGuideFor(client: Client, channel: GuildBasedChannel): void {
+  if (channel.guild.id !== env.DISCORD_GUILD_ID) return;
+  if ('topic' in channel && isTicketTopic(channel.topic)) return;
+  scheduleServerGuideRefresh(client);
+}
+
+/** Replies with an answer as embeds; a long answer continues in further messages. */
+async function replyWithAnswer(message: Message, text: string): Promise<void> {
+  const [first, ...rest] = answerMessages(text);
+  await message.reply(first!);
+  for (const part of rest) {
+    if ('send' in message.channel) await message.channel.send(part);
+  }
 }
 
 export function isSupportTicketChannel(message: Message): boolean {

@@ -30,6 +30,9 @@ describe('documentation retrieval', () => {
     ['what does fire sens do', 'Fire Sens'],
     ['crouch shot', 'Drop Shot and Crouch Shot'],
     ['my code does not work', 'Problems getting a code'],
+    ['how do i open a ticket', 'Opening a support ticket'],
+    ['where can i ask a question', 'Asking the assistant'],
+    ['what does the get started button do', 'The Get started button'],
   ])('"%s" finds %s', async (question, heading) => {
     expect(await topHeading(question)).toBe(heading);
   });

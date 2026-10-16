@@ -6,6 +6,7 @@ import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, EmbedB
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { fetchSendableChannel, findPanel } from '../bot/panels.js';
+import { notice } from '../bot/embeds.js';
 
 // One showcase per game: an embed with the T.C.P banner, what the script does, and a Download link button,
 // in that game's own channel. To add a game, add an entry to GAME_SCRIPTS and redeploy.
@@ -135,9 +136,11 @@ export async function handleGameInteraction(interaction: Interaction): Promise<b
   const key = interaction.customId.slice(INSTALL_PREFIX.length).split(':')[0];
   const game = findGame(key);
   if (!game) {
-    await interaction.reply({ content: 'This script is no longer listed.', ephemeral: true });
+    await interaction.reply({ ...notice('This script is no longer listed.', { tone: 'muted' }), ephemeral: true });
     return true;
   }
-  await interaction.reply({ content: installGuide(game, { licence: env.LICENSE_CHANNEL_ID, bugs: env.BUG_REPORT_CHANNEL_ID }), ephemeral: true });
+  // The guide's first line is its heading; it becomes the embed's title.
+  const [heading = '', ...steps] = installGuide(game, { licence: env.LICENSE_CHANNEL_ID, bugs: env.BUG_REPORT_CHANNEL_ID }).split('\n');
+  await interaction.reply({ ...notice(steps.join('\n'), { title: heading.replace(/\*\*/g, '') }), ephemeral: true });
   return true;
 }

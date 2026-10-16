@@ -13,6 +13,7 @@ import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { ensurePanel, fetchSendableChannel, repostPanel } from '../bot/panels.js';
 import { createReviewStore, type ReviewRecord, type ReviewStore } from './reviewStore.js';
+import { finalNotice, notice, tcpEmbed } from '../bot/embeds.js';
 
 // Member reviews. A "Leave a review" panel in REVIEW_CHANNEL_ID: pick 1 to 5 stars, write a few words,
 // and the bot posts the review as a card there. One review per member; a new one replaces the old card.
@@ -159,14 +160,18 @@ function cancelButton() {
 }
 
 function starPicker(existing: ReviewRecord | null) {
-  const lines = ['**Leave a review · Step 1 of 2**', 'How many stars do you give T.C.P?'];
+  const lines = ['How many stars do you give T.C.P?'];
   if (existing) lines.push(`You already left a ${starString(existing.stars)} review. A new one replaces it.`);
   const stars = new ActionRowBuilder<ButtonBuilder>().addComponents(
     [1, 2, 3, 4, 5].map((count) =>
       new ButtonBuilder().setCustomId(`${STARS_PREFIX}${count}`).setLabel(String(count)).setEmoji(STAR).setStyle(ButtonStyle.Primary),
     ),
   );
-  return { content: lines.join('\n'), embeds: [], components: [stars, new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton())] };
+  return {
+    content: '',
+    embeds: [tcpEmbed({ title: 'Leave a review · Step 1 of 2', description: lines.join('\n'), tone: 'warning' })],
+    components: [stars, new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton())],
+  };
 }
 
 function input(id: string, label: string, style: TextInputStyle, min: number, max: number, required: boolean, placeholder: string, value: string) {
@@ -186,7 +191,7 @@ function reviewModal(stars: number, draft: ReviewDraft) {
     );
 }
 
-const ended = (content: string) => ({ content, embeds: [], components: [] });
+const ended = (text: string, tone: 'brand' | 'success' | 'warning' | 'danger' = 'brand') => finalNotice(text, { tone });
 
 /** Opens the review records, posts or refreshes the panel, and sets the rating channel's name. */
 export async function ensureReviewPanel(client: Client): Promise<void> {
@@ -265,7 +270,7 @@ export async function handleReviewInteraction(interaction: Interaction): Promise
   // Remove button on a posted review: owner only.
   if (interaction.isButton() && id.startsWith(REMOVE_PREFIX)) {
     if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
-      await interaction.reply({ content: 'Only the owner can remove a review.', ephemeral: true });
+      await interaction.reply({ ...notice('Only the owner can remove a review.', { tone: 'danger' }), ephemeral: true });
       return true;
     }
     const reviewerId = id.slice(REMOVE_PREFIX.length);
@@ -275,13 +280,13 @@ export async function handleReviewInteraction(interaction: Interaction): Promise
     if (store && current?.messageId === interaction.message.id) await store.remove(reviewerId);
     await interaction.message.delete();
     logger.info(`[TCP Reviews] Owner removed the review by ${reviewerId}`);
-    await interaction.editReply('Review removed. The rating has been updated.');
+    await interaction.editReply(notice('Review removed. The rating has been updated.', { tone: 'success' }));
     await refreshRating(interaction.client, false);
     return true;
   }
 
   if (!store || !env.REVIEW_CHANNEL_ID) {
-    await interaction.reply({ content: 'Reviews are not set up yet.', ephemeral: true });
+    await interaction.reply({ ...notice('Reviews are not set up yet.', { tone: 'muted' }), ephemeral: true });
     return true;
   }
   const userId = interaction.user.id;
@@ -290,7 +295,10 @@ export async function handleReviewInteraction(interaction: Interaction): Promise
   if (interaction.isButton() && id === REVIEW_BUTTON_ID) {
     const wait = cooldownMinutesLeft(lastReview.get(userId), now);
     if (wait > 0) {
-      await interaction.reply({ content: `You reviewed recently. You can update your review in ${wait} minute${wait === 1 ? '' : 's'}.`, ephemeral: true });
+      await interaction.reply({
+        ...notice(`You reviewed recently. You can update your review in ${wait} minute${wait === 1 ? '' : 's'}.`, { tone: 'warning' }),
+        ephemeral: true,
+      });
       return true;
     }
     const existing = await store.get(userId);
@@ -335,8 +343,8 @@ export async function handleReviewInteraction(interaction: Interaction): Promise
   const result = readReviewForm({ stars, headline: draft.headline, text: draft.text });
   if ('error' in result) {
     await interaction.update({
-      content: `**Leave a review · Step 2 of 2**\n${result.error} Press the button to fix it; what you typed is kept.`,
-      embeds: [],
+      content: '',
+      embeds: [tcpEmbed({ title: 'Leave a review · Step 2 of 2', description: `${result.error} Press the button to fix it; what you typed is kept.`, tone: 'warning' })],
       components: [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
           new ButtonBuilder().setCustomId(`${STARS_PREFIX}${stars}`).setLabel('Fix review').setStyle(ButtonStyle.Primary),
@@ -370,12 +378,15 @@ export async function handleReviewInteraction(interaction: Interaction): Promise
     drafts.delete(userId);
     logger.info(`[TCP Reviews] ${userId} left ${result.stars} stars`);
     await interaction.editReply(
-      ended([`Thanks for your ${starString(result.stars)} review! It is posted here: ${message.url}`, previous ? 'It replaces your earlier review.' : ''].filter(Boolean).join('\n')),
+      ended(
+        [`Thanks for your ${starString(result.stars)} review! It is posted here: ${message.url}`, previous ? 'It replaces your earlier review.' : ''].filter(Boolean).join('\n'),
+        'success',
+      ),
     );
     await refreshRating(interaction.client, true);
   } catch (error) {
     logger.error({ err: error }, '[TCP Reviews ERROR] Could not post a review');
-    await interaction.editReply(ended('Something went wrong posting your review. Please try again later.'));
+    await interaction.editReply(ended('Something went wrong posting your review. Please try again later.', 'danger'));
   }
   return true;
 }

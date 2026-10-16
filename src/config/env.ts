@@ -20,6 +20,15 @@ const envSchema = z.object({
   RULES_CHANNEL_ID: z.string().optional(),
   REVIEW_CHANNEL_ID: z.string().optional(),
   REVIEW_VOICE_CHANNEL_ID: z.string().optional(),
+  // The channel where the assistant answers every message, no @mention needed.
+  HELP_CHANNEL_ID: z.string().optional(),
+  // Ticket transcripts go here; LOG_CHANNEL_ID when unset. The Open a ticket panel goes in
+  // TICKET_PANEL_CHANNEL_ID, or the help channel when unset. Tickets are created in SUPPORT_CATEGORY_ID.
+  TICKET_LOG_CHANNEL_ID: z.string().optional(),
+  TICKET_PANEL_CHANNEL_ID: z.string().optional(),
+  // Roles given by the Get started setup; found or created by name when unset.
+  PLAYSTATION_ROLE_ID: z.string().optional(),
+  XBOX_ROLE_ID: z.string().optional(),
   // 'false' turns the feature off; anything else (or unset) leaves it on.
   LICENSE_REMINDERS: z.string().default('true'),
   WELCOME_GREET: z.string().default('true'),

@@ -56,6 +56,10 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `RULES_CHANNEL_ID` (optional; adds a Rules button to the welcome guide)
 - `REVIEW_CHANNEL_ID` (optional; the channel for the review panel and posted reviews)
 - `REVIEW_VOICE_CHANNEL_ID` (optional; a voice channel the bot renames to show the star rating)
+- `HELP_CHANNEL_ID` (optional; the channel where the assistant answers every question, no @mention needed)
+- `TICKET_LOG_CHANNEL_ID` (optional; private channel for ticket opened/closed logs and transcripts; `LOG_CHANNEL_ID` when unset)
+- `TICKET_PANEL_CHANNEL_ID` (optional; where the Open a ticket panel goes; without it the ticket buttons are on the help channel panel)
+- `PLAYSTATION_ROLE_ID`, `XBOX_ROLE_ID` (optional; roles given by Get started; without them the bot uses, or creates, roles named PlayStation and Xbox)
 - `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
 - `WELCOME_MEMBER_INTENT` (optional, default true; `false` stops the bot asking for the Server Members Intent)
 - `LICENSE_REMINDERS` (optional, default true; `false` stops expiry reminder DMs)
@@ -149,11 +153,34 @@ The panel shows the average, the number of reviews and how many gave each star c
 
 Reviews are stored in Postgres when `DATABASE_URL` is a Postgres address (the `reviews` table), otherwise in the local SQLite file, which a redeploy clears. The bot needs View Channel, Send Messages, Embed Links and Read Message History in the review channel.
 
-## Welcome
+## Embeds
 
-With `WELCOME_CHANNEL_ID` set, the bot posts a **Start here** panel with buttons for private guides (Get my licence, Download, Settings, Get help, Rules; each only when its channel is set). It also greets each new member in that channel, pinging them, with the same buttons.
+Every message the bot sends is an embed in one style (`src/bot/embeds.ts`): T.C.P red by default, and a "T.C.P Assistant" footer with the bot's own avatar as its icon, so set the T.C.P logo as the bot's avatar. Pings stay in the message text, because Discord does not notify mentions inside an embed. Long AI answers are split across several embeds.
+
+## Welcome and Get started
+
+With `WELCOME_CHANNEL_ID` set, the bot posts a **Start here** panel with a **Get started** button, buttons for private guides (Get my licence, Download, Settings, Get help, Rules; each only when its channel is set), and a **Server guide**: every category and channel that @everyone can see, with a short note from each channel's topic. The guide updates itself about 30 seconds after channels are added, renamed, moved or deleted. It never lists channels @everyone cannot see, or ticket channels.
+
+Each new member gets a welcome card in that channel that pings them, shows their member number and has **Get started** and **Rules** buttons. **Get started** asks two questions privately (PlayStation or Xbox; do they have T.C.P on their Zen yet), gives them a PlayStation or Xbox role, and shows a checklist worded for their controller with links to the right channels. The roles come from `PLAYSTATION_ROLE_ID` / `XBOX_ROLE_ID`, or roles with those names, or are created; the bot needs **Manage Roles** and its own role above them. Choosing the other controller later swaps the role.
 
 New members are seen through Discord's **Server Members Intent**, which must be switched on in the Discord Developer Portal (your application → Bot → Privileged Gateway Intents → Server Members Intent). The bot only asks for it when a welcome channel is set and greetings are on. If Discord refuses it because it is still off in the portal, the bot logs an error saying so and connects again without it, so it stays online; it then greets from Discord's own "joined the server" message instead, which needs *Send a random welcome message when someone joins* on in Server Settings → Overview. Only one of the two greets, so nobody is welcomed twice. The startup log says which is in use.
+
+## Help channel
+
+With `HELP_CHANNEL_ID` set, the assistant answers every message in that channel, no @mention needed. It starts a thread on each question and answers inside it, so conversations do not mix; replies in the thread continue the same conversation. Each answer has **Solved** (only the asker or the owner; archives the thread) and **Still stuck? Open a ticket** (opens a Setup & tuning ticket with the question filled in). The owner's own messages are not answered unless they @mention the bot, and once the owner writes in a member's thread the assistant leaves that thread to them. The bot posts a panel at the top of the channel explaining this, with the ticket buttons when `TICKET_PANEL_CHANNEL_ID` is not set. The bot needs View Channel, Send Messages, Send Messages in Threads, Create Public Threads, Embed Links and Read Message History there; without Create Public Threads it answers in the channel instead.
+
+Answers everywhere (help channel, @mentions, `/tcp ask`, tickets) know the server's channels the member can see, so the assistant links them, for example the licence channel when someone asks for a code. Channels the member cannot see are never named.
+
+## Tickets
+
+With `SUPPORT_CATEGORY_ID` set, T.C.P runs its own tickets. A member picks a type (**Licence & codes**, **Setup & tuning**, **Bug report**, **Payment & other**) on the ticket panel or with **Still stuck** under a help answer, fills in a short form, and gets a private channel such as `#ticket-0042-name` in that category that only they, the owner and the bot can see. One open ticket per member.
+
+- **Licence & codes**: the owner is pinged and the member's licence status (days left, latest code) is posted straight away.
+- **Setup & tuning** and **Bug report**: the assistant takes a first look and answers follow-ups; **Call the owner** pings the owner once. The assistant stops answering once the owner presses **Claim** or writes in the ticket (it still answers if the member @mentions it).
+- **Payment & other**: the owner is pinged.
+- **Close ticket** (member or owner, with a confirmation) posts a plain-text transcript to `TICKET_LOG_CHANNEL_ID` (or `LOG_CHANNEL_ID`), DMs it to the member, and deletes the channel 10 seconds later. Opening a ticket is logged there too.
+
+Tickets are stored in Postgres when `DATABASE_URL` is a Postgres address (the `support_tickets` table), otherwise in the local SQLite file. Ticket numbers keep counting across redeploys only with Postgres. The bot needs **Manage Channels** in the support category, plus View Channel, Send Messages, Embed Links, Attach Files and Read Message History. If another ticket bot also creates channels in that category, remove its panel so members only see one; the bot still greets channels it did not create.
 
 ## Unanswered questions
 

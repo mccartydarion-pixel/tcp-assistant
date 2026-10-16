@@ -2,6 +2,8 @@ import { EscalationService, detectEscalationIntent } from './escalation.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { normalizeUserQuestion } from './question.js';
+import { tcpEmbed } from '../bot/embeds.js';
+import type { EmbedBuilder } from 'discord.js';
 
 export type SpecialIntent = 'HUMAN_ESCALATION' | 'OWNER_REQUEST' | 'ADMIN_REQUEST' | 'HUMAN_SUPPORT_REQUEST';
 
@@ -47,17 +49,31 @@ export class SpecialIntentRouter {
     this.escalation.markOwnerJoined(guildId, channelId);
   }
 
-  ownerResponse(duplicate: boolean): { content: string; allowedMentions?: { users: string[] } } {
+  /** The reply when someone asks for a person. The owner's ping stays outside the embed, where it notifies. */
+  ownerResponse(duplicate: boolean): { content?: string; embeds: EmbedBuilder[]; allowedMentions: { users: string[] } } {
     if (duplicate) {
-      return { content: 'The owner has already been notified for this conversation. Add any extra details here and they will be available when reviewed.' };
+      return {
+        embeds: [tcpEmbed({ description: 'The owner has already been notified for this conversation. Add any extra details here and they will see them.', tone: 'muted' })],
+        allowedMentions: { users: [] },
+      };
     }
     if (!env.OWNER_USER_ID) {
       logger.warn('[TCP Escalation WARNING] OWNER_USER_ID not configured.');
-      return { content: 'I can escalate this once the owner account is configured. Please leave the issue details here for now.' };
+      return {
+        embeds: [tcpEmbed({ description: 'I can call the owner once their account is set up. Please leave the details of your issue here for now.', tone: 'muted' })],
+        allowedMentions: { users: [] },
+      };
     }
     logger.info('[TCP Escalation] Owner configured: YES');
     return {
-      content: `Owner requested. I've notified <@${env.OWNER_USER_ID}> that you need assistance.\n\nPlease leave a quick description of the issue so they have context when they review this.`,
+      content: `<@${env.OWNER_USER_ID}>`,
+      embeds: [
+        tcpEmbed({
+          title: 'Owner notified',
+          description: "I've let the owner know you need a hand.\n\nPlease leave a quick description of the issue so they have the details when they get here.",
+          tone: 'warning',
+        }),
+      ],
       allowedMentions: { users: [env.OWNER_USER_ID] },
     };
   }

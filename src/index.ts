@@ -16,6 +16,9 @@ import { ensureBugPanel } from './bugs/bugReports.js';
 import { ensureReviewPanel } from './reviews/reviews.js';
 import { ensureGamePanels } from './games/gameScripts.js';
 import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './welcome/welcome.js';
+import { setBrandIcon } from './bot/embeds.js';
+import { initTickets } from './tickets/ticketSystem.js';
+import { ensureHelpPanel, initHelpChannel } from './help/helpChannel.js';
 
 const knowledge = new KnowledgeService();
 const assistant = new AssistantService(knowledge);
@@ -39,8 +42,12 @@ function createClient(commands: Command[], withMembers: boolean): Client {
   if (withMembers) intents.push(GatewayIntentBits.GuildMembers);
   const client = new Client({ intents });
   client.commands = new Map(commands.map((command) => [command.data.name, command]));
+  // discord.js turns a failed async listener into an 'error' event; without a listener that would end the process.
+  client.on(Events.Error, (error) => logger.error({ err: error }, '[TCP Discord ERROR] Unhandled client error'));
   registerEvents(client, assistant, specialIntentRouter, conversationMemory);
   client.once(Events.ClientReady, (readyClient) => {
+    // The bot's avatar is the T.C.P logo: it becomes the footer icon on every embed.
+    setBrandIcon(readyClient.user.displayAvatarURL({ size: 128 }));
     logger.info(`[TCP Discord] Logged in as ${readyClient.user.tag}`);
     logger.info(`[TCP Discord] Logged-in bot ID: ${readyClient.user.id}`);
     logger.info('T.C.P. Assistant ONLINE');
@@ -117,6 +124,10 @@ async function validateGuildConfiguration(client: Client): Promise<void> {
     ANNOUNCEMENT_CHANNEL_ID: env.ANNOUNCEMENT_CHANNEL_ID,
     REVIEW_CHANNEL_ID: env.REVIEW_CHANNEL_ID,
     REVIEW_VOICE_CHANNEL_ID: env.REVIEW_VOICE_CHANNEL_ID,
+    WELCOME_CHANNEL_ID: env.WELCOME_CHANNEL_ID,
+    HELP_CHANNEL_ID: env.HELP_CHANNEL_ID,
+    TICKET_LOG_CHANNEL_ID: env.TICKET_LOG_CHANNEL_ID,
+    TICKET_PANEL_CHANNEL_ID: env.TICKET_PANEL_CHANNEL_ID,
   })) {
     if (!channelId) continue;
     try {
@@ -154,6 +165,7 @@ async function start(): Promise<void> {
 
   logger.info(isOpenAiConfigured() ? '[TCP AI] OpenAI configured.' : '[TCP AI ERROR] OPENAI_API_KEY missing.');
 
+  initHelpChannel({ assistant, memory: conversationMemory, router: specialIntentRouter });
   const commands = createCommands(assistant, knowledge, status, specialIntentRouter, conversationMemory);
   status.commandsLoaded = commands.length;
   logger.info(`[TCP Commands] Loaded ${commands.length} commands.`);
@@ -162,6 +174,8 @@ async function start(): Promise<void> {
   status.commandsRegistered = await registerCommands(commands);
   logger.info('[TCP Ticket] Ticket Assistant: READY');
   await ensureLicensePanel(client);
+  await initTickets(client, { assistant, memory: conversationMemory });
+  await ensureHelpPanel(client);
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);

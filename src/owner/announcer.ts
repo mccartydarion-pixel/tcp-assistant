@@ -15,6 +15,7 @@ import {
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { fetchSendableChannel } from '../bot/panels.js';
+import { finalNotice, notice, tcpEmbed } from '../bot/embeds.js';
 
 // Owner announcements: a form, a private preview, then a post to ANNOUNCEMENT_CHANNEL_ID only when the
 // owner presses Post. The buttons that start it live on the owner panel (licensePanel.ts).
@@ -97,18 +98,18 @@ export async function handleAnnounceInteraction(interaction: Interaction): Promi
   if (!id.startsWith(PREFIX)) return false;
 
   if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
-    await interaction.reply({ content: 'Only the owner can post announcements.', ephemeral: true });
+    await interaction.reply({ ...notice('Only the owner can post announcements.', { tone: 'danger' }), ephemeral: true });
     return true;
   }
   if (!env.ANNOUNCEMENT_CHANNEL_ID) {
-    await interaction.reply({ content: 'Set ANNOUNCEMENT_CHANNEL_ID in Railway first, so the bot knows where to post.', ephemeral: true });
+    await interaction.reply({ ...notice('Set ANNOUNCEMENT_CHANNEL_ID in Railway first, so the bot knows where to post.', { tone: 'warning' }), ephemeral: true });
     return true;
   }
 
   if (interaction.isButton() && (id === ANNOUNCE_BUTTON_ID || id === ANNOUNCE_FLYER_BUTTON_ID)) {
     const withFlyer = id === ANNOUNCE_FLYER_BUTTON_ID;
     if (withFlyer && !existsSync(FLYER_PATH)) {
-      await interaction.reply({ content: 'The flyer image is missing from the bot (assets/tcp-flyer.gif).', ephemeral: true });
+      await interaction.reply({ ...notice('The flyer image is missing from the bot (assets/tcp-flyer.gif).', { tone: 'warning' }), ephemeral: true });
       return true;
     }
     const modal = new ModalBuilder()
@@ -135,7 +136,7 @@ export async function handleAnnounceInteraction(interaction: Interaction): Promi
       id.endsWith('1'),
     );
     if ('error' in parsed) {
-      await interaction.reply({ content: parsed.error, ephemeral: true });
+      await interaction.reply({ ...notice(parsed.error, { tone: 'warning' }), ephemeral: true });
       return true;
     }
     drafts.set(interaction.user.id, { draft: parsed.draft, createdAt: Date.now() });
@@ -145,8 +146,10 @@ export async function handleAnnounceInteraction(interaction: Interaction): Promi
       new ButtonBuilder().setCustomId(CANCEL_ID).setLabel('Cancel').setStyle(ButtonStyle.Secondary),
     );
     await interaction.reply({
-      content: `**Preview.** This is how it will look in <#${env.ANNOUNCEMENT_CHANNEL_ID}>. Nothing has been posted yet.`,
-      embeds: [buildAnnouncementEmbed(parsed.draft)],
+      embeds: [
+        tcpEmbed({ title: 'Preview', description: `This is how it will look in <#${env.ANNOUNCEMENT_CHANNEL_ID}>. Nothing has been posted yet.` }),
+        buildAnnouncementEmbed(parsed.draft),
+      ],
       files: flyerFiles(parsed.draft),
       components: [buttons],
       ephemeral: true,
@@ -158,7 +161,7 @@ export async function handleAnnounceInteraction(interaction: Interaction): Promi
 
   if (id === CANCEL_ID) {
     drafts.delete(interaction.user.id);
-    await interaction.update({ content: 'Cancelled. Nothing was posted.', embeds: [], components: [], attachments: [] });
+    await interaction.update({ ...finalNotice('Cancelled. Nothing was posted.'), attachments: [] });
     return true;
   }
 
@@ -166,7 +169,7 @@ export async function handleAnnounceInteraction(interaction: Interaction): Promi
     const saved = drafts.get(interaction.user.id);
     if (!saved || Date.now() - saved.createdAt > DRAFT_LIFETIME_MS) {
       drafts.delete(interaction.user.id);
-      await interaction.update({ content: 'This preview has expired. Start the announcement again.', embeds: [], components: [], attachments: [] });
+      await interaction.update({ ...finalNotice('This preview has expired. Start the announcement again.', { tone: 'muted' }), attachments: [] });
       return true;
     }
     const everyone = id === POST_EVERYONE_ID;
@@ -181,13 +184,14 @@ export async function handleAnnounceInteraction(interaction: Interaction): Promi
       });
       drafts.delete(interaction.user.id);
       logger.info(`[TCP Announce] Posted "${saved.draft.title}"${everyone ? ' with @everyone' : ''}`);
-      await interaction.update({ content: `Posted: ${message.url}`, embeds: [], components: [], attachments: [] });
+      await interaction.update({ ...finalNotice(`Posted: ${message.url}`, { tone: 'success' }), attachments: [] });
     } catch (error) {
       logger.error({ err: error }, '[TCP Announce ERROR] Could not post the announcement');
       await interaction.update({
-        content: 'Could not post it. Check the bot can view and send messages (and attach files, and mention everyone if used) in the announcement channel.',
-        embeds: [],
-        components: [],
+        ...finalNotice(
+          'Could not post it. Check the bot can view and send messages (and attach files, and mention everyone if used) in the announcement channel.',
+          { tone: 'danger' },
+        ),
         attachments: [],
       });
     }

@@ -34,6 +34,8 @@ export class AssistantService {
     botId?: string,
     tuningState: TuningState = {},
     followUpIntent: FollowUpIntent = null,
+    /** The channels the member can see (describeServerForAssistant), so the answer can link them. */
+    serverMap?: string,
   ): Promise<AssistantAnswer> {
     const normalizedQuestion = normalizeUserQuestion(question, botId);
     const details = extractQuestionDetails(normalizedQuestion);
@@ -68,7 +70,7 @@ export class AssistantService {
       return fixed("T.C.P. Assistant's AI service is not configured right now. Please provide your weapon, distance, current settings, and symptom so the support team can help.");
     }
 
-    const prompt = buildTCPPrompt({ question: normalizedQuestion, retrievedChunks: matches, conversationHistory, details, tuningState });
+    const prompt = buildTCPPrompt({ question: normalizedQuestion, retrievedChunks: matches, conversationHistory, details, tuningState, serverMap });
 
     try {
       logger.info('[TCP AI] Sending question + documentation to OpenAI');

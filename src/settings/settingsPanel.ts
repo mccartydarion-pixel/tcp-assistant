@@ -14,6 +14,7 @@ import {
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { ensurePanel, fetchSendableChannel, repostPanel } from '../bot/panels.js';
+import { finalNotice, notice, tcpEmbed } from '../bot/embeds.js';
 
 // Settings sharing, as a short wizard in one private message that updates as the member goes:
 //   1. playstyle and weapon (dropdowns)   2. recoil form   3. optional ADS form   then a preview and Post.
@@ -229,8 +230,8 @@ function selectRow(id: string, placeholder: string, options: readonly string[], 
 
 function stepOne(draft: SettingsDraft) {
   return {
-    content: '**Step 1 of 3 · Playstyle and weapon**\nPick both, then press Next.',
-    embeds: [],
+    content: '',
+    embeds: [tcpEmbed({ title: 'Share my settings · Step 1 of 3', description: 'Pick your playstyle and weapon, then press **Next**.' })],
     components: [
       selectRow(STYLE_SELECT_ID, 'Playstyle', PLAYSTYLES, draft.playstyle),
       selectRow(WEAPON_SELECT_ID, 'Weapon', WEAPONS, draft.weapon),
@@ -246,11 +247,16 @@ function stepOne(draft: SettingsDraft) {
   };
 }
 
-function previewScreen(draft: SettingsDraft, author: { name: string; iconURL?: string }, thumbnail?: string, notice = '') {
-  const header = draft.hasAds ? '**Preview.** Happy with it? Post it, or edit any part.' : '**Step 3 of 3 · ADS (optional)**\nAdd your ADS values, or post it as it is.';
+function previewScreen(draft: SettingsDraft, author: { name: string; iconURL?: string }, thumbnail?: string, warning = '') {
+  const header = draft.hasAds
+    ? { title: 'Preview', description: 'Happy with it? Post it, or edit any part.' }
+    : { title: 'Share my settings · Step 3 of 3', description: 'Add your ADS values (optional), or post it as it is.' };
   return {
-    content: [notice, header].filter(Boolean).join('\n'),
-    embeds: [buildSettingsCard(draft, author, thumbnail)],
+    content: '',
+    embeds: [
+      tcpEmbed({ title: header.title, description: [warning, header.description].filter(Boolean).join('\n'), tone: warning ? 'warning' : 'brand' }),
+      buildSettingsCard(draft, author, thumbnail),
+    ],
     components: [
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId(POST_ID).setLabel('Post it').setStyle(ButtonStyle.Success),
@@ -296,7 +302,7 @@ function adsModal(draft: SettingsDraft) {
     );
 }
 
-const ended = (content: string) => ({ content, embeds: [], components: [] });
+const ended = (text: string, tone: 'brand' | 'success' | 'warning' | 'danger' = 'brand') => finalNotice(text, { tone });
 
 // ---- interaction handling ----------------------------------------------------------------------
 
@@ -308,12 +314,12 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
   // "How to apply" on a posted card works for anyone, any time.
   if (interaction.isButton() && id === APPLY_ID) {
     const fields = interaction.message.embeds[0]?.fields ?? [];
-    await interaction.reply({ content: applyGuide(fields), ephemeral: true });
+    await interaction.reply({ ...notice(applyGuide(fields), { title: 'How to apply this setup' }), ephemeral: true });
     return true;
   }
 
   if (!env.SETTINGS_CHANNEL_ID) {
-    await interaction.reply({ content: 'Settings sharing is not set up yet.', ephemeral: true });
+    await interaction.reply({ ...notice('Settings sharing is not set up yet.', { tone: 'muted' }), ephemeral: true });
     return true;
   }
   const userId = interaction.user.id;
@@ -324,7 +330,10 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
   if (interaction.isButton() && id === SETTINGS_BUTTON_ID) {
     const wait = cooldownMinutesLeft(lastShare.get(userId), now);
     if (wait > 0) {
-      await interaction.reply({ content: `You shared a setup recently. You can share another in ${wait} minute${wait === 1 ? '' : 's'}.`, ephemeral: true });
+      await interaction.reply({
+        ...notice(`You shared a setup recently. You can share another in ${wait} minute${wait === 1 ? '' : 's'}.`, { tone: 'warning' }),
+        ephemeral: true,
+      });
       return true;
     }
     const draft = newDraft(now);
@@ -370,7 +379,7 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
     if (id === POST_ID) {
       const wait = cooldownMinutesLeft(lastShare.get(userId), now);
       if (wait > 0) {
-        await interaction.update(ended(`You shared a setup recently. You can share another in ${wait} minute${wait === 1 ? '' : 's'}.`));
+        await interaction.update(ended(`You shared a setup recently. You can share another in ${wait} minute${wait === 1 ? '' : 's'}.`, 'warning'));
         return true;
       }
       try {
@@ -383,11 +392,11 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
         lastShare.set(userId, now);
         drafts.delete(userId);
         logger.info(`[TCP Settings] ${userId} shared "${draft.name}"`);
-        await interaction.update(ended(`Posted! Thanks for sharing: ${message.url}`));
+        await interaction.update(ended(`Posted! Thanks for sharing: ${message.url}`, 'success'));
         await repostPanel(interaction.client, channel, SETTINGS_BUTTON_ID, buildSettingsPanel());
       } catch (error) {
         logger.error({ err: error }, '[TCP Settings ERROR] Could not post a shared setup');
-        await interaction.update(ended('Something went wrong posting your setup. Please try again later.'));
+        await interaction.update(ended('Something went wrong posting your setup. Please try again later.', 'danger'));
       }
       return true;
     }
@@ -402,8 +411,10 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
     const result = readRecoilForm({ name: value('name'), vertical: value('vertical'), horizontal: value('horizontal'), turn: value('turn'), inGame: value('inGame') });
     if ('error' in result) {
       await interaction.update({
-        content: `**Step 2 of 3 · Anti-recoil**\n${result.error} Press the button to fix it; what you typed is kept.`,
-        embeds: [],
+        content: '',
+        embeds: [
+          tcpEmbed({ title: 'Share my settings · Step 2 of 3', description: `${result.error} Press the button to fix it; what you typed is kept.`, tone: 'warning' }),
+        ],
         components: [
           new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder().setCustomId(EDIT_RECOIL_ID).setLabel('Fix anti-recoil').setStyle(ButtonStyle.Primary),
@@ -425,7 +436,7 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
     for (const key of ['adsSens', 'precision', 'easing', 'fireSens', 'notes']) draft.typed[key] = value(key);
     const result = readAdsForm({ adsSens: value('adsSens'), precision: value('precision'), easing: value('easing'), fireSens: value('fireSens'), notes: value('notes') });
     if ('error' in result) {
-      await interaction.update(previewScreen(draft, author, thumbnail, `⚠️ ${result.error}`));
+      await interaction.update(previewScreen(draft, author, thumbnail, result.error));
       return true;
     }
     for (const key of ADS_KEYS) delete draft.values[key];

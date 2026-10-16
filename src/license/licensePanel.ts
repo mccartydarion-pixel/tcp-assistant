@@ -29,6 +29,7 @@ import { codeLine, isOnTrial, joinLines, subscriptionLine, summarizeSubscription
 import { describeMemberLicence } from './memberLicence.js';
 import { startReminderLoop } from './reminders.js';
 import { ensurePanel } from '../bot/panels.js';
+import { notice } from '../bot/embeds.js';
 import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
 
 const PREFIX = 'tcp-license:';
@@ -173,7 +174,7 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
   if (!isAdmin) return false;
 
   if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
-    await interaction.reply({ content: 'Only the owner can use this panel.', ephemeral: true });
+    await interaction.reply({ ...notice('Only the owner can use this panel.', { tone: 'danger' }), ephemeral: true });
     return true;
   }
   const now = Date.now();
@@ -236,7 +237,10 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
     await records.setExpiry(userId, now);
     logger.info(`[TCP License] Owner ended access for ${userId}`);
     await interaction.reply({
-      content: `Access ended for <@${userId}>. They cannot generate new codes. A code already on their Zen keeps working until its power-ups run out.`,
+      ...notice(`Access ended for <@${userId}>. They cannot generate new codes. A code already on their Zen keeps working until its power-ups run out.`, {
+        title: 'Access ended',
+        tone: 'danger',
+      }),
       ephemeral: true,
       allowedMentions: { parse: [] },
     });
@@ -247,14 +251,14 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
     const userId = id.slice(ADMIN_DAYS_MODAL_ID.length);
     const days = parseDays(interaction.fields.getTextInputValue(ADMIN_DAYS_INPUT_ID));
     if (days === null) {
-      await interaction.reply({ content: 'Enter a whole number of days between 1 and 3650.', ephemeral: true });
+      await interaction.reply({ ...notice('Enter a whole number of days between 1 and 3650.', { tone: 'warning' }), ephemeral: true });
       return true;
     }
     const expiresAt = extendExpiry(await records.getExpiry(userId), days, now);
     await records.setExpiry(userId, expiresAt);
     logger.info(`[TCP License] Owner added ${days} days for ${userId}`);
     await interaction.reply({
-      content: `Added ${days} day${days === 1 ? '' : 's'} for <@${userId}>. ${describeSubscription(expiresAt, now)}`,
+      ...notice(`Added ${days} day${days === 1 ? '' : 's'} for <@${userId}>. ${describeSubscription(expiresAt, now)}`, { title: 'Days added', tone: 'success' }),
       ephemeral: true,
       allowedMentions: { parse: [] },
     });
@@ -280,38 +284,46 @@ async function grantMemberRole(interaction: Interaction, userId: string): Promis
   }
 }
 
+/**
+ * A member's licence as an embed: days left, power-ups a new code would get, codes used. For the My licence
+ * button and for licence tickets. Null when the licence records are not open.
+ */
+export async function memberLicenceEmbed(userId: string, heading: string): Promise<EmbedBuilder | null> {
+  if (!store) return null;
+  const now = Date.now();
+  const subscription = await store.getSubscription(userId);
+  const summary = describeMemberLicence({
+    expiresAt: subscription?.expiresAt ?? null,
+    hadTrial: subscription?.trialGrantedAt != null,
+    onTrial: subscription !== null && isOnTrial(subscription, env.LICENSE_TRIAL_DAYS),
+    codesToday: await store.countCodesSince(userId, now - DAY_MS),
+    maxPerDay: env.LICENSE_MAX_CODES,
+    latest: await store.latestCodeFor(userId),
+    now,
+    trialDays: env.LICENSE_TRIAL_DAYS,
+    isOwner: Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID,
+  });
+  return new EmbedBuilder()
+    .setTitle(`${heading}: ${summary.title}`)
+    .setColor(summary.active ? PANEL_COLOUR : 0x868e96)
+    .setDescription(summary.lines.join('\n'));
+}
+
 /** Handles the licence panels' buttons, menus and forms. Returns true when the interaction was one of ours. */
 export async function handleLicenseInteraction(interaction: Interaction): Promise<boolean> {
   if (!interaction.isButton() && !interaction.isModalSubmit() && !interaction.isUserSelectMenu()) return false;
   if (!interaction.customId.startsWith(PREFIX)) return false;
 
   if (!licenseKey || !store) {
-    await interaction.reply({ content: 'The licence generator is not set up yet. Please let the owner know.', ephemeral: true });
+    await interaction.reply({ ...notice('The licence generator is not set up yet. Please let the owner know.', { tone: 'muted' }), ephemeral: true });
     return true;
   }
   if (await handleAdmin(interaction, store)) return true;
 
   if (interaction.isButton() && interaction.customId === MY_LICENCE_ID) {
     await interaction.deferReply({ ephemeral: true });
-    const userId = interaction.user.id;
-    const now = Date.now();
-    const subscription = await store.getSubscription(userId);
-    const summary = describeMemberLicence({
-      expiresAt: subscription?.expiresAt ?? null,
-      hadTrial: subscription?.trialGrantedAt != null,
-      onTrial: subscription !== null && isOnTrial(subscription, env.LICENSE_TRIAL_DAYS),
-      codesToday: await store.countCodesSince(userId, now - DAY_MS),
-      maxPerDay: env.LICENSE_MAX_CODES,
-      latest: await store.latestCodeFor(userId),
-      now,
-      trialDays: env.LICENSE_TRIAL_DAYS,
-      isOwner: Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID,
-    });
-    const embed = new EmbedBuilder()
-      .setTitle(`Your licence: ${summary.title}`)
-      .setColor(summary.active ? PANEL_COLOUR : 0x868e96)
-      .setDescription(summary.lines.join('\n'));
-    await interaction.editReply({ embeds: [embed] });
+    const embed = await memberLicenceEmbed(interaction.user.id, 'Your licence');
+    await interaction.editReply({ embeds: embed ? [embed] : notice('The licence generator is not set up yet.', { tone: 'muted' }).embeds });
     return true;
   }
 
@@ -337,7 +349,9 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   const challenge = parseChallenge(interaction.fields.getTextInputValue(LICENSE_INPUT_ID));
   if (challenge === null) {
     await interaction.reply({
-      content: 'That is not the number from the Zen. It is exactly five digits, shown on the lock screen. Press **Generate** to try again.',
+      ...notice('That is not the number from the Zen. It is exactly five digits, shown on the lock screen. Press **Generate** to try again.', {
+        tone: 'warning',
+      }),
       ephemeral: true,
     });
     return true;
@@ -363,7 +377,12 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   const tier = isOwner ? 5 : tierForDaysLeft(days);
   if (tier === null) {
     logger.info(`[TCP License] Refused ${userId}: no active subscription`);
-    await interaction.editReply('Your T.C.P. trial or subscription has ended, so no new code can be generated. Open a support ticket to renew.');
+    await interaction.editReply(
+      notice('Your T.C.P. trial or subscription has ended, so no new code can be generated. Open a support ticket to renew.', {
+        title: 'Subscription ended',
+        tone: 'muted',
+      }),
+    );
     return true;
   }
 
@@ -375,7 +394,9 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   const decision = decideLicense({ alreadyIssued, issuedToday, maxPerDay: env.LICENSE_MAX_CODES, isOwner });
   if (decision === 'LIMIT') {
     logger.info(`[TCP License] Daily limit reached for ${userId}`);
-    await interaction.editReply(`You have generated ${issuedToday} codes in the last day, which is the limit. Try again tomorrow, or open a support ticket.`);
+    await interaction.editReply(
+      notice(`You have generated ${issuedToday} codes in the last day, which is the limit. Try again tomorrow, or open a support ticket.`, { tone: 'warning' }),
+    );
     return true;
   }
   if (decision === 'ISSUE') await store.recordCode(userId, challenge, tier);
@@ -405,7 +426,9 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
       const logChannel = await interaction.client.channels.fetch(env.LOG_CHANNEL_ID);
       if (logChannel && logChannel.isTextBased() && 'send' in logChannel) {
         await logChannel.send({
-          content: `Licence generated by <@${userId}> for number \`${challenge}\`: ${TIER_USES[tier]} power-ups, ${isOwner ? 'owner' : `${days} days left`}.`,
+          ...notice(`Licence generated by <@${userId}> for number \`${challenge}\`: ${TIER_USES[tier]} power-ups, ${isOwner ? 'owner' : `${days} days left`}.`, {
+            tone: 'success',
+          }),
           allowedMentions: { parse: [] },
         });
       }

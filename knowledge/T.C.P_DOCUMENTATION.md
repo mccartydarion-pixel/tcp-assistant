@@ -378,6 +378,20 @@ The bot sends you a direct message three days before your trial or subscription 
 - **"Generated codes in the last day ... limit"**: a member can generate codes for up to three new numbers per day. Asking again for the same number does not count.
 - **Code does not work**: make sure the number typed into Discord is exactly the one on the Zen, and re-enter the code carefully.
 
+## Getting Help on Discord
+
+### Asking the assistant
+
+Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. You can also @mention the assistant anywhere, or use the /tcp ask command.
+
+### Opening a support ticket
+
+Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **Licence & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the owner can see. For setup and bug tickets the assistant takes a first look; press **Call the owner** if you need them. Licence and payment tickets go straight to the owner. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message.
+
+### The Get started button
+
+New members: press **Get started** in the welcome channel. Pick your controller (PlayStation or Xbox) and say whether you have T.C.P on your Zen yet, and you get a checklist with the right button names and links, plus a PlayStation or Xbox role.
+
 ## Limits
 
 - T.C.P cannot remove DayZ's random recoil, weapon sway, stamina effects, latency or desync.

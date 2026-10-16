@@ -14,6 +14,7 @@ import {
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { ensurePanel, fetchSendableChannel, repostPanel } from '../bot/panels.js';
+import { finalNotice, notice, tcpEmbed } from '../bot/embeds.js';
 
 // Bug reports, as a short private wizard (area and build, then a form, then a preview), posted as a card
 // in BUG_REPORT_CHANNEL_ID. The owner sets each card's status with its buttons, and the reporter gets a
@@ -176,8 +177,8 @@ function selectRow(id: string, placeholder: string, options: readonly string[], 
 
 function stepOne(draft: BugDraft) {
   return {
-    content: '**Report a bug · Step 1 of 2**\nWhich feature is it, and which build do you use?',
-    embeds: [],
+    content: '',
+    embeds: [tcpEmbed({ title: 'Report a bug · Step 1 of 2', description: 'Which feature is it, and which build do you use?' })],
     components: [
       selectRow(AREA_SELECT_ID, 'Feature', BUG_AREAS, draft.area),
       selectRow(BUILD_SELECT_ID, 'Build', BUG_BUILDS, draft.build),
@@ -208,10 +209,10 @@ function bugModal(draft: BugDraft) {
     );
 }
 
-function preview(draft: BugDraft, reporterId: string, author: { name: string; iconURL?: string }, notice = '') {
+function preview(draft: BugDraft, reporterId: string, author: { name: string; iconURL?: string }) {
   return {
-    content: [notice, '**Preview.** Check your report, then submit it.'].filter(Boolean).join('\n'),
-    embeds: [buildBugCard(draft, reporterId, author)],
+    content: '',
+    embeds: [tcpEmbed({ title: 'Preview', description: 'Check your report, then submit it.' }), buildBugCard(draft, reporterId, author)],
     components: [
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId(SUBMIT_ID).setLabel('Submit report').setStyle(ButtonStyle.Danger),
@@ -222,7 +223,7 @@ function preview(draft: BugDraft, reporterId: string, author: { name: string; ic
   };
 }
 
-const ended = (content: string) => ({ content, embeds: [], components: [] });
+const ended = (text: string, tone: 'brand' | 'success' | 'danger' = 'brand') => finalNotice(text, { tone });
 
 export async function handleBugInteraction(interaction: Interaction): Promise<boolean> {
   if (!interaction.isButton() && !interaction.isModalSubmit() && !interaction.isStringSelectMenu()) return false;
@@ -232,7 +233,7 @@ export async function handleBugInteraction(interaction: Interaction): Promise<bo
   // Status buttons on a posted card: owner only.
   if (interaction.isButton() && id.startsWith(STATUS_PREFIX)) {
     if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
-      await interaction.reply({ content: 'Only the owner can change a report status.', ephemeral: true });
+      await interaction.reply({ ...notice('Only the owner can change a report status.', { tone: 'danger' }), ephemeral: true });
       return true;
     }
     const status = id.slice(STATUS_PREFIX.length) as BugStatus;
@@ -243,7 +244,11 @@ export async function handleBugInteraction(interaction: Interaction): Promise<bo
     if (reporter && reporter !== interaction.user.id) {
       try {
         const user = await interaction.client.users.fetch(reporter);
-        await user.send(`Your T.C.P bug report **${card.title?.replace(/^Bug: /, '') ?? ''}** is now: **${BUG_STATUSES[status].label}**.\n${interaction.message.url}`);
+        await user.send(
+          notice(`Your report **${card.title?.replace(/^Bug: /, '') ?? ''}** is now: **${BUG_STATUSES[status].label}**.\n${interaction.message.url}`, {
+            title: 'Bug report update',
+          }),
+        );
       } catch (error) {
         logger.info({ err: error }, `[TCP Bugs] Could not DM reporter ${reporter}`);
       }
@@ -253,7 +258,7 @@ export async function handleBugInteraction(interaction: Interaction): Promise<bo
   }
 
   if (!env.BUG_REPORT_CHANNEL_ID) {
-    await interaction.reply({ content: 'Bug reports are not set up yet.', ephemeral: true });
+    await interaction.reply({ ...notice('Bug reports are not set up yet.', { tone: 'muted' }), ephemeral: true });
     return true;
   }
   const userId = interaction.user.id;
@@ -263,7 +268,10 @@ export async function handleBugInteraction(interaction: Interaction): Promise<bo
   if (interaction.isButton() && id === BUG_BUTTON_ID) {
     const wait = cooldownMinutesLeft(lastReport.get(userId), now);
     if (wait > 0) {
-      await interaction.reply({ content: `You reported a bug recently. You can send another in ${wait} minute${wait === 1 ? '' : 's'}.`, ephemeral: true });
+      await interaction.reply({
+        ...notice(`You reported a bug recently. You can send another in ${wait} minute${wait === 1 ? '' : 's'}.`, { tone: 'warning' }),
+        ephemeral: true,
+      });
       return true;
     }
     const draft: BugDraft = { summary: '', happened: '', expected: '', steps: '', version: '', createdAt: now };
@@ -314,11 +322,11 @@ export async function handleBugInteraction(interaction: Interaction): Promise<bo
         lastReport.set(userId, now);
         drafts.delete(userId);
         logger.info(`[TCP Bugs] ${userId} reported "${draft.summary}"`);
-        await interaction.update(ended(`Thanks, your report is in: ${message.url}\nYou will get a DM when its status changes.`));
+        await interaction.update(ended(`Thanks, your report is in: ${message.url}\nYou will get a DM when its status changes.`, 'success'));
         await repostPanel(interaction.client, channel, BUG_BUTTON_ID, buildBugPanel());
       } catch (error) {
         logger.error({ err: error }, '[TCP Bugs ERROR] Could not post a bug report');
-        await interaction.update(ended('Something went wrong sending your report. Please try again later.'));
+        await interaction.update(ended('Something went wrong sending your report. Please try again later.', 'danger'));
       }
       return true;
     }
@@ -331,8 +339,8 @@ export async function handleBugInteraction(interaction: Interaction): Promise<bo
   const result = readBugForm(draft);
   if ('error' in result) {
     await interaction.update({
-      content: `**Report a bug · Step 2 of 2**\n${result.error} Press the button to fix it; what you typed is kept.`,
-      embeds: [],
+      content: '',
+      embeds: [tcpEmbed({ title: 'Report a bug · Step 2 of 2', description: `${result.error} Press the button to fix it; what you typed is kept.`, tone: 'warning' })],
       components: [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
           new ButtonBuilder().setCustomId(EDIT_ID).setLabel('Fix report').setStyle(ButtonStyle.Primary),

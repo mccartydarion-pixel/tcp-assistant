@@ -1,5 +1,4 @@
 import {
-  EmbedBuilder,
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
   type SlashCommandSubcommandsOnlyBuilder,
@@ -11,6 +10,9 @@ import { SpecialIntentRouter } from '../../ai/specialIntentRouter.js';
 import { ConversationMemory, detectFollowUpIntent } from '../../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../../ai/question.js';
 import { reportUnanswered } from '../../ai/unanswered.js';
+import { answerMessages, notice, tcpEmbed } from '../embeds.js';
+import { serverMapFor } from '../../server/serverMap.js';
+import { ticketAudience } from '../../tickets/ticketSystem.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -51,17 +53,16 @@ export function createCommands(
       async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         if (subcommand === 'help') {
-          await interaction.reply('Use `/tcp ask` for a technical question or `/tcp status` to inspect assistant readiness. You can also mention T.C.P. Assistant in a support channel.');
+          await interaction.reply({ embeds: [helpEmbed()], ephemeral: true });
           return;
         }
 
         if (subcommand === 'status') {
           if (env.OWNER_USER_ID && interaction.user.id !== env.OWNER_USER_ID) {
-            await interaction.reply({ content: 'This command is restricted to the configured owner.', ephemeral: true });
+            await interaction.reply({ ...notice('Only the owner can use this command.', { tone: 'danger' }), ephemeral: true });
             return;
           }
-          const embed = new EmbedBuilder()
-            .setTitle('T.C.P. Assistant Status')
+          const embed = tcpEmbed({ title: 'T.C.P. Assistant Status' })
             .addFields(
               { name: 'Discord', value: 'ONLINE', inline: true },
               { name: 'OpenAI', value: env.OPENAI_API_KEY ? 'CONFIGURED' : 'NOT CONFIGURED', inline: true },
@@ -78,13 +79,13 @@ export function createCommands(
         }
 
         if (!interaction.guildId) {
-          await interaction.reply('This command is only available inside a server.');
+          await interaction.reply(notice('This command only works inside the T.C.P server.', { tone: 'muted' }));
           return;
         }
 
         if (subcommand === 'reset-session') {
           memory.reset(interaction.guildId, interaction.channelId, interaction.user.id);
-          await interaction.reply('Your T.C.P. support session has been reset.');
+          await interaction.reply({ ...notice('Your T.C.P. support session has been reset. Ask away!', { tone: 'success' }), ephemeral: true });
           return;
         }
 
@@ -104,9 +105,14 @@ export function createCommands(
         const followUpIntent = memory.updateFromQuestion(session, extractQuestionDetails(question), question);
         await interaction.deferReply();
         loggerRequest();
-        const result = await assistant.answerDetailed(question, session.turns, interaction.client.user?.id, session.tuning, followUpIntent);
+        // The answer is public: only channels the asker and its readers can both see (the ticket's member in a ticket).
+        const audience = interaction.guild ? await ticketAudience(interaction.guild, interaction.channelId) : null;
+        const serverMap = serverMapFor(interaction.guild, interaction.inCachedGuild() ? interaction.member : null, audience);
+        const result = await assistant.answerDetailed(question, session.turns, interaction.client.user?.id, session.tuning, followUpIntent, serverMap);
         memory.record(session, question, result.text);
-        await interaction.editReply(result.text);
+        const [first, ...rest] = answerMessages(result.text, { title: 'T.C.P. Assistant' });
+        await interaction.editReply(first!);
+        for (const part of rest) await interaction.followUp(part);
         if (result.unanswered) {
           await reportUnanswered(interaction.client, {
             question,
@@ -118,6 +124,18 @@ export function createCommands(
       },
     },
   ];
+}
+
+/** What the assistant can do, for /tcp help. */
+export function helpEmbed() {
+  const lines = [
+    env.HELP_CHANNEL_ID
+      ? `**Ask a question:** post it in <#${env.HELP_CHANNEL_ID}>, no @mention needed, or use \`/tcp ask\`.`
+      : '**Ask a question:** @mention **T.C.P. Assistant**, or use `/tcp ask`.',
+    '**Open a ticket:** for anything the assistant cannot solve, press **Open a ticket** on the support panel.',
+    '**Start over:** `/tcp reset-session` clears your conversation with the assistant.',
+  ];
+  return tcpEmbed({ title: 'T.C.P. Assistant', description: lines.join('\n') });
 }
 
 function loggerRequest(): void {
