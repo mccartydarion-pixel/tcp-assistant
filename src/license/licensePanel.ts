@@ -30,8 +30,8 @@ import { startReminderLoop } from './reminders.js';
 import { ensurePanel } from '../bot/panels.js';
 import { notice } from '../bot/embeds.js';
 import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
-import { paymentButtons, paymentsEnabled, priceText, renewsAutomatically, subscriptionSummary, yearlyPriceText } from '../payments/stripeBilling.js';
-import { eliteRoleName, isEliteMember, setEliteRole } from '../premium/premium.js';
+import { manageButton, paymentButtons, paymentsEnabled, planButtons, priceText, renewsAutomatically, subscriptionSummary, yearlyPriceText } from '../payments/stripeBilling.js';
+import { eliteRoleName, isEliteMember, premiumAvailable, premiumDownloadButton, setEliteRole } from '../premium/premium.js';
 
 const PREFIX = 'tcp-license:';
 export const LICENSE_BUTTON_ID = `${PREFIX}generate`;
@@ -84,12 +84,22 @@ export function buildLicensePanel() {
           : []),
       ].join('\n'),
     );
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+  return { embeds: [embed], components: licencePanelRows() };
+}
+
+/**
+ * The panel's buttons, one purpose per row: what members use (green), the plans (blue), their account (grey).
+ * Rows without buttons are left out, so with payments off it is Generate and My licence.
+ */
+export function licencePanelRows(): ActionRowBuilder<ButtonBuilder>[] {
+  const use = [
     new ButtonBuilder().setCustomId(LICENSE_BUTTON_ID).setLabel('Generate').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(MY_LICENCE_ID).setLabel('My licence').setStyle(ButtonStyle.Secondary),
-  );
-  const payments = paymentButtons();
-  return { embeds: [embed], components: payments ? [row, payments] : [row] };
+    ...(paymentsEnabled() && premiumAvailable() ? [premiumDownloadButton()] : []),
+  ];
+  const plans = planButtons();
+  const manage = manageButton();
+  const account = [new ButtonBuilder().setCustomId(MY_LICENCE_ID).setLabel('My licence').setStyle(ButtonStyle.Secondary), ...(manage ? [manage] : [])];
+  return [use, plans, account].filter((row) => row.length > 0).map((row) => new ActionRowBuilder<ButtonBuilder>().addComponents(...row));
 }
 
 /** How a member renews: Subscribe when payments are on, else a ticket. */

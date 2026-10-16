@@ -147,3 +147,17 @@ describe('switching from monthly to yearly', () => {
     expect(grantedDays).toEqual([]);
   });
 });
+
+describe('licence panel layout', () => {
+  it('puts one purpose on each row: use, plans, account', async () => {
+    const { licencePanelRows } = await import('../src/license/licensePanel.js');
+    const labels = () => licencePanelRows().map((row) => row.toJSON().components.map((button) => ('label' in button ? button.label : '')));
+    // Payments set up (as in the tests above): Generate, then the plan, then the account buttons.
+    usePaymentsForTests({ stripe: new Stripe('sk_test_not_used'), store: {} as PaymentStore, grantDays: async () => 0 });
+    const rows = labels();
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toEqual(['Generate']);
+    expect(rows[1]![0]).toMatch(/^Subscribe/);
+    expect(rows[2]).toEqual(['My licence', 'Manage subscription']);
+  });
+});

@@ -38,6 +38,8 @@ let hooks: PaymentHooks = {};
 let client: Client | null = null;
 let priceLabel = '';
 let yearlyLabel = '';
+/** "save $14.00" when a year costs less than twelve months, else empty. */
+let yearlySaving = '';
 
 /** Whether members can subscribe: Stripe keys and the price are set, and the records are open. */
 export function paymentsEnabled(): boolean {
@@ -93,8 +95,10 @@ export async function initPayments(discord: Client, deps: { grantDays: GrantDays
     if (env.STRIPE_YEARLY_PRICE_ID) {
       try {
         const yearly = await stripe.prices.retrieve(env.STRIPE_YEARLY_PRICE_ID);
-        if (yearly.recurring) yearlyLabel = formatPrice(yearly.unit_amount, yearly.currency, yearly.recurring.interval, yearly.recurring.interval_count);
-        else logger.warn('[TCP Payments] STRIPE_YEARLY_PRICE_ID is a one-off price, so the Yearly button is off.');
+        if (yearly.recurring) {
+          yearlyLabel = formatPrice(yearly.unit_amount, yearly.currency, yearly.recurring.interval, yearly.recurring.interval_count);
+          yearlySaving = savingText(price, yearly);
+        } else logger.warn('[TCP Payments] STRIPE_YEARLY_PRICE_ID is a one-off price, so the Yearly button is off.');
       } catch (error) {
         logger.warn({ err: error }, '[TCP Payments] Could not load STRIPE_YEARLY_PRICE_ID, so the Yearly button is off.');
       }
@@ -108,13 +112,36 @@ export async function initPayments(discord: Client, deps: { grantDays: GrantDays
   }
 }
 
-/** The Subscribe and Manage subscription buttons, or null when payments are off. */
+/** How much a year saves against twelve monthly payments, as "save $14.00", or empty. */
+function savingText(monthly: Stripe.Price, yearly: Stripe.Price): string {
+  if (monthly.recurring?.interval !== 'month' || monthly.recurring.interval_count !== 1 || yearly.recurring?.interval !== 'year') return '';
+  if (monthly.currency !== yearly.currency || monthly.unit_amount === null || yearly.unit_amount === null) return '';
+  const saving = monthly.unit_amount * 12 - yearly.unit_amount;
+  return saving > 0 ? `save ${formatPrice(saving, yearly.currency)}` : '';
+}
+
+/** Subscribe, and Yearly when that plan is on; empty when payments are off. */
+export function planButtons(): ButtonBuilder[] {
+  if (!paymentsEnabled()) return [];
+  return [
+    new ButtonBuilder().setCustomId(SUBSCRIBE_ID).setLabel(subscribeLabel()).setStyle(ButtonStyle.Primary),
+    ...(yearlyLabel
+      ? [new ButtonBuilder().setCustomId(SUBSCRIBE_YEARLY_ID).setLabel(`Yearly · ${yearlyLabel}${yearlySaving ? ` · ${yearlySaving}` : ''}`).setStyle(ButtonStyle.Primary)]
+      : []),
+  ];
+}
+
+/** Manage subscription, or null when payments are off. */
+export function manageButton(): ButtonBuilder | null {
+  return paymentsEnabled() ? new ButtonBuilder().setCustomId(MANAGE_ID).setLabel('Manage subscription').setStyle(ButtonStyle.Secondary) : null;
+}
+
+/** The plan, Manage subscription and Download Premium buttons in one row, for replies; null when payments are off. */
 export function paymentButtons(): ActionRowBuilder<ButtonBuilder> | null {
   if (!paymentsEnabled()) return null;
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId(SUBSCRIBE_ID).setLabel(subscribeLabel()).setStyle(ButtonStyle.Primary),
-    ...(yearlyLabel ? [new ButtonBuilder().setCustomId(SUBSCRIBE_YEARLY_ID).setLabel(`Yearly · ${yearlyLabel}`).setStyle(ButtonStyle.Primary)] : []),
-    new ButtonBuilder().setCustomId(MANAGE_ID).setLabel('Manage subscription').setStyle(ButtonStyle.Secondary),
+    ...planButtons(),
+    manageButton()!,
     ...(premiumAvailable() ? [premiumDownloadButton()] : []),
   );
 }
