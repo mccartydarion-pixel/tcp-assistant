@@ -98,16 +98,6 @@ export function parseDays(input: string): number | null {
   return days;
 }
 
-/**
- * Whether to hand a member the free trial now: only when they are not the owner, have never had a
- * trial before, and have no active subscription. Granting it again on every empty subscription would
- * make the licence free forever, so it is once per member.
- */
-export function shouldGrantTrial(input: { daysLeft: number; hadTrial: boolean; isOwner: boolean }): boolean {
-  if (input.isOwner || input.hadTrial) return false;
-  return input.daysLeft <= 0;
-}
-
 export type LicenseDecision = 'REISSUE' | 'ISSUE' | 'LIMIT';
 
 /**

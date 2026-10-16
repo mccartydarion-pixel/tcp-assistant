@@ -9,10 +9,11 @@ export interface MemberLicenceInput {
   maxPerDay: number;
   latest: CodeRecord | null;
   now: number;
-  trialDays: number;
   isOwner: boolean;
   /** How to renew, for an ended subscription. Defaults to opening a ticket. */
   renewHint?: string;
+  /** How to join, for a member who has never had days. Defaults to opening a ticket. */
+  joinHint?: string;
 }
 
 /** What the "My licence" button tells a member about their own subscription. */
@@ -24,7 +25,7 @@ export function describeMemberLicence(input: MemberLicenceInput): { title: strin
   if (input.expiresAt === null && !input.hadTrial) {
     return {
       title: 'No subscription yet',
-      lines: [`Press **Generate** to start your free **${input.trialDays}-day** trial and get your first code.`],
+      lines: [`Codes are for **Elite Supporters**. ${input.joinHint ?? 'Open a support ticket to join.'}`],
       active: false,
     };
   }

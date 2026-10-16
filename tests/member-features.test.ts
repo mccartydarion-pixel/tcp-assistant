@@ -15,13 +15,15 @@ const DAY = 24 * 60 * 60 * 1000;
 const now = 1_700_000_000_000;
 
 describe('my licence', () => {
-  const base = { hadTrial: false, onTrial: false, codesToday: 0, maxPerDay: 3, latest: null, now, trialDays: 14, isOwner: false };
+  const base = { hadTrial: false, onTrial: false, codesToday: 0, maxPerDay: 3, latest: null, now, isOwner: false };
 
-  it('points a new member at the free trial', () => {
-    const result = describeMemberLicence({ ...base, expiresAt: null });
+  it('tells a new member codes are for Elite Supporters, and how to join', () => {
+    const result = describeMemberLicence({ ...base, expiresAt: null, joinHint: 'Press **Subscribe** on the licence panel to join.' });
     expect(result.title).toBe('No subscription yet');
-    expect(result.lines[0]).toContain('free **14-day** trial');
+    expect(result.lines[0]).toBe('Codes are for **Elite Supporters**. Press **Subscribe** on the licence panel to join.');
+    expect(result.lines.join('\n')).not.toMatch(/trial/i);
     expect(result.active).toBe(false);
+    expect(describeMemberLicence({ ...base, expiresAt: null }).lines[0]).toContain('Open a support ticket to join.');
   });
 
   it('shows days left, the power-ups a code would get, and codes used', () => {
@@ -120,10 +122,11 @@ describe('welcome guide', () => {
   });
 
   it('links the right channels in each guide', () => {
-    expect(welcomeGuide('licence', { licence: '111' }, 14)).toContain('<#111>');
-    expect(welcomeGuide('licence', { licence: '111' }, 14)).toContain('**14-day** trial');
-    expect(welcomeGuide('help', { bugs: '222' }, 14)).toContain('<#222>');
-    expect(welcomeGuide('help', {}, 14)).not.toContain('Report it');
+    expect(welcomeGuide('licence', { licence: '111' })).toContain('<#111>');
+    expect(welcomeGuide('licence', { licence: '111' })).toContain('Codes are for **Elite Supporters**');
+    expect(welcomeGuide('licence', { licence: '111' })).not.toMatch(/trial/i);
+    expect(welcomeGuide('help', { bugs: '222' })).toContain('<#222>');
+    expect(welcomeGuide('help', {})).not.toContain('Report it');
   });
 });
 

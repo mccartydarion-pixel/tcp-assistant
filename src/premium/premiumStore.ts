@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { env } from '../config/env.js';
+import type { Mark } from './fingerprint.js';
 
 /**
  * The premium script file subscribers receive. It is uploaded by the owner with /tcp release and kept in the
@@ -14,11 +15,45 @@ export interface PremiumFile {
   uploadedBy: string;
 }
 
+/** The fingerprint one member's copy of one upload carries. */
+export interface MarkRecord extends Mark {
+  discordUserId: string;
+  fileSha: string;
+  createdAt: number;
+}
+
 export interface PremiumStore {
   readonly kind: 'postgres' | 'sqlite';
   init(): Promise<void>;
   get(): Promise<PremiumFile | null>;
   save(file: PremiumFile): Promise<void>;
+  /** The mark this member's copy of this upload carries, if they have been sent one. */
+  getMark(discordUserId: string, fileSha: string): Promise<Mark | null>;
+  /**
+   * Gives this member this mark for this upload, unless they already have one. Returns the mark they now
+   * have, or null when another member already holds the same name and value (pick another and try again).
+   */
+  claimMark(discordUserId: string, fileSha: string, mark: Mark): Promise<Mark | null>;
+  listMarks(): Promise<MarkRecord[]>;
+}
+
+// One mark per member per upload, and no two members with the same name and value.
+const MARKS_TABLE = `
+  CREATE TABLE IF NOT EXISTS premium_marks (
+    discord_user_id TEXT NOT NULL,
+    file_sha TEXT NOT NULL,
+    mark_name TEXT NOT NULL,
+    mark_value INTEGER NOT NULL,
+    created_at BIGINT NOT NULL,
+    PRIMARY KEY (discord_user_id, file_sha),
+    UNIQUE (mark_name, mark_value)
+  );
+`;
+
+type MarkRow = { discord_user_id: string; file_sha: string; mark_name: string; mark_value: number; created_at: number | string };
+
+function toMarkRecord(row: MarkRow): MarkRecord {
+  return { discordUserId: row.discord_user_id, fileSha: row.file_sha, name: row.mark_name, value: Number(row.mark_value), createdAt: Number(row.created_at) };
 }
 
 const KEY = 'release';
@@ -42,6 +77,7 @@ class PostgresPremiumStore implements PremiumStore {
         uploaded_by TEXT NOT NULL
       );
     `);
+    await this.pool.query(MARKS_TABLE);
   }
 
   async get(): Promise<PremiumFile | null> {
@@ -58,6 +94,28 @@ class PostgresPremiumStore implements PremiumStore {
          uploaded_at = EXCLUDED.uploaded_at, uploaded_by = EXCLUDED.uploaded_by`,
       [KEY, file.fileName, file.content, file.sha256, file.uploadedAt, file.uploadedBy],
     );
+  }
+
+  async getMark(discordUserId: string, fileSha: string): Promise<Mark | null> {
+    const result = await this.pool.query('SELECT mark_name, mark_value FROM premium_marks WHERE discord_user_id = $1 AND file_sha = $2', [
+      discordUserId,
+      fileSha,
+    ]);
+    const row = result.rows[0];
+    return row ? { name: row.mark_name, value: Number(row.mark_value) } : null;
+  }
+
+  async claimMark(discordUserId: string, fileSha: string, mark: Mark): Promise<Mark | null> {
+    await this.pool.query(
+      'INSERT INTO premium_marks (discord_user_id, file_sha, mark_name, mark_value, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING',
+      [discordUserId, fileSha, mark.name, mark.value, Date.now()],
+    );
+    return this.getMark(discordUserId, fileSha);
+  }
+
+  async listMarks(): Promise<MarkRecord[]> {
+    const result = await this.pool.query('SELECT discord_user_id, file_sha, mark_name, mark_value, created_at FROM premium_marks');
+    return result.rows.map(toMarkRecord);
   }
 }
 
@@ -78,6 +136,7 @@ class SqlitePremiumStore implements PremiumStore {
         uploaded_by TEXT NOT NULL
       );
     `);
+    this.db.exec(MARKS_TABLE);
   }
 
   async get(): Promise<PremiumFile | null> {
@@ -96,6 +155,24 @@ class SqlitePremiumStore implements PremiumStore {
            uploaded_at = excluded.uploaded_at, uploaded_by = excluded.uploaded_by`,
       )
       .run(KEY, file.fileName, file.content, file.sha256, file.uploadedAt, file.uploadedBy);
+  }
+
+  async getMark(discordUserId: string, fileSha: string): Promise<Mark | null> {
+    const row = this.db.prepare('SELECT mark_name, mark_value FROM premium_marks WHERE discord_user_id = ? AND file_sha = ?').get(discordUserId, fileSha) as
+      | { mark_name: string; mark_value: number }
+      | undefined;
+    return row ? { name: row.mark_name, value: row.mark_value } : null;
+  }
+
+  async claimMark(discordUserId: string, fileSha: string, mark: Mark): Promise<Mark | null> {
+    this.db
+      .prepare('INSERT OR IGNORE INTO premium_marks (discord_user_id, file_sha, mark_name, mark_value, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(discordUserId, fileSha, mark.name, mark.value, Date.now());
+    return this.getMark(discordUserId, fileSha);
+  }
+
+  async listMarks(): Promise<MarkRecord[]> {
+    return (this.db.prepare('SELECT discord_user_id, file_sha, mark_name, mark_value, created_at FROM premium_marks').all() as MarkRow[]).map(toMarkRecord);
   }
 }
 

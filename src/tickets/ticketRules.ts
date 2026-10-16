@@ -32,7 +32,7 @@ export const TICKET_TYPES: TicketType[] = [
   {
     kind: 'licence',
     label: 'Licence & codes',
-    blurb: 'Unlock codes, your free trial, days left.',
+    blurb: 'Unlock codes, your subscription, days left.',
     assistantFirst: false,
     callOwner: true,
     fields: [

@@ -147,3 +147,73 @@ describe('payment hooks', () => {
     expect(grants).toEqual([30]);
   });
 });
+
+describe('fingerprints', () => {
+  const script = ['define z100 = 0;', 'define z101   = 1;', 'define z102 = 25;', 'const string z103 = "T.C.P";', 'main {', 'set_val(PS4_R2, 100);', '}', ''].join('\r\n');
+
+  it('adds exactly one define line, keeps the line endings, and gives the same member the same copy', async () => {
+    const { stampCopy, definesIn } = await import('../src/premium/fingerprint.js');
+    const mark = { name: 'z5d1', value: 4821 };
+    const copy = stampCopy(script, mark);
+    const added = copy.split('\r\n').filter((line) => !script.split('\r\n').includes(line));
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatch(/^define z5d1 +=  ?4821;$/);
+    expect(copy.split('\r\n')).toHaveLength(script.split('\r\n').length + 1);
+    expect(copy).not.toMatch(/[^\r]\n/);
+    expect(stampCopy(script, mark)).toBe(copy);
+    expect(definesIn(copy)).toContainEqual(mark);
+    // It sits among the defines, never inside the code.
+    expect(copy.indexOf('define z5d1')).toBeLessThan(copy.indexOf('const string'));
+  });
+
+  it("picks a name just above the script's own, and never a pair another member has", async () => {
+    const { newMark, markFits } = await import('../src/premium/fingerprint.js');
+    let seed = 7;
+    const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const offered: { name: string; value: number }[] = [];
+    // Pretend the first pair offered already belongs to another member.
+    const mark = newMark(script, (candidate) => offered.push(candidate) === 1, random);
+    expect(mark).toEqual(offered[1]);
+    expect(mark).not.toEqual(offered[0]);
+    // The script's names end at z103, so a new one is z104 or a little above.
+    expect(parseInt(mark.name.slice(1), 16)).toBeGreaterThan(0x103);
+    expect(parseInt(mark.name.slice(1), 16)).toBeLessThanOrEqual(0x103 + 0x300);
+    expect(markFits(script, mark)).toBe(true);
+    expect(mark.value).toBeGreaterThanOrEqual(100);
+    expect(mark.value).toBeLessThanOrEqual(9999);
+    expect(markFits(script, { name: 'z101', value: 7 })).toBe(false);
+  });
+
+  it("traces a copy to its member, even after it was re-saved with other spacing", async () => {
+    const { stampCopy } = await import('../src/premium/fingerprint.js');
+    const { findOwners } = await import('../src/premium/premium.js');
+    const marks = [
+      { discordUserId: 'ana', fileSha: 'v1', name: 'z5d1', value: 4821, createdAt: 1 },
+      { discordUserId: 'ben', fileSha: 'v1', name: 'z7a0', value: 1234, createdAt: 2 },
+    ];
+    const anasCopy = stampCopy(script, marks[0]!);
+    expect(findOwners(anasCopy, marks).map((m) => m.discordUserId)).toEqual(['ana']);
+    const resaved = anasCopy.replace(/\r\n/g, '\n').replace(/ +=/g, ' =').replace(/^define/gm, '    define');
+    expect(findOwners(resaved, marks).map((m) => m.discordUserId)).toEqual(['ana']);
+    expect(findOwners(script, marks)).toEqual([]);
+    // Same name, different value: not Ben's.
+    expect(findOwners(stampCopy(script, { name: 'z7a0', value: 1235 }), marks)).toEqual([]);
+  });
+
+  it('still passes the release check once stamped', async () => {
+    const { stampCopy } = await import('../src/premium/fingerprint.js');
+    expect(checkRelease('Tactical Competitive Pro Release.gpc', stampCopy(scrambled, { name: 'z5d1', value: 4821 }))).toEqual({ ok: true });
+  });
+});
+
+describe('the assistant knows codes are for Elite Supporters', () => {
+  it('promises no free trial anywhere in its documentation', async () => {
+    const { readFileSync } = await import('node:fs');
+    for (const path of ['knowledge/T.C.P_DOCUMENTATION.md', 'T.C.P_DOCUMENTATION.md']) {
+      const doc = readFileSync(path, 'utf8');
+      expect(doc).not.toMatch(/free 14-day|trial automatically|up to three new numbers/i);
+      expect(doc).toContain('There is no free trial. Unlock codes are only for **Elite Supporters**.');
+      expect(doc).toContain('**"Elite Supporters only"**');
+    }
+  });
+});

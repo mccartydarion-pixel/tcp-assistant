@@ -20,6 +20,8 @@ export interface LicenseStore {
   /** How many different numbers this member has been given a code for since the given time. */
   countCodesSince(discordUserId: string, since: number): Promise<number>;
   recordCode(discordUserId: string, challenge: number, tier: number): Promise<void>;
+  /** This member's codes since the given time, oldest first: one per number. */
+  listCodesSince(discordUserId: string, since: number): Promise<CodeRecord[]>;
   /** Every member with a subscription record, soonest expiry first. */
   listSubscriptions(): Promise<SubscriptionRecord[]>;
   /** The most recently issued codes, newest first. */
@@ -144,6 +146,19 @@ class PostgresLicenseStore implements LicenseStore {
       discordUserId: row.discord_user_id,
       expiresAt: Number(row.expires_at),
       trialGrantedAt: row.trial_granted_at === null ? null : Number(row.trial_granted_at),
+    }));
+  }
+
+  async listCodesSince(discordUserId: string, since: number): Promise<CodeRecord[]> {
+    const result = await this.pool.query(
+      'SELECT discord_user_id, challenge, tier, created_at FROM license_codes WHERE discord_user_id = $1 AND created_at >= $2 ORDER BY created_at ASC',
+      [discordUserId, since],
+    );
+    return result.rows.map((row) => ({
+      discordUserId: row.discord_user_id,
+      challenge: Number(row.challenge),
+      tier: Number(row.tier),
+      createdAt: Number(row.created_at),
     }));
   }
 
@@ -293,6 +308,12 @@ class SqliteLicenseStore implements LicenseStore {
     return this.db
       .prepare('SELECT discordUserId, expiresAt, trialGrantedAt FROM licenseSubscriptions ORDER BY expiresAt ASC')
       .all() as SubscriptionRecord[];
+  }
+
+  async listCodesSince(discordUserId: string, since: number): Promise<CodeRecord[]> {
+    return this.db
+      .prepare('SELECT discordUserId, challenge, tier, createdAt FROM licenseCodes WHERE discordUserId = ? AND createdAt >= ? ORDER BY createdAt ASC')
+      .all(discordUserId, since) as CodeRecord[];
   }
 
   async listRecentCodes(limit: number): Promise<CodeRecord[]> {

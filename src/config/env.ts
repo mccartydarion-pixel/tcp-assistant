@@ -44,7 +44,8 @@ const envSchema = z.object({
   WELCOME_MEMBER_INTENT: z.string().default('true'),
   LICENSE_MEMBER_ROLE_ID: z.string().optional(),
   LICENSE_TRIAL_DAYS: z.coerce.number().int().min(1).max(3650).default(14),
-  LICENSE_MAX_CODES: z.coerce.number().int().min(1).default(3),
+  // New numbers each member may get a code for per day. One Zen rarely needs more than one.
+  LICENSE_MAX_CODES: z.coerce.number().int().min(1).default(1),
   DATABASE_URL: z.string().default('file:./data/tcp.db'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),

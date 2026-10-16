@@ -13,7 +13,7 @@ import { reportUnanswered } from '../../ai/unanswered.js';
 import { answerMessages, notice, tcpEmbed } from '../embeds.js';
 import { serverMapFor } from '../../server/serverMap.js';
 import { ticketAudience } from '../../tickets/ticketSystem.js';
-import { handleReleaseCommand } from '../../premium/premium.js';
+import { handleReleaseCommand, handleTraceCommand } from '../../premium/premium.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -54,6 +54,12 @@ export function createCommands(
         .addAttachmentOption((option) =>
           option.setName('file').setDescription('Tactical Competitive Pro Release.gpc (the scrambled build)').setRequired(false),
         ),
+    )
+    .addSubcommand((command) =>
+      command
+        .setName('trace')
+        .setDescription('Owner: find out whose copy a leaked Premium script is')
+        .addAttachmentOption((option) => option.setName('file').setDescription('The leaked .gpc file').setRequired(true)),
     );
 
   return [
@@ -63,6 +69,10 @@ export function createCommands(
         const subcommand = interaction.options.getSubcommand();
         if (subcommand === 'release') {
           await handleReleaseCommand(interaction);
+          return;
+        }
+        if (subcommand === 'trace') {
+          await handleTraceCommand(interaction);
           return;
         }
         if (subcommand === 'help') {

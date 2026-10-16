@@ -16,14 +16,17 @@ import { logger } from '../utils/logger.js';
 import { fetchSendableChannel } from '../bot/panels.js';
 import { notice, tcpEmbed, type Tone } from '../bot/embeds.js';
 import { isSafeSelfRole, plainName } from '../bot/roles.js';
-import { createPremiumStore, type PremiumFile, type PremiumStore } from './premiumStore.js';
+import { createPremiumStore, type MarkRecord, type PremiumFile, type PremiumStore } from './premiumStore.js';
+import { definesIn, markFits, newMark, stampCopy } from './fingerprint.js';
 
 // T.C.P Premium for paying members. On a member's first payment the bot DMs them the premium script
 // (Tactical Competitive Pro Release.gpc), gives them the Elite Supporter role and welcomes them in the
 // elite welcome channel. Renewals keep the role; when the subscription ends the role is taken away.
 // The owner uploads the script with /tcp release; it is kept in the database, never in the bot's public
 // repository, and only the scrambled release is accepted (the readable one carries the licence key).
-// Subscribers can fetch the latest upload any time with Download Premium.
+// Subscribers can fetch the latest upload any time with Download Premium. Every copy sent out carries the
+// member's own fingerprint (see fingerprint.ts), and /tcp trace tells the owner whose a leaked copy was.
+// Only Elite Supporters (and the owner) can generate unlock codes.
 const PREFIX = 'tcp-premium:';
 export const PREMIUM_DOWNLOAD_ID = `${PREFIX}download`;
 const MAX_FILE_BYTES = 2_000_000;
@@ -117,6 +120,26 @@ function eliteWelcomeChannel(guild: Guild): TextChannel | null {
   return channel && channel.type === ChannelType.GuildText ? channel : null;
 }
 
+/** True when this member holds the Elite role. False when the role is not set up or they are not in the server. */
+export async function isEliteMember(client: Client, discordUserId: string): Promise<boolean> {
+  try {
+    const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
+    const role = eliteRole(guild);
+    if (!role) return false;
+    const member = await guild.members.fetch(discordUserId).catch(() => null);
+    return member?.roles.cache.has(role.id) ?? false;
+  } catch (error) {
+    logger.warn({ err: error }, `[TCP Premium] Could not check the Elite role of ${discordUserId}`);
+    return false;
+  }
+}
+
+/** The name of the Elite role, for messages; "Elite Supporter" when it is not found. */
+export function eliteRoleName(client: Client): string {
+  const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID);
+  return (guild && eliteRole(guild)?.name) || 'Elite Supporter';
+}
+
 async function ownerLog(client: Client, title: string, description: string, tone: Tone): Promise<void> {
   if (!env.LOG_CHANNEL_ID) return;
   try {
@@ -160,12 +183,35 @@ export function premiumFileMessage(file: Pick<PremiumFile, 'fileName' | 'content
             ? `\`3\` Get your code with **Generate** in <#${licenceChannelId}> and enter it on the Zen.`
             : '`3` Get your code with **Generate** on the licence panel and enter it on the Zen.',
           '',
-          'Keep this file to yourself: it only unlocks with your own code. When a new version comes out, press **Download Premium** on the licence panel.',
+          'Keep this file to yourself: it only unlocks with your own code, and every copy is personal to the member it was sent to. When a new version comes out, press **Download Premium** on the licence panel.',
         ].join('\n'),
       }),
     ],
     files: [new AttachmentBuilder(file.content, { name: file.fileName })],
   };
+}
+
+// ---- fingerprinted copies --------------------------------------------------------------------------
+
+/** This member's own copy of the current upload, with their fingerprint in it. */
+async function personalCopy(discordUserId: string): Promise<{ fileName: string; content: Buffer }> {
+  if (!current || !store) throw new Error('No premium script uploaded');
+  const file = current;
+  const text = file.content.toString('utf8');
+  let mark = await store.getMark(discordUserId, file.sha256);
+  for (let attempt = 0; !mark && attempt < 5; attempt += 1) {
+    const handedOut = await store.listMarks();
+    const fresh = newMark(text, (candidate) => handedOut.some((m) => m.name === candidate.name && m.value === candidate.value));
+    mark = await store.claimMark(discordUserId, file.sha256, fresh);
+  }
+  if (!mark || !markFits(text, mark)) throw new Error(`Could not give ${discordUserId} a fingerprint`);
+  return { fileName: file.fileName, content: Buffer.from(stampCopy(text, mark), 'utf8') };
+}
+
+/** Whose copies a file came from: every member whose fingerprint is in it. */
+export function findOwners(text: string, marks: MarkRecord[]): MarkRecord[] {
+  const defines = new Set(definesIn(text).map((define) => `${define.name}=${define.value}`));
+  return marks.filter((mark) => defines.has(`${mark.name}=${mark.value}`));
 }
 
 // ---- payment hooks ---------------------------------------------------------------------------------
@@ -191,7 +237,7 @@ export async function onPremiumPaid(client: Client, discordUserId: string, first
     if (current) {
       try {
         const user = member?.user ?? (await client.users.fetch(discordUserId));
-        await user.send(premiumFileMessage(current, env.LICENSE_CHANNEL_ID));
+        await user.send(premiumFileMessage(await personalCopy(discordUserId), env.LICENSE_CHANNEL_ID));
         delivered = true;
       } catch (error) {
         logger.info({ err: error }, `[TCP Premium] Could not DM the script to ${discordUserId}`);
@@ -222,13 +268,25 @@ export async function onPremiumPaid(client: Client, discordUserId: string, first
 
 /** The subscription ended: take the Elite role away. Their licence days still run out as normal. */
 export async function onPremiumEnded(client: Client, discordUserId: string): Promise<void> {
+  await setEliteRole(client, discordUserId, false, 'T.C.P Premium subscription ended');
+}
+
+/**
+ * Gives (on) or takes away (off) the Elite role, for payments and the owner's Add days / End access.
+ * True when the member ends up as asked. Never throws.
+ */
+export async function setEliteRole(client: Client, discordUserId: string, on: boolean, reason: string): Promise<boolean> {
   try {
     const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
     const role = eliteRole(guild);
     const member = await guild.members.fetch(discordUserId).catch(() => null);
-    if (role && member?.roles.cache.has(role.id)) await member.roles.remove(role, 'T.C.P Premium subscription ended');
+    if (!role || !member) return false;
+    if (on && !member.roles.cache.has(role.id)) await member.roles.add(role, reason);
+    if (!on && member.roles.cache.has(role.id)) await member.roles.remove(role, reason);
+    return true;
   } catch (error) {
-    logger.warn({ err: error }, `[TCP Premium] Could not take the Elite role from ${discordUserId}`);
+    logger.warn({ err: error }, `[TCP Premium] Could not ${on ? 'give' : 'take'} the Elite role ${on ? 'to' : 'from'} ${discordUserId}; check Manage Roles and that the bot's role sits above it.`);
+    return false;
   }
 }
 
@@ -242,8 +300,11 @@ export async function handlePremiumInteraction(interaction: Interaction): Promis
   if (!interaction.isButton() || interaction.customId !== PREMIUM_DOWNLOAD_ID) return false;
   await interaction.deferReply({ ephemeral: true });
   const owner = Boolean(env.OWNER_USER_ID) && interaction.user.id === env.OWNER_USER_ID;
-  if (!owner && !(await isSubscriber(interaction.user.id))) {
-    await interaction.editReply(notice('Download Premium is for T.C.P Premium subscribers. Press **Subscribe** on the licence panel to join.', { tone: 'muted' }));
+  const allowed = owner || (await isEliteMember(interaction.client, interaction.user.id)) || (await isSubscriber(interaction.user.id));
+  if (!allowed) {
+    await interaction.editReply(
+      notice(`Download Premium is for **${eliteRoleName(interaction.client)}s**. Press **Subscribe** on the licence panel to join.`, { tone: 'muted' }),
+    );
     return true;
   }
   if (!current) {
@@ -251,9 +312,64 @@ export async function handlePremiumInteraction(interaction: Interaction): Promis
     await ownerLog(interaction.client, 'Premium script missing', `<@${interaction.user.id}> pressed Download Premium, but no script is uploaded. Use \`/tcp release\`.`, 'warning');
     return true;
   }
-  await interaction.editReply(premiumFileMessage(current, env.LICENSE_CHANNEL_ID));
+  let copy;
+  try {
+    copy = await personalCopy(interaction.user.id);
+  } catch (error) {
+    logger.error({ err: error }, `[TCP Premium ERROR] Could not prepare a copy for ${interaction.user.id}`);
+    await interaction.editReply(notice('Your copy could not be prepared just now. Please try again in a minute.', { tone: 'danger' }));
+    return true;
+  }
+  await interaction.editReply(premiumFileMessage(copy, env.LICENSE_CHANNEL_ID));
   logger.info(`[TCP Premium] ${interaction.user.id} downloaded ${current.fileName}`);
   return true;
+}
+
+/** /tcp trace: the owner attaches a copy found somewhere, and the bot says whose it was. */
+export async function handleTraceCommand(interaction: ChatInputCommandInteraction): Promise<void> {
+  if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
+    await interaction.reply({ ...notice('Only the owner can use this command.', { tone: 'danger' }), ephemeral: true });
+    return;
+  }
+  await interaction.deferReply({ ephemeral: true });
+  if (!store) {
+    await interaction.editReply(notice('The premium file records are not open. Check the bot log.', { tone: 'danger' }));
+    return;
+  }
+  const attachment = interaction.options.getAttachment('file', true);
+  if (attachment.size > MAX_FILE_BYTES) {
+    await interaction.editReply(notice('That file is too big for a T.C.P script.', { tone: 'warning' }));
+    return;
+  }
+  const response = await fetch(attachment.url);
+  if (!response.ok) {
+    await interaction.editReply(notice('Could not read the file from Discord. Please try again.', { tone: 'danger' }));
+    return;
+  }
+  const content = Buffer.from(await response.arrayBuffer());
+  const owners = findOwners(content.toString('utf8'), await store.listMarks());
+  if (owners.length === 0) {
+    const yours = current !== null && createHash('sha256').update(content).digest('hex') === current.sha256;
+    await interaction.editReply(
+      notice(
+        yours
+          ? "This is your own upload, exactly as you sent it to `/tcp release`. It carries no member's fingerprint."
+          : 'No fingerprint found. Either this copy was handed out before fingerprints began (16 October 2026), it is not the Premium script, or someone found and removed the line.',
+        { title: 'Trace', tone: yours ? 'muted' : 'warning' },
+      ),
+    );
+    return;
+  }
+  const lines = owners.map((mark) => {
+    const version = current && mark.fileSha === current.sha256 ? 'the current upload' : `an older upload (\`${mark.fileSha.slice(0, 12)}\`)`;
+    return `• <@${mark.discordUserId}> (\`${mark.discordUserId}\`): their copy of ${version}, first sent <t:${Math.floor(mark.createdAt / 1000)}:R>.`;
+  });
+  if (owners.length > 1) lines.push('', "More than one fingerprint: this copy was put together from several members' copies.");
+  await interaction.editReply({
+    ...notice(lines.join('\n'), { title: owners.length === 1 ? 'This copy belongs to' : 'This copy carries fingerprints of', tone: 'danger' }),
+    allowedMentions: { parse: [] },
+  });
+  logger.info(`[TCP Premium] Owner traced a copy to ${owners.map((mark) => mark.discordUserId).join(', ')}`);
 }
 
 /** /tcp release: the owner uploads the premium script (or, without a file, sees which one is live). */

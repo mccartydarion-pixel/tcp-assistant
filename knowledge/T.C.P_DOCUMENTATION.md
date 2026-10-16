@@ -22,14 +22,14 @@ T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server
 There are two ways to get T.C.P:
 
 - **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop, and no lock.
-- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month; new members get a free 14-day trial). It has everything in the free version plus the Weapon Workshop, and needs an unlock code from the Discord (see Licence and Unlock Codes).
+- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, and needs an unlock code from the Discord (see Licence and Unlock Codes).
 
 ## Getting Started
 
 New to T.C.P? The welcome channel has a **Start here** panel with buttons for a quick private guide: getting your licence, downloading the script, settings, getting help and the rules.
 
 1. Download the script from the download channel and load it onto your Cronus Zen with Zen Studio.
-2. Load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). New members get a free 14-day trial.
+2. Load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). Codes are for Elite Supporters: press **Subscribe** in the licence channel to join.
 3. Open the menu with L2 + OPTIONS (LT + Menu on Xbox) and tune from there. The settings channel has setups shared by other players.
 
 ## Controls
@@ -196,7 +196,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 - Each slot holds **one steady pull** (a Vertical and a Horizontal value) for one gun. It is not a recoil pattern: DayZ gives every shot of a magazine the same expected kick, so one steady pull is what a gun needs.
 - **Weapon OFF** (the default): T.C.P fires your Vertical and Horizontal Recoil exactly as before.
 - Where it is: the last menu page, **Workshop** (page 27/27). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
-- **Premium only.** T.C.P Premium is the licensed version from the Discord: $7 a month, unlocked with a code from the licence channel (see Licence and Unlock Codes). New members get a free 14-day trial. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest download from the download channel (licensed downloads from before the Workshop do not have it).
+- **Premium only.** T.C.P Premium is the licensed version from the Discord: $7 a month, unlocked with a code from the licence channel (see Licence and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the licence panel (licensed downloads from before the Workshop do not have it).
 - You can use it with a PlayStation or an Xbox controller; it works the same on both. Button names here are PlayStation first, Xbox in brackets.
 
 ### Workshop: recording step by step
@@ -465,7 +465,7 @@ One rumble pulse means it unlocked. "WRONG CODE" with two pulses means the code 
 
 ### Free trial
 
-New members get a free 14-day trial automatically the first time they press Generate. The trial is once per member.
+There is no free trial. Unlock codes are only for **Elite Supporters**. Press **Subscribe** on the licence panel to join: your payment gives you the Elite Supporter role, sends you the Premium script in your DMs and adds your days, and you can press **Generate** straight away.
 
 ### Why it asks for a new code
 
@@ -487,12 +487,13 @@ Press **My licence** on the licence panel to see, privately, how many days you h
 
 ### Expiry reminders
 
-The bot sends you a direct message three days before your trial or subscription ends, and again on its last day. If you have direct messages from server members turned off, the reminder cannot reach you, so check **My licence** instead.
+If your subscription does not renew by itself, the bot sends you a direct message three days before your access ends, and again on its last day. If you have direct messages from server members turned off, the reminder cannot reach you, so check **My licence** instead.
 
 ### Problems getting a code
 
-- **"Your trial or subscription has ended"**: the subscription has expired. Open a support ticket to renew.
-- **"Generated codes in the last day ... limit"**: a member can generate codes for up to three new numbers per day. Asking again for the same number does not count.
+- **"Elite Supporters only"**: codes are only for members with the Elite Supporter role. Press **Subscribe** on the licence panel to join; the role comes with your first payment. If you have paid and still see this, open a support ticket.
+- **"Your T.C.P Premium days have run out"**: press **Subscribe** on the licence panel to renew.
+- **"Generated codes in the last day ... limit"**: a member can get a code for one new number per day. Asking again for the same number does not count.
 - **Code not working**: make sure the number typed into Discord is exactly the one on the Zen, and re-enter the code carefully.
 
 ## Getting Help on Discord

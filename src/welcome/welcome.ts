@@ -90,7 +90,7 @@ const LABELS: Record<WelcomeGuide, string> = {
   rules: 'Rules',
 };
 
-export function welcomeGuide(guide: WelcomeGuide, channels: WelcomeChannels, trialDays: number): string {
+export function welcomeGuide(guide: WelcomeGuide, channels: WelcomeChannels): string {
   switch (guide) {
     case 'licence':
       return [
@@ -99,7 +99,7 @@ export function welcomeGuide(guide: WelcomeGuide, channels: WelcomeChannels, tri
         `\`2\` Go to <#${channels.licence}> and press **Generate**, then type in your number.`,
         '`3` Enter the six-digit code you get back on the Zen.',
         '',
-        `New members get a free **${trialDays}-day** trial automatically the first time they press Generate.`,
+        'Codes are for **Elite Supporters** (T.C.P Premium): press **Subscribe** in that channel to join.',
       ].join('\n');
     case 'download':
       return [
@@ -156,7 +156,6 @@ export function setupChecklist(input: {
   platform: Platform;
   hasScript: boolean;
   channels: WelcomeChannels;
-  trialDays: number;
   tickets: boolean;
   roleGiven?: string;
 }): { title: string; lines: string[] } {
@@ -176,7 +175,7 @@ export function setupChecklist(input: {
     lines.push('`2` Add it to Zen Studio and program it to a slot on your Cronus Zen.');
     lines.push(
       channels.licence
-        ? `\`3\` Load the slot. On the lock screen press **${pad.confirm}** to see your number, then get your code in <#${channels.licence}>. Your first **${input.trialDays} days** are free.`
+        ? `\`3\` Load the slot. On the lock screen press **${pad.confirm}** to see your number, then get your code in <#${channels.licence}>. Codes are for **Elite Supporters**: press **Subscribe** there to join.`
         : '`3` Load the slot on your Zen.',
     );
     lines.push(`\`4\` Open the menu with ${pad.menu} and tune it from there.`);
@@ -285,7 +284,6 @@ async function finishSetup(interaction: ButtonInteraction, platform: Platform, h
     platform,
     hasScript,
     channels: welcomeChannels(),
-    trialDays: env.LICENSE_TRIAL_DAYS,
     tickets: ticketsEnabled(),
     roleGiven: roleGiven ?? undefined,
   });
@@ -460,7 +458,7 @@ export async function handleWelcomeInteraction(interaction: Interaction): Promis
 
   const guide = id.slice(PREFIX.length) as WelcomeGuide;
   const channels = welcomeChannels();
-  const text = availableGuides(channels).includes(guide) ? welcomeGuide(guide, channels, env.LICENSE_TRIAL_DAYS) : welcomeGuide('help', channels, env.LICENSE_TRIAL_DAYS);
+  const text = availableGuides(channels).includes(guide) ? welcomeGuide(guide, channels) : welcomeGuide('help', channels);
   await interaction.reply({ ...guideNotice(text), ephemeral: true });
   return true;
 }

@@ -21,7 +21,6 @@ import {
   parseChallenge,
   parseDays,
   parseLicenseKey,
-  shouldGrantTrial,
   tierForDaysLeft,
 } from './licenseCode.js';
 import { createLicenseStore, type LicenseStore } from './licenseStore.js';
@@ -32,6 +31,7 @@ import { ensurePanel } from '../bot/panels.js';
 import { notice } from '../bot/embeds.js';
 import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
 import { paymentButtons, paymentsEnabled, priceText, renewsAutomatically, subscriptionSummary } from '../payments/stripeBilling.js';
+import { eliteRoleName, isEliteMember, setEliteRole } from '../premium/premium.js';
 
 const PREFIX = 'tcp-license:';
 export const LICENSE_BUTTON_ID = `${PREFIX}generate`;
@@ -52,6 +52,9 @@ const RECENT_CODES = 20;
 const PANEL_COLOUR = 0x2b8a3e;
 const ADMIN_COLOUR = 0x1971c2;
 const DAY_MS = 24 * 60 * 60 * 1000;
+// A member who makes codes for this many different Zens within the window is flagged to the owner.
+const SHARING_WINDOW_MS = 7 * DAY_MS;
+const SHARING_ALERT_ZENS = 3;
 
 const licenseKey = parseLicenseKey(env.LICENSE_SECRET);
 let store: LicenseStore | null = null;
@@ -71,12 +74,12 @@ export function buildLicensePanel() {
         'Your code only works with your number, so sharing it will not unlock anyone else.',
         'Every so often the script asks for a new code. Come back here and press **Generate** again.',
         '',
-        `New here? Pressing **Generate** gives you a free **${env.LICENSE_TRIAL_DAYS}-day** trial automatically.`,
+        'Codes are for **Elite Supporters** only.',
         'Press **My licence** any time to see how many days you have left.',
         ...(paymentsEnabled()
           ? [
               '',
-              `**T.C.P Premium${priceText() ? `: ${priceText()}` : ''}.** Press **Subscribe** to keep playing after your trial. Every payment adds days to your licence automatically; cancel any time with **Manage subscription**.`,
+              `**T.C.P Premium${priceText() ? `: ${priceText()}` : ''}.** Press **Subscribe** to become an Elite Supporter: you get the role, the Premium script in your DMs and your codes. Every payment adds days to your licence automatically; cancel any time with **Manage subscription**.`,
             ]
           : []),
       ].join('\n'),
@@ -278,9 +281,12 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
   if (interaction.isButton() && id.startsWith(ADMIN_REVOKE_ID)) {
     const userId = id.slice(ADMIN_REVOKE_ID.length);
     await records.setExpiry(userId, now);
+    const roleTaken = await setEliteRole(interaction.client, userId, false, 'Owner ended access');
     logger.info(`[TCP License] Owner ended access for ${userId}`);
+    const roleNote = roleTaken ? ` The ${eliteRoleName(interaction.client)} role was taken away.` : '';
+    const stripeNote = (await renewsAutomatically(userId)) ? ' They still have a Stripe subscription: cancel it in Stripe, or their next payment gives access back.' : '';
     await interaction.reply({
-      ...notice(`Access ended for <@${userId}>. They cannot generate new codes. A code already on their Zen keeps working until its power-ups run out.`, {
+      ...notice(`Access ended for <@${userId}>. They cannot generate new codes. A code already on their Zen keeps working until its power-ups run out.${roleNote}${stripeNote}`, {
         title: 'Access ended',
         tone: 'danger',
       }),
@@ -299,15 +305,65 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
     }
     const expiresAt = extendExpiry(await records.getExpiry(userId), days, now);
     await records.setExpiry(userId, expiresAt);
+    // Codes are for Elite Supporters, so days the owner gives come with the role.
+    const roleGiven = await setEliteRole(interaction.client, userId, true, 'Owner added days');
     logger.info(`[TCP License] Owner added ${days} days for ${userId}`);
+    const roleNote = roleGiven
+      ? ` They have the ${eliteRoleName(interaction.client)} role.`
+      : ` Could not give them the ${eliteRoleName(interaction.client)} role, so they cannot generate yet: give it by hand.`;
     await interaction.reply({
-      ...notice(`Added ${days} day${days === 1 ? '' : 's'} for <@${userId}>. ${describeSubscription(expiresAt, now)}`, { title: 'Days added', tone: 'success' }),
+      ...notice(`Added ${days} day${days === 1 ? '' : 's'} for <@${userId}>. ${describeSubscription(expiresAt, now)}${roleNote}`, { title: 'Days added', tone: 'success' }),
       ephemeral: true,
       allowedMentions: { parse: [] },
     });
     return true;
   }
   return false;
+}
+
+/** Only Elite Supporters and the owner can generate codes. */
+async function mayGenerate(client: Client, userId: string): Promise<boolean> {
+  if (env.OWNER_USER_ID && userId === env.OWNER_USER_ID) return true;
+  return isEliteMember(client, userId);
+}
+
+function eliteOnlyReply(client: Client) {
+  const role = eliteRoleName(client);
+  const payments = paymentButtons();
+  return {
+    ...notice(
+      paymentsEnabled()
+        ? `Unlock codes are for **${role}s** (T.C.P Premium members). Press **Subscribe** to join: you get the role, the Premium script in your DMs and your codes.`
+        : `Unlock codes are for **${role}s** (T.C.P Premium members). Open a support ticket to join.`,
+      { title: `${role}s only`, tone: 'muted' },
+    ),
+    components: payments ? [payments] : [],
+  };
+}
+
+/**
+ * Tells the owner when a member has made codes for several different Zens in a week: a sign they are
+ * handing codes to friends. Every new number after the limit is flagged again. Never throws.
+ */
+async function flagSharing(client: Client, records: LicenseStore, userId: string, now: number): Promise<void> {
+  if (!env.LOG_CHANNEL_ID) return;
+  try {
+    const codes = await records.listCodesSince(userId, now - SHARING_WINDOW_MS);
+    if (codes.length < SHARING_ALERT_ZENS) return;
+    logger.warn(`[TCP License] ${userId} has made codes for ${codes.length} different Zens in 7 days`);
+    const channel = await client.channels.fetch(env.LOG_CHANNEL_ID);
+    if (!channel || !channel.isTextBased() || !('send' in channel)) return;
+    const numbers = codes.map((code) => `\`${code.challenge}\` <t:${Math.floor(code.createdAt / 1000)}:R>`).join('\n');
+    await channel.send({
+      ...notice(
+        `<@${userId}> has generated codes for **${codes.length} different Zens** in the last 7 days. One player rarely needs more than one or two, so they may be sharing codes.\n\n${numbers}\n\nUse **End access** on the owner panel if they are.`,
+        { title: 'Possible code sharing', tone: 'warning' },
+      ),
+      allowedMentions: { parse: [] },
+    });
+  } catch (error) {
+    logger.warn({ err: error }, '[TCP License] Could not flag possible code sharing');
+  }
 }
 
 /** Give the member the licensed-member role. Best effort: needs Manage Roles and the right hierarchy. */
@@ -343,9 +399,9 @@ export async function memberLicenceEmbed(userId: string, heading: string): Promi
     maxPerDay: env.LICENSE_MAX_CODES,
     latest: await store.latestCodeFor(userId),
     now,
-    trialDays: env.LICENSE_TRIAL_DAYS,
     isOwner: Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID,
     renewHint: renewHint(),
+    joinHint: paymentsEnabled() ? 'Press **Subscribe** on the licence panel to join.' : 'Open a support ticket to join.',
   });
   const payment = await subscriptionSummary(userId);
   return new EmbedBuilder()
@@ -377,6 +433,10 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   }
 
   if (interaction.isButton() && interaction.customId === LICENSE_BUTTON_ID) {
+    if (!(await mayGenerate(interaction.client, interaction.user.id))) {
+      await interaction.reply({ ...eliteOnlyReply(interaction.client), ephemeral: true });
+      return true;
+    }
     const input = new TextInputBuilder()
       .setCustomId(LICENSE_INPUT_ID)
       .setLabel('Number shown on your Zen')
@@ -411,24 +471,21 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   const now = Date.now();
   const isOwner = Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID;
 
-  let days = daysLeft(await store.getExpiry(userId), now);
-  // First-timers with no subscription get the free trial automatically, once.
-  let trialGranted = false;
-  if (shouldGrantTrial({ daysLeft: days, hadTrial: await store.hasHadTrial(userId), isOwner })) {
-    const expiresAt = extendExpiry(null, env.LICENSE_TRIAL_DAYS, now);
-    await store.grantTrial(userId, expiresAt);
-    days = daysLeft(expiresAt, now);
-    trialGranted = true;
-    logger.info(`[TCP License] Granted ${env.LICENSE_TRIAL_DAYS}-day trial to ${userId}`);
+  // Codes are for Elite Supporters. Checked again here: the role may have gone while the form was open.
+  if (!(await mayGenerate(interaction.client, userId))) {
+    logger.info(`[TCP License] Refused ${userId}: not an Elite Supporter`);
+    await interaction.editReply(eliteOnlyReply(interaction.client));
+    return true;
   }
+  const days = daysLeft(await store.getExpiry(userId), now);
 
   // The owner always gets the longest-lasting code, with or without a subscription of their own.
   const tier = isOwner ? 5 : tierForDaysLeft(days);
   if (tier === null) {
-    logger.info(`[TCP License] Refused ${userId}: no active subscription`);
+    logger.info(`[TCP License] Refused ${userId}: no days left`);
     const payments = paymentButtons();
     await interaction.editReply({
-      ...notice(`Your T.C.P. trial or subscription has ended, so no new code can be generated. ${renewHint()}`, {
+      ...notice(`Your T.C.P Premium days have run out, so no new code can be generated. ${renewHint()}`, {
         title: 'Subscription ended',
         tone: 'muted',
       }),
@@ -451,6 +508,7 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
     return true;
   }
   if (decision === 'ISSUE') await store.recordCode(userId, challenge, tier);
+  if (decision === 'ISSUE' && !isOwner) await flagSharing(interaction.client, store, userId, now);
 
   const code = computeLicenseCode(challenge, licenseKey, tier);
   const embed = new EmbedBuilder()
@@ -462,7 +520,6 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
     )
     .setDescription(
       [
-        trialGranted ? `Welcome! You have a **${env.LICENSE_TRIAL_DAYS}-day** free trial.\n` : '',
         'Enter the code on your Zen: Up/Down changes a digit, Left/Right moves along, X confirms (A on an Xbox controller).',
         '',
         `This code lasts **${TIER_USES[tier]} power-ups** of the script. After that the Zen shows a new number; come back and press **Generate** again.`,

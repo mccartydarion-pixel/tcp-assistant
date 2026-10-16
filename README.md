@@ -65,8 +65,8 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `WELCOME_GREET` (optional, default true; `false` keeps the Start here panel but stops per-member greetings)
 - `WELCOME_MEMBER_INTENT` (optional, default true; `false` stops the bot asking for the Server Members Intent)
 - `LICENSE_REMINDERS` (optional, default true; `false` stops expiry reminder DMs)
-- `LICENSE_TRIAL_DAYS` (optional, default 14; length of the free trial granted on first generate)
-- `LICENSE_MAX_CODES` (optional, default 3; new codes each member may generate per day)
+- `LICENSE_TRIAL_DAYS` (optional, default 14; there is no free trial any more, this only labels members who were given one before)
+- `LICENSE_MAX_CODES` (optional, default 1; new numbers each member may get a code for per day)
 - `DATABASE_URL` (optional, default SQLite file)
 - `NODE_ENV`
 - `PORT`
@@ -87,9 +87,11 @@ The T.C.P. script shows a five-digit number on the Zen. A member brings it here 
 
 **Member panel.** With `LICENSE_CHANNEL_ID` and `LICENSE_SECRET` set, the bot posts a panel with a **Generate** button in that channel on startup, and refreshes its own panel if one is already there. The button opens a form for the number, and the code comes back in a reply only that member can see.
 
-**Free trial and role.** The first time a member presses **Generate** with no active subscription, the bot gives them a free trial of `LICENSE_TRIAL_DAYS` days (default 14) automatically, once. Whenever a member successfully gets a code, the bot also gives them the role in `LICENSE_MEMBER_ROLE_ID` (if set). The trial is once per member — generating again after it ends does not renew it; that needs the owner panel or a paid subscription. For the role, the bot needs the **Manage Roles** permission and its own role must sit above the member role.
+**Who can generate.** Only members with the **Elite Supporter** role (see Premium script and the Elite role) and the owner. Everyone else is told codes are for Elite Supporters and shown **Subscribe**; the role is checked when the button is pressed and again when the number is sent. There is no free trial (members given one before keep its days, but cannot generate without the role). Whenever a member successfully gets a code, the bot also gives them the role in `LICENSE_MEMBER_ROLE_ID` (if set); for that the bot needs the **Manage Roles** permission and its own role must sit above the member role.
 
-**Owner panel.** With `LICENSE_ADMIN_CHANNEL_ID` and `OWNER_USER_ID` set, the bot posts a second panel in that channel. Keep the channel private. Pick a member from the menu to see their subscription, then **Add days** or **End access**. Nobody can generate a code until they have been given days. The owner can always generate.
+**Code sharing.** Each member may get a code for one new number a day (`LICENSE_MAX_CODES`). When a member has made codes for 3 or more different numbers (Zens) within 7 days, `LOG_CHANNEL_ID` gets a **Possible code sharing** alert listing the numbers, again for each further number; **End access** stops them.
+
+**Owner panel.** With `LICENSE_ADMIN_CHANNEL_ID` and `OWNER_USER_ID` set, the bot posts a second panel in that channel. Keep the channel private. Pick a member from the menu to see their subscription, then **Add days** or **End access**. **Add days** also gives the Elite Supporter role, since codes need it; **End access** takes it away, and warns when the member still has a Stripe subscription (cancel that in Stripe, or their next payment gives access back). Nobody can generate a code until they have been given days. The owner can always generate.
 
 **How long a code lasts.** The code carries a tier chosen from the days left on the subscription, and the script counts power-ups against it:
 
@@ -194,9 +196,11 @@ On a member's **first** payment the bot also:
 - gives them the **Elite Supporter** role (`ELITE_ROLE_ID`, or a role with that name);
 - welcomes them, with a ping, in the elite welcome channel (`ELITE_WELCOME_CHANNEL_ID`, or a text channel with "elite" and "welcome" in its name).
 
-Renewals only make sure they still have the role. When the subscription ends (cancelled and run out, or deleted in Stripe) the role is taken away; their licence days still run out as normal. If their DMs are closed, or no script is uploaded yet, `LOG_CHANNEL_ID` says so. Subscribers (and the owner) also get a **Download Premium** button on the licence panel, under **My licence** and in Licence & codes tickets, which sends the current script privately.
+Renewals only make sure they still have the role. When the subscription ends (cancelled and run out, or deleted in Stripe) the role is taken away; their licence days still run out as normal. If their DMs are closed, or no script is uploaded yet, `LOG_CHANNEL_ID` says so. Elite Supporters, subscribers and the owner also get a **Download Premium** button on the licence panel, under **My licence** and in Licence & codes tickets, which sends the current script privately.
 
 **The script is never in this repository**, which is public. The owner uploads it in Discord with `/tcp release` and attaches the file; it is stored in the `premium_files` table (Postgres when `DATABASE_URL` is one). Only the **scrambled** release is accepted (`python tools/make_play_build.py --license --scramble` in the script project): the readable release, which contains the real licence key, and the debug, play and free builds are refused. `/tcp release` with no file shows which script is live and its fingerprint. Upload again whenever there is a new build; Download Premium always gives the latest.
+
+**Fingerprints and `/tcp trace`.** Every copy the bot sends (the DM and Download Premium) is personal: it carries one extra `define` line with an unused scrambled name, just above the file's own highest name, and a random value, placed among the script's other defines. An unused define changes nothing when the script runs, and in the scrambled file it looks like the hundreds around it. Each member keeps the same mark for the same upload; a new upload gives them a new one. The marks are in the `premium_marks` table. If a copy turns up somewhere, the owner runs `/tcp trace` with the file attached, and the bot says whose copy it is (it still finds the line if the file was re-saved with other spacing). It cannot trace copies sent before fingerprints began, or one where someone found and deleted the line.
 
 The bot needs **Manage Roles**, with its own role above Elite Supporter, and Send Messages and Embed Links in the elite welcome channel. It will not hand out a role that has moderator permissions. The startup log names the Elite role and channel it found, or says "not found".
 

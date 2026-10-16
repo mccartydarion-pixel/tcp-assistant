@@ -92,17 +92,18 @@ describe('get started', () => {
   const channelsSet = { licence: '20', games: [{ game: 'DayZ', channelId: '40' }], settings: '50', rules: '10', help: '30' };
 
   it('walks a new player through download, Zen Studio, the licence and the menu, with their button names', () => {
-    const playstation = setupChecklist({ platform: 'playstation', hasScript: false, channels: channelsSet, trialDays: 14, tickets: true, roleGiven: 'PlayStation' });
+    const playstation = setupChecklist({ platform: 'playstation', hasScript: false, channels: channelsSet, tickets: true, roleGiven: 'PlayStation' });
     expect(playstation.title).toBe('Your T.C.P setup');
     const text = playstation.lines.join('\n');
     expect(text).toContain('You now have the **PlayStation** role.');
     expect(text).toContain('`1` Download it from <#40>.');
-    expect(text).toContain('press **X** to see your number, then get your code in <#20>. Your first **14 days** are free.');
+    expect(text).toContain('press **X** to see your number, then get your code in <#20>. Codes are for **Elite Supporters**: press **Subscribe** there to join.');
+    expect(text).not.toMatch(/trial|free\./i);
     expect(text).toContain('**L2** + **OPTIONS**');
     expect(text).toContain('Ask anything in <#30>');
     expect(text).toContain('Open a ticket');
 
-    const xbox = setupChecklist({ platform: 'xbox', hasScript: false, channels: channelsSet, trialDays: 14, tickets: false }).lines.join('\n');
+    const xbox = setupChecklist({ platform: 'xbox', hasScript: false, channels: channelsSet, tickets: false }).lines.join('\n');
     expect(xbox).toContain('press **A**');
     expect(xbox).toContain('**LT** + **Menu**');
     expect(xbox).not.toContain('Open a ticket');
@@ -110,7 +111,7 @@ describe('get started', () => {
   });
 
   it('skips the install steps for a player who already has the script', () => {
-    const ready = setupChecklist({ platform: 'xbox', hasScript: true, channels: channelsSet, trialDays: 14, tickets: true });
+    const ready = setupChecklist({ platform: 'xbox', hasScript: true, channels: channelsSet, tickets: true });
     expect(ready.title).toBe('Your T.C.P checklist');
     expect(ready.lines.join('\n')).not.toContain('Zen Studio');
     expect(ready.lines.join('\n')).toContain('Press **Generate** in <#20>');
