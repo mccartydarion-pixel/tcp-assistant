@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { DocumentParser } from '../src/knowledge/documentParser.js';
 import { KeywordRetriever } from '../src/knowledge/retriever.js';
 import { KnowledgeService } from '../src/knowledge/knowledgeService.js';
+import { buildTCPPrompt } from '../src/ai/promptBuilder.js';
+import { extractQuestionDetails } from '../src/ai/question.js';
+import { buildRetrievalQuery } from '../src/ai/retrievalQuery.js';
 
 // Questions players actually ask, run against the real documentation. If the doc's headings or the
 // retriever change, these show which answers would now come from the wrong section.
@@ -33,6 +36,9 @@ describe('documentation retrieval', () => {
     ['how do i open a ticket', 'Opening a support ticket'],
     ['where can i ask a question', 'Asking the assistant'],
     ['what does the get started button do', 'The Get started button'],
+    // "turn" is in the Turn Strength heading; questions about turning a feature on or off must not land there.
+    ['how do i turn on lean spam', 'Lean Spam'],
+    ['how do i turn off auto run', 'Auto Run'],
   ])('"%s" finds %s', async (question, heading) => {
     expect(await topHeading(question)).toBe(heading);
   });
@@ -42,7 +48,86 @@ describe('documentation retrieval', () => {
     expect(text).toContain('26 pages');
     expect(text).not.toMatch(/12[- ]page/i);
   });
+
+  it('keeps the root copy of the documentation identical to the one the bot loads', () => {
+    const lf = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+    expect(lf('T.C.P_DOCUMENTATION.md')).toBe(lf('knowledge/T.C.P_DOCUMENTATION.md'));
+  });
 });
+
+// Turn Strength's name reads the wrong way round: higher means LESS recoil control while the stick moves.
+// The bot once answered it backwards, so these pin the retrieval, the doc's direction and the prompt rule.
+describe('Turn Strength', () => {
+  const section = chunks.find((chunk) => chunk.heading === 'Turn Strength')?.content ?? '';
+
+  it.each([
+    'what does turn strength do',
+    'what is turn strength',
+    'turn strength explained',
+    'should I lower turn strength',
+    'turn strenght?',
+    'what does 100 turn strength mean',
+    'turn strength 0 vs 100',
+    'is higher turn strength more recoil control',
+    'what does turning strength do',
+  ])('"%s" finds Turn Strength, as typed and as the bot searches', async (question) => {
+    expect(await topHeading(question)).toBe('Turn Strength');
+    const botQuery = buildRetrievalQuery(question, extractQuestionDetails(question));
+    expect((await retriever.search(botQuery, 1))[0]?.chunk.heading).toBe('Turn Strength');
+  });
+
+  it('says 0 never lets flicks weaken the pull and 100 weakens it the most', () => {
+    expect(section).toContain('**Turn Strength 100** (default): the pull is cut by 60%, leaving 40% of it. Moving the stick weakens it the most.');
+    expect(section).toContain('**Turn Strength 50**: the pull is cut by 30%, leaving 70% of it.');
+    expect(section).toContain('**Turn Strength 0**: the pull is not cut at all. Flicks and tracking never weaken it.');
+    // A bare "**0**" next to "100%" is how a small model turns it back into "100 = full pull"; name the setting every time.
+    expect(section).not.toMatch(/\*\*\d+\*\*/);
+    expect(section).toContain('Pulling down yourself still takes part of the pull off at any value, and so does Motion Intel if you turn it on.');
+    expect(section).toContain('letting the stick rest near centre for a moment restores it');
+    expect(section).toContain('Higher Turn Strength means less recoil control while you move the stick');
+    expect(section).toMatch(/name is misleading/i);
+  });
+
+  it('agrees with the other places that mention it', () => {
+    const content = (heading: string) => chunks.find((chunk) => chunk.heading === heading)?.content ?? '';
+    expect(content('How anti-recoil reacts to your stick')).toContain('Turn Strength sets how much of the flick and tracking weakening applies: at 100 it applies fully, at 0 flicks and tracking never weaken the pull.');
+    expect(content('How anti-recoil reacts to your stick')).toContain('Letting the stick rest near centre for a moment restores full strength');
+    expect(content('Hard to stay on target while shooting')).toContain('lower Turn Strength (around 40) so moving the stick weakens the pull less');
+    expect(content('Gun climbs during a burst')).toContain('lower Turn Strength instead');
+    expect(content('Aim gets pulled down / sinks')).toContain('If it only drags down when switching targets (flicking to a new target) and you have lowered Turn Strength, raise Turn Strength back toward 100.');
+  });
+
+  // The "keep 100 if the pull drags your aim down" advice lives in the Turn Strength section, which a
+  // dragged-down question does not retrieve; the sinks section must carry it, or the bot only says lower Vertical.
+  it.each([
+    'my aim gets dragged down when I flick to a new target',
+    'aim drags down when switching targets',
+  ])('"%s" brings the sinks section and its Turn Strength advice into the prompt', async (question) => {
+    const botQuery = buildRetrievalQuery(question, extractQuestionDetails(question));
+    for (const query of [question, botQuery]) {
+      const sinks = (await retriever.search(query, 5)).find((result) => result.chunk.heading === 'Aim gets pulled down / sinks');
+      expect(sinks?.chunk.content).toContain('raise Turn Strength back toward 100');
+    }
+  });
+
+  it('puts the direction rule and the section in the prompt for the question', async () => {
+    const question = 'what does turn strength do';
+    const details = extractQuestionDetails(question);
+    const prompt = buildTCPPrompt({
+      question,
+      details,
+      retrievedChunks: await retriever.search(buildRetrievalQuery(question, details), 5),
+    });
+
+    expect(prompt.system).toContain('Turn Strength (0 to 100, default 100) sets how much moving the right stick while firing weakens the recoil pull.');
+    expect(prompt.system).toContain('Higher means moving the stick weakens the pull more (less recoil control while moving); at 0 flicks and tracking never weaken the pull (pulling down yourself, and Motion Intel if it is on, still can).');
+    expect(prompt.system).toContain('raise it back toward 100 if the pull drags the aim down when flicking to a new target');
+    expect(prompt.system).not.toContain('0 keeps the full pull');
+    expect(prompt.system).toContain('it is not the strength of the recoil control');
+    expect(prompt.context).toContain(`[Anti-Recoil > Turn Strength]\n${section}`);
+  });
+});
+
 
 describe('canned answers', () => {
   it('does not tell players ADS profiles are a legacy setting', async () => {

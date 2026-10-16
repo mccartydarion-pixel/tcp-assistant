@@ -130,26 +130,41 @@ Anti-recoil works while you fire: R2 held together with L2 (aiming down sights).
 ### Vertical and Horizontal Recoil
 
 - **Vertical Recoil** (default 25) is how hard the script pulls down while you fire. Higher means more pull.
-- **Horizontal Recoil** (default 3) is the sideways pull. Positive pulls one way and negative the other; set it to cancel your gun's sideways drift.
+- **Horizontal Recoil** (default 3) is the sideways pull. Positive pushes the aim right and negative pushes it left; set it against your gun's sideways drift (gun drifts right: lower it; drifts left: raise it).
 
-These two are the whole recoil baseline. The pull is the same for the whole burst. There are no weapon profiles, recoil patterns or phase settings in the current version.
+These two are the whole recoil baseline. Despite the names, they are the script's counter-pull, not how much the gun kicks. The pull is the same for the whole burst. There are no weapon profiles, recoil patterns or phase settings in the current version.
 
 **Important:** the right Vertical value depends on your in-game aiming sensitivity. The correction is a fixed stick amount, so if you raise DayZ's own vertical aim sensitivity, the same Vertical value pulls further and you need a lower one. Always check your in-game sensitivity before tuning Vertical.
 
 ### How anti-recoil reacts to your stick
 
-The script backs off when you move the stick yourself, so it does not fight you:
+The script weakens its pull when you move the stick yourself, so it does not fight you:
 
-- A **fast flick** reduces the pull a lot, so you can snap to a new target.
+- A **fast flick** weakens the pull a lot, so you can snap to a new target.
 - **Steady tracking** keeps most of the pull.
 - **Pulling down yourself** takes part of your pull off the script's, so the two do not add up and drag the aim low.
-- Holding the stick nearly still for a moment restores full strength (precision hold).
+- Letting the stick rest near centre for a moment restores full strength (precision hold).
+
+Turn Strength sets how much of the flick and tracking weakening applies: at 100 it applies fully, at 0 flicks and tracking never weaken the pull.
 
 When you stop firing, the pull fades out over a fraction of a second instead of cutting off, so the aim does not jump.
 
 ### Turn Strength
 
-Turn Strength (0 to 100, default 100) controls how much your own stick movement reduces the recoil pull. At 100 the script backs off fully when you move the stick. At 0 it never backs off. If the gun kicks every time you steer during a burst, try lowering Turn Strength to around 40.
+Turn Strength (0 to 100, default 100) sets how much moving the right stick while you fire weakens the recoil pull. (A fast flick weakens it a lot, steady tracking a little; letting the stick rest near centre for a moment restores it.) It does not set how strong the pull is; Vertical and Horizontal do that.
+
+- **Higher**: moving the stick weakens the pull more. Your stick takes over and recoil control drops while you move.
+- **Lower**: the pull stays closer to full strength while you move the stick.
+
+Example, for a fast flick that cuts the pull by 60% at the default:
+
+- **Turn Strength 100** (default): the pull is cut by 60%, leaving 40% of it. Moving the stick weakens it the most.
+- **Turn Strength 50**: the pull is cut by 30%, leaving 70% of it.
+- **Turn Strength 0**: the pull is not cut at all. Flicks and tracking never weaken it.
+
+Lower it (try around 40) if the gun climbs when you steer or track mid-burst. Keep 100 if the pull drags your aim down when you switch targets. Pulling down yourself still takes part of the pull off at any value, and so does Motion Intel if you turn it on.
+
+**The name is misleading:** Turn Strength is not the strength of the recoil control. Higher Turn Strength means less recoil control while you move the stick, because your stick takes over more.
 
 ### Hip Fire Recoil
 
@@ -268,7 +283,7 @@ Anti Deadzone (0 to 40, default 0 = off) skips over DayZ's own deadzone, so smal
 
 ### Motion Intel
 
-Motion Intel (default off) watches how you move the stick and can reduce anti-recoil further during fast movement. It can only reduce the recoil pull, never increase it. Most players should leave it off.
+Motion Intel (default off) watches how you move the stick and can weaken the recoil pull further during fast movement, on top of Turn Strength. It only ever weakens the pull (less recoil control), never strengthens it. Most players should leave it off.
 
 ## Tuning Guide
 
@@ -280,19 +295,19 @@ Most "it feels wrong" problems start with DayZ's own controller sensitivity, not
 
 ### Gun climbs during a burst
 
-Vertical Recoil is too low. Raise it 1 or 2 at a time. Or run Calibrate Recoil.
+Vertical Recoil is too low. Raise it 1 or 2 at a time. Or run Calibrate Recoil. If it only climbs while you move the stick (tracking or steering), lower Turn Strength instead.
 
 ### Aim gets pulled down / sinks
 
-Vertical Recoil is too high. Lower it 1 or 2 at a time. If it only sinks while you pull down yourself, that is normal behaviour and you do not need to pull as hard.
+Vertical Recoil is too high. Lower it 1 or 2 at a time. If it only sinks while you pull down yourself, that is normal behaviour and you do not need to pull as hard. If it only drags down when switching targets (flicking to a new target) and you have lowered Turn Strength, raise Turn Strength back toward 100.
 
 ### Gun drifts left or right
 
-Adjust Horizontal Recoil a little toward the side that cancels the drift. Small changes; values of 0 to 5 are common. DayZ recoil also has a random sideways part no script can cancel.
+If the gun drifts right, lower Horizontal Recoil a little (toward negative); if it drifts left, raise it. Small changes; values of 0 to 5 are common. DayZ recoil also has a random sideways part no script can cancel.
 
 ### Hard to stay on target while shooting
 
-Check in-game sensitivity first. Then try lowering Turn Strength (around 40), adding a little Fire Sens (around 75) or Easing (10 to 15).
+Check in-game sensitivity first. If the gun climbs when you steer or track mid-burst, lower Turn Strength (around 40) so moving the stick weakens the pull less. For steadier small corrections, lower Fire Sens to around 75 or add a little Easing (10 to 15).
 
 ### Aim feels too fast or overshoots
 
@@ -377,6 +392,20 @@ The bot sends you a direct message three days before your trial or subscription 
 - **"Your trial or subscription has ended"**: the subscription has expired. Open a support ticket to renew.
 - **"Generated codes in the last day ... limit"**: a member can generate codes for up to three new numbers per day. Asking again for the same number does not count.
 - **Code does not work**: make sure the number typed into Discord is exactly the one on the Zen, and re-enter the code carefully.
+
+## Getting Help on Discord
+
+### Asking the assistant
+
+Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. You can also @mention the assistant anywhere, or use the /tcp ask command.
+
+### Opening a support ticket
+
+Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **Licence & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the owner can see. For setup and bug tickets the assistant takes a first look; press **Call the owner** if you need them. Licence and payment tickets go straight to the owner. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message.
+
+### The Get started button
+
+New members: press **Get started** in the welcome channel. Pick your controller (PlayStation or Xbox) and say whether you have T.C.P on your Zen yet, and you get a checklist with the right button names and links, plus a PlayStation or Xbox role.
 
 ## Limits
 
