@@ -18,6 +18,8 @@ const aliasMap: Record<string, string> = {
   // With "work" changed, "does it work on ps4" no longer finds "works with a PlayStation" in the Overview.
   ps4: 'playstation ps4',
   ps5: 'playstation ps5',
+  // Asking for the Premium file itself is a download question, not one about what Premium is.
+  'premium file': 'download premium script',
   premium: 'licensed versions',
   // "clear" is in a Workshop heading, but clearing every setting is a factory reset.
   'clear my settings': 'factory reset settings',

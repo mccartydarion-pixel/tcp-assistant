@@ -514,7 +514,8 @@ async function callOwner(interaction: ButtonInteraction): Promise<void> {
   });
 }
 
-async function fetchTranscriptMessages(channel: GuildTextBasedChannel): Promise<{ messages: TranscriptMessage[]; names: Map<string, string> }> {
+/** Every message of a channel or thread (up to the transcript limit), oldest first, with display names. */
+export async function fetchTranscriptMessages(channel: GuildTextBasedChannel): Promise<{ messages: TranscriptMessage[]; names: Map<string, string> }> {
   const fetched: Message[] = [];
   let before: string | undefined;
   while (fetched.length < TRANSCRIPT_MESSAGE_LIMIT) {

@@ -19,16 +19,19 @@ import { extractQuestionDetails, normalizeUserQuestion } from '../ai/question.js
 import { reportUnanswered } from '../ai/unanswered.js';
 import { serverMapFor } from '../server/serverMap.js';
 import { startTicket, ticketButtons, ticketPanelLines, ticketsEnabled } from '../tickets/ticketSystem.js';
+import { cleanUpSolvedSoon } from './helpCleanup.js';
+import { HELP_PANEL_ID, SOLVED_GRACE_MS, SOLVED_NOTICE } from './helpCleanupRules.js';
 
 // The help channel (HELP_CHANNEL_ID): the assistant answers every question there, no @mention needed. Each
 // question gets its own thread, so conversations do not mix; the asker's follow-ups in the thread continue
-// the same conversation. Every answer has Solved (archives the thread) and Still stuck (opens a ticket with
-// the question filled in). When the owner writes in a thread, the assistant leaves that thread to them.
+// the same conversation. Every answer has Solved (archives the thread, which is cleared away a few minutes
+// later) and Still stuck (opens a ticket with the question filled in). When the owner writes in a thread, the
+// assistant leaves that thread to them. helpCleanup.ts keeps the channel tidy.
 const PREFIX = 'tcp-help:';
 const SOLVED_PREFIX = `${PREFIX}solved:`;
 const STUCK_ID = `${PREFIX}stuck`;
 /** The panel's "How this channel works" button; its ID is also how the panel is found again. */
-const HOW_IT_WORKS_ID = `${PREFIX}panel`;
+const HOW_IT_WORKS_ID = HELP_PANEL_ID;
 export const HELP_PANEL_MARKER = HOW_IT_WORKS_ID;
 
 /** The first question asked in each help thread, for Still stuck's ticket form. */
@@ -233,7 +236,8 @@ export async function handleHelpInteraction(interaction: Interaction): Promise<b
         [
           '`1` Post your question in this channel.',
           '`2` I start a thread for it and answer there. Reply in the thread to keep the conversation going.',
-          '`3` Sorted? Press **Solved** and the thread is archived. Not sorted? Press **Still stuck** to open a private ticket with the owner.',
+          `\`3\` Sorted? Press **Solved** and the thread is cleared away ${SOLVED_GRACE_MS / 60_000} minutes later. Not sorted? Press **Still stuck** to open a private ticket with the owner.`,
+          '`4` Threads with no reply for a day are cleared away too, so the channel stays tidy.',
         ].join('\n'),
         { title: 'How this channel works' },
       ),
@@ -256,10 +260,11 @@ export async function handleHelpInteraction(interaction: Interaction): Promise<b
     }
     await interaction.update({ components: [] });
     const channel = interaction.channel;
-    if (channel && 'send' in channel) await channel.send(notice('Marked as solved. Glad it is sorted!', { tone: 'success' }));
+    if (channel && 'send' in channel) await channel.send(notice(SOLVED_NOTICE, { tone: 'success' }));
     if (channel?.isThread()) {
       threadQuestions.delete(channel.id);
       await channel.setArchived(true, 'T.C.P help question solved').catch((error: unknown) => logger.info({ err: error }, '[TCP Help] Could not archive a solved thread'));
+      cleanUpSolvedSoon(interaction.client, channel.id);
     }
     return true;
   }

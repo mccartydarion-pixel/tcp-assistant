@@ -150,7 +150,7 @@ export interface TranscriptMeta {
   closedAt: number;
 }
 
-function stamp(ms: number): string {
+export function stamp(ms: number): string {
   return `${new Date(ms).toISOString().slice(0, 16).replace('T', ' ')} UTC`;
 }
 
@@ -168,13 +168,20 @@ function indent(text: string): string {
 
 /** A plain-text transcript, oldest message first, readable in Discord's file preview. */
 export function buildTranscript(meta: TranscriptMeta, messages: TranscriptMessage[], names: Map<string, string> = new Map()): string {
-  const lines = [
-    `T.C.P ticket ${formatTicketNumber(meta.number)} · ${meta.type}`,
-    `Opened by ${meta.openedBy} on ${stamp(meta.openedAt)}`,
-    `Closed by ${meta.closedBy} on ${stamp(meta.closedAt)}`,
-    `${messages.length} message${messages.length === 1 ? '' : 's'}`,
-    '='.repeat(60),
-  ];
+  return transcriptText(
+    [
+      `T.C.P ticket ${formatTicketNumber(meta.number)} · ${meta.type}`,
+      `Opened by ${meta.openedBy} on ${stamp(meta.openedAt)}`,
+      `Closed by ${meta.closedBy} on ${stamp(meta.closedAt)}`,
+    ],
+    messages,
+    names,
+  );
+}
+
+/** A transcript under the given header lines: the message count, a rule, then every message. */
+export function transcriptText(header: string[], messages: TranscriptMessage[], names: Map<string, string> = new Map()): string {
+  const lines = [...header, `${messages.length} message${messages.length === 1 ? '' : 's'}`, '='.repeat(60)];
   for (const message of messages) {
     lines.push('', `[${stamp(message.at)}] ${message.author}${message.bot ? ' (bot)' : ''}`);
     if (message.content) lines.push(indent(resolveMentions(message.content, names)));

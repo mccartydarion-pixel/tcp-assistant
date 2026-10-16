@@ -19,6 +19,7 @@ import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './
 import { setBrandIcon } from './bot/embeds.js';
 import { initTickets } from './tickets/ticketSystem.js';
 import { ensureHelpPanel, initHelpChannel } from './help/helpChannel.js';
+import { startHelpCleanup } from './help/helpCleanup.js';
 import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
 import { initPremium, onPremiumEnded, onPremiumPaid } from './premium/premium.js';
 import { startHttpServer } from './server/httpServer.js';
@@ -187,6 +188,7 @@ async function start(): Promise<void> {
   await ensureLicensePanel(client);
   await initTickets(client, { assistant, memory: conversationMemory });
   await ensureHelpPanel(client);
+  startHelpCleanup(client);
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);

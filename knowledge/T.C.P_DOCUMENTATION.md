@@ -24,13 +24,24 @@ There are two ways to get T.C.P:
 - **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop, and no lock.
 - **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, and needs an unlock code from the Discord (see Licence and Unlock Codes).
 
+Where to get each one is under Downloading the script: the free version from the **Download** button in the DayZ channel, Premium in your direct messages after you **Subscribe** (or with **Download Premium**).
+
 ## Getting Started
 
 New to T.C.P? The welcome channel has a **Start here** panel with buttons for a quick private guide: getting your licence, downloading the script, settings, getting help and the rules.
 
-1. Download the script from the download channel and load it onto your Cronus Zen with Zen Studio.
-2. Load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). Codes are for Elite Supporters: press **Subscribe** in the licence channel to join.
+1. Get the script (see Downloading the script) and load it onto your Cronus Zen with Zen Studio.
+2. T.C.P Premium only: load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). Codes are for Elite Supporters: press **Subscribe** in the licence channel to join. The free version has no lock.
 3. Open the menu with L2 + OPTIONS (LT + Menu on Xbox) and tune from there. The settings channel has setups shared by other players.
+
+### Downloading the script
+
+There is no separate download channel. Where you get T.C.P depends on the version:
+
+- **Free version:** go to the DayZ channel (the one with the T.C.P for DayZ post) and press **Download**, then sign in to the GPC Library with Discord. It needs no code.
+- **T.C.P Premium:** press **Subscribe** in the licence channel. When your payment goes through, the bot sends the Premium script to your direct messages and gives you the Elite Supporter role. No DM (your DMs are closed), lost the file, or want the newest version? Press **Download Premium** on the licence panel and it is sent to you privately.
+
+Then add the file to Zen Studio and program it to a slot on your Cronus Zen. Asking for the file in the help channel or a ticket does not get it to you faster; use the buttons above.
 
 ## Controls
 
@@ -500,7 +511,7 @@ If your subscription does not renew by itself, the bot sends you a direct messag
 
 ### Asking the assistant
 
-Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. You can also @mention the assistant anywhere, or use the /tcp ask command.
+Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. To keep the channel tidy, a solved thread is cleared away 5 minutes later, and a thread with no messages for a day is cleared away too; ask again any time. You can also @mention the assistant anywhere, or use the /tcp ask command.
 
 ### Opening a support ticket
 
