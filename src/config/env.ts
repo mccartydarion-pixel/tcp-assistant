@@ -11,7 +11,11 @@ const envSchema = z.object({
   LOG_CHANNEL_ID: z.string().optional(),
   ANNOUNCEMENT_CHANNEL_ID: z.string().optional(),
   DOWNLOAD_CHANNEL_ID: z.string().optional(),
+  // The four info channels (FAQ, Rules, Disclaimer, Overview) the bot keeps its own post in; each has a
+  // default in src/info/infoChannels.ts and these move it.
   FAQ_CHANNEL_ID: z.string().optional(),
+  DISCLAIMER_CHANNEL_ID: z.string().optional(),
+  OVERVIEW_CHANNEL_ID: z.string().optional(),
   LICENSE_CHANNEL_ID: z.string().optional(),
   LICENSE_SECRET: z.string().optional(),
   LICENSE_ADMIN_CHANNEL_ID: z.string().optional(),

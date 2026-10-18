@@ -46,14 +46,14 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `LOG_CHANNEL_ID` (optional)
 - `ANNOUNCEMENT_CHANNEL_ID` (optional)
 - `DOWNLOAD_CHANNEL_ID` (optional; only used when no games are listed in `src/games/gameScripts.ts`)
-- `FAQ_CHANNEL_ID` (optional)
+- `FAQ_CHANNEL_ID`, `RULES_CHANNEL_ID`, `DISCLAIMER_CHANNEL_ID`, `OVERVIEW_CHANNEL_ID` (optional; the four info channels the bot keeps its own post in, see Info channels below; each defaults to the server's own channel, so set one only to move it)
 - `LICENSE_CHANNEL_ID` (optional; the channel that holds the licence generator panel)
 - `LICENSE_SECRET` (needed for the generator; six comma-separated numbers that must match the key built into the script)
 - `LICENSE_ADMIN_CHANNEL_ID` (optional; a private channel for the owner's licence panel)
 - `LICENSE_MEMBER_ROLE_ID` (optional; the role given to a member when they generate a code)
 - `SETTINGS_CHANNEL_ID` (optional; the channel where members share their T.C.P setups)
 - `WELCOME_CHANNEL_ID` (optional; the channel for the Start here panel and new-member greetings)
-- `RULES_CHANNEL_ID` (optional; adds a Rules button to the welcome guide)
+- `RULES_CHANNEL_ID` also adds a Rules button to the welcome guide (only when it is set)
 - `REVIEW_CHANNEL_ID` (optional; the channel for the review panel and posted reviews)
 - `REVIEW_VOICE_CHANNEL_ID` (optional; a voice channel the bot renames to show the star rating)
 - `HELP_CHANNEL_ID` (optional; the channel where the assistant answers every question, no @mention needed)
@@ -146,6 +146,19 @@ Each game T.C.P supports has its own channel with a showcase: an embed with the 
 On startup the bot posts each showcase in its channel. It keeps a fingerprint of the wording in the install button's ID, so a redeploy leaves an unchanged showcase alone, and replaces the old one (deleting it and posting the new one) only when the wording, link or banner changed. The bot needs View Channel, Send Messages, Embed Links, Attach Files and Read Message History in each game channel; members only need to see it.
 
 The welcome guide's **Download** button lists these channels. `DOWNLOAD_CHANNEL_ID` is only used when `GAME_SCRIPTS` is empty.
+
+## Info channels
+
+The bot keeps one post of its own in each of four info channels: **Overview**, **FAQ**, **Disclaimer** and **Rules**. Each post is a single message of several embeds; the wording is in `src/info/infoContent.ts` (taken from the knowledge file; keep the two in step) and the channel IDs, with their defaults, in `src/info/infoChannels.ts`. `OVERVIEW_CHANNEL_ID`, `FAQ_CHANNEL_ID`, `DISCLAIMER_CHANNEL_ID` and `RULES_CHANNEL_ID` move a channel.
+
+The bot knows its post by the first embed's author line (for example "T.C.P · FAQ"). On startup, per channel:
+
+- **No post of the bot's yet (first run):** it deletes every other message in the channel (bulk delete for messages under 14 days, one by one for older), then posts. Without **Manage Messages** it can only delete its own messages: it says so in the log, posts anyway, and you delete the rest by hand.
+- **Post already there:** it edits the post in place only when the wording changed, and touches nothing else, so you can still post in the channel.
+- If you delete the bot's post by hand, the next startup counts as a first run and clears the channel again.
+- It reads at most the last 1000 messages; in a channel busier than that without its post it neither deletes nor posts.
+
+The bot needs View Channel, Read Message History, Send Messages, Embed Links and Manage Messages in these four channels. Without Read Message History it leaves the channel alone (it could not find its own post and would post again at every startup).
 
 ## Reviews and the star rating
 

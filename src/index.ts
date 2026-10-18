@@ -15,6 +15,7 @@ import { ensureSettingsPanel } from './settings/settingsPanel.js';
 import { ensureBugPanel } from './bugs/bugReports.js';
 import { ensureReviewPanel } from './reviews/reviews.js';
 import { ensureGamePanels } from './games/gameScripts.js';
+import { ensureInfoChannels } from './info/infoChannels.js';
 import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './welcome/welcome.js';
 import { setBrandIcon } from './bot/embeds.js';
 import { initTickets } from './tickets/ticketSystem.js';
@@ -122,6 +123,9 @@ async function validateGuildConfiguration(client: Client): Promise<void> {
 
   for (const [name, channelId] of Object.entries({
     FAQ_CHANNEL_ID: env.FAQ_CHANNEL_ID,
+    RULES_CHANNEL_ID: env.RULES_CHANNEL_ID,
+    DISCLAIMER_CHANNEL_ID: env.DISCLAIMER_CHANNEL_ID,
+    OVERVIEW_CHANNEL_ID: env.OVERVIEW_CHANNEL_ID,
     DOWNLOAD_CHANNEL_ID: env.DOWNLOAD_CHANNEL_ID,
     LOG_CHANNEL_ID: env.LOG_CHANNEL_ID,
     BUG_REPORT_CHANNEL_ID: env.BUG_REPORT_CHANNEL_ID,
@@ -195,6 +199,7 @@ async function start(): Promise<void> {
   await ensureReviewPanel(client);
   await ensureGamePanels(client);
   await ensureWelcomePanel(client);
+  await ensureInfoChannels(client);
 }
 
 start().catch((error) => {

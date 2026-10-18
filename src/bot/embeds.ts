@@ -22,6 +22,11 @@ export function setBrandIcon(url: string | undefined): void {
   brandIcon = url;
 }
 
+/** The bot's avatar (the T.C.P logo), once logged in. */
+export function getBrandIcon(): string | undefined {
+  return brandIcon;
+}
+
 export interface EmbedOptions {
   title?: string;
   description?: string;
