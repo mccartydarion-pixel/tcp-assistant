@@ -225,7 +225,7 @@ function disclaimer(links: InfoLinks): InfoSection[] {
         {
           name: '🔒 Licensed to you',
           value:
-            'Premium is for you only. Don\'t share, upload, leak or resell the script or your codes. Every Premium copy is fingerprinted to the member it was sent to, and shared copies or codes can lose access.',
+            'Premium is for you only. Don\'t share, upload, leak or resell the script or your codes. Premium copies are fingerprinted to the member they were sent to, and shared copies or codes can lose access.',
         },
         {
           name: '💳 Subscription & refunds',

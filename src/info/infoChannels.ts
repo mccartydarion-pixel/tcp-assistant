@@ -26,11 +26,11 @@ export const DEFAULT_INFO_CHANNELS: Record<InfoKey, string> = {
   rules: '1541049882947748001',
 };
 
-const ENV_NAMES: Record<InfoKey, 'OVERVIEW_CHANNEL_ID' | 'FAQ_CHANNEL_ID' | 'DISCLAIMER_CHANNEL_ID' | 'RULES_CHANNEL_ID'> = {
-  overview: 'OVERVIEW_CHANNEL_ID',
-  faq: 'FAQ_CHANNEL_ID',
-  disclaimer: 'DISCLAIMER_CHANNEL_ID',
-  rules: 'RULES_CHANNEL_ID',
+const ENV_NAMES: Record<InfoKey, 'INFO_OVERVIEW_CHANNEL_ID' | 'INFO_FAQ_CHANNEL_ID' | 'INFO_DISCLAIMER_CHANNEL_ID' | 'INFO_RULES_CHANNEL_ID'> = {
+  overview: 'INFO_OVERVIEW_CHANNEL_ID',
+  faq: 'INFO_FAQ_CHANNEL_ID',
+  disclaimer: 'INFO_DISCLAIMER_CHANNEL_ID',
+  rules: 'INFO_RULES_CHANNEL_ID',
 };
 
 export const INFO_LABELS: Record<InfoKey, string> = { overview: 'Overview', faq: 'FAQ', disclaimer: 'Disclaimer', rules: 'Rules' };

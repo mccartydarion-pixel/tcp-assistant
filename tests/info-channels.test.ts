@@ -167,7 +167,7 @@ describe('info channel IDs', () => {
   });
 
   it('lets each environment variable move its channel, and ignores an empty one', () => {
-    const ids = infoChannelIds({ FAQ_CHANNEL_ID: '111', RULES_CHANNEL_ID: ' 222 ', DISCLAIMER_CHANNEL_ID: '', OVERVIEW_CHANNEL_ID: '444' });
+    const ids = infoChannelIds({ INFO_FAQ_CHANNEL_ID: '111', INFO_RULES_CHANNEL_ID: ' 222 ', INFO_DISCLAIMER_CHANNEL_ID: '', INFO_OVERVIEW_CHANNEL_ID: '444' });
     expect(ids).toEqual({ overview: '444', faq: '111', disclaimer: DEFAULT_INFO_CHANNELS.disclaimer, rules: '222' });
   });
 });

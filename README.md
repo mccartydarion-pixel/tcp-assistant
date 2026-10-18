@@ -46,7 +46,7 @@ T.C.P. Assistant is a production-ready Discord support bot for the Tactical Comp
 - `LOG_CHANNEL_ID` (optional)
 - `ANNOUNCEMENT_CHANNEL_ID` (optional)
 - `DOWNLOAD_CHANNEL_ID` (optional; only used when no games are listed in `src/games/gameScripts.ts`)
-- `FAQ_CHANNEL_ID`, `RULES_CHANNEL_ID`, `DISCLAIMER_CHANNEL_ID`, `OVERVIEW_CHANNEL_ID` (optional; the four info channels the bot keeps its own post in, see Info channels below; each defaults to the server's own channel, so set one only to move it)
+- `INFO_OVERVIEW_CHANNEL_ID`, `INFO_FAQ_CHANNEL_ID`, `INFO_DISCLAIMER_CHANNEL_ID`, `INFO_RULES_CHANNEL_ID` (optional; the four info channels the bot keeps its own post in, see Info channels below; each defaults to the server's own channel, so set one only to move it)
 - `LICENSE_CHANNEL_ID` (optional; the channel that holds the licence generator panel)
 - `LICENSE_SECRET` (needed for the generator; six comma-separated numbers that must match the key built into the script)
 - `LICENSE_ADMIN_CHANNEL_ID` (optional; a private channel for the owner's licence panel)
@@ -149,7 +149,7 @@ The welcome guide's **Download** button lists these channels. `DOWNLOAD_CHANNEL_
 
 ## Info channels
 
-The bot keeps one post of its own in each of four info channels: **Overview**, **FAQ**, **Disclaimer** and **Rules**. Each post is a single message of several embeds; the wording is in `src/info/infoContent.ts` (taken from the knowledge file; keep the two in step) and the channel IDs, with their defaults, in `src/info/infoChannels.ts`. `OVERVIEW_CHANNEL_ID`, `FAQ_CHANNEL_ID`, `DISCLAIMER_CHANNEL_ID` and `RULES_CHANNEL_ID` move a channel.
+The bot keeps one post of its own in each of four info channels: **Overview**, **FAQ**, **Disclaimer** and **Rules**. Each post is a single message of several embeds; the wording is in `src/info/infoContent.ts` (taken from the knowledge file; keep the two in step) and the channel IDs, with their defaults, in `src/info/infoChannels.ts`. `INFO_OVERVIEW_CHANNEL_ID`, `INFO_FAQ_CHANNEL_ID`, `INFO_DISCLAIMER_CHANNEL_ID` and `INFO_RULES_CHANNEL_ID` move a channel (their own names, so the older `FAQ_CHANNEL_ID` and `RULES_CHANNEL_ID` can never point the first-run clean-up at another channel).
 
 The bot knows its post by the first embed's author line (for example "T.C.P · FAQ"). On startup, per channel:
 
