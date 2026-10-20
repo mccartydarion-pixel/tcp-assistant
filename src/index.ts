@@ -24,6 +24,7 @@ import { startHelpCleanup } from './help/helpCleanup.js';
 import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
 import { initPremium, onPremiumEnded, onPremiumPaid } from './premium/premium.js';
 import { startHttpServer } from './server/httpServer.js';
+import { initAnnouncements } from './announcements/announcements.js';
 
 const knowledge = new KnowledgeService();
 const assistant = new AssistantService(knowledge);
@@ -200,6 +201,8 @@ async function start(): Promise<void> {
   await ensureGamePanels(client);
   await ensureWelcomePanel(client);
   await ensureInfoChannels(client);
+  // Last, once every panel is in place: posts the code-written announcements that are due (queue.ts).
+  await initAnnouncements(client);
 }
 
 start().catch((error) => {

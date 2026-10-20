@@ -118,6 +118,45 @@ The owner panel (in `LICENSE_ADMIN_CHANNEL_ID`) has three rows:
 - **Reports**: *Active subscriptions* (everyone with days left, soonest expiry first, and how many are on the free trial), *Expiring this week* (7 days or less), and *Recent codes* (the latest 20 codes generated). Replies are private to the owner.
 - **Announce**: *Post announcement* or *Post announcement + flyer* opens a form (title, version, patch notes, link). The bot shows a private preview first; nothing is posted until **Post** or **Post + @everyone** is pressed. It posts to `ANNOUNCEMENT_CHANNEL_ID`. The flyer is `assets/tcp-flyer.gif`; replace that file to change it. The bot needs Send Messages, Embed Links and Attach Files there, and Mention Everyone to use the @everyone button.
 
+## Queued announcements
+
+Update announcements can also be written in code, so each T.C.P release is announced the moment the new bot version starts. The queue is `src/announcements/queue.ts`; GIFs go in `assets/announcements/`.
+
+On every start, once the bot is connected and its panels are in place, it posts each entry that is **ready**, **never posted** and **at most 14 days past its date**, oldest first, to `ANNOUNCEMENT_CHANNEL_ID`. Each entry is one message: the ping (if any), a T.C.P embed, and the GIF attached and shown as the embed's image.
+
+To add one:
+
+1. Put the GIF in `assets/announcements/` (a plain file name: letters, digits, `.`, `_`, `-`; `.gif`, `.png`, `.jpg` or `.webp`; **8 MB at most**, Discord's limit for a server without boosts).
+2. Add an entry to `ANNOUNCEMENT_QUEUE` in `src/announcements/queue.ts`:
+
+   ```ts
+   {
+     id: '2026-10-workshop-mag',     // stable and unique; never change it once posted
+     date: '2026-10-21',             // the day you wrote it (YYYY-MM-DD)
+     ready: true,                    // false keeps it as a draft: never posted
+     title: 'T.C.P Premium: the Mag item is here',
+     description: 'What is new, with **bold** and line breaks.',
+     fields: [{ name: 'Version', value: 'Round 8', inline: true }], // optional, up to 25
+     url: 'https://...',             // optional: the title links here
+     gif: 'workshop-mag.gif',        // optional: a file in assets/announcements/
+     ping: '@everyone',              // optional: '@everyone', a role ID (digits) or 'none'
+   },
+   ```
+
+3. Run `npm test` (it checks every entry in the real queue: ids, dates, Discord's embed limits, and that each ready entry's GIF is there and under 8 MB), commit, push and let Railway redeploy. The announcement goes out when the new version starts.
+
+Rules the bot keeps:
+
+- **Never twice.** Each posted id is recorded in the database (the `queued_announcements` table in Postgres when `DATABASE_URL` is a Postgres address, otherwise `queuedAnnouncements` in the SQLite file, which a redeploy clears; use Postgres so a redeploy cannot repost). The row is written as *sending* before the message goes out and becomes *posted* once Discord confirms it.
+- **Never lost silently.** If the bot stops between those two steps, the entry stays *sending*: every start logs it as a warning and it is **not** retried by itself, because it may already be in the channel. Look in the channel; if it is missing, run `/tcp announcements retry:<id>`, which clears it and posts it. If Discord refuses a message outright (a 4xx answer, e.g. missing permissions), it was certainly not posted, so the record is cleared and it is tried again on the next start. A failed send stops the run so later entries keep their order.
+- **Drafts wait.** Entries with `ready: false` are never posted (or checked), so a draft can sit in the queue without its GIF.
+- **No old news.** A ready entry never posted by 14 days after its `date` is skipped with a log line, so a fresh database never floods the channel. To post it anyway, give it today's date.
+- **All or nothing.** If anything due is wrong (an embed over Discord's limits, a missing or oversized GIF, a bad ping, a duplicate id or bad date anywhere in the queue, or `ANNOUNCEMENT_CHANNEL_ID` missing or not a channel the bot can see), the bot logs a clear `[TCP Announcements ERROR]` line for each problem and posts nothing; fix it and redeploy. Text is never cut short.
+
+`/tcp announcements` (owner only, private reply) lists the queue in posting order with each entry's status: POSTED, PENDING, DRAFT, UNSURE (was sending) or SKIPPED (over 14 days old).
+
+The bot needs View Channel, Send Messages, Embed Links and Attach Files in the announcement channel, and Mention Everyone for an `@everyone` or role ping (unless the role is mentionable). The build copies the whole repository (Railpack, and `COPY . .` in the Dockerfile; there is no `.dockerignore`), so files in `assets/announcements/` ship with the bot.
+
 ## Settings sharing
 
 With `SETTINGS_CHANNEL_ID` set, the bot posts a **Share my settings** panel in that channel. Pressing it starts a short private wizard:
@@ -280,6 +319,7 @@ These commands require owner/admin permissions and should be restricted in Disco
 
 - `/tcp reload-docs`
 - `/tcp status`
+- `/tcp announcements` (owner only: the queued announcements and their status; see Queued announcements)
 - `/tcp summarize`
 - `/tcp escalate`
 - `/tcp resolve`

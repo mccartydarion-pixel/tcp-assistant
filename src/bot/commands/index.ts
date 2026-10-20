@@ -14,6 +14,7 @@ import { answerMessages, notice, tcpEmbed } from '../embeds.js';
 import { serverMapFor } from '../../server/serverMap.js';
 import { ticketAudience } from '../../tickets/ticketSystem.js';
 import { handleReleaseCommand, handleSyncCommand, handleTraceCommand } from '../../premium/premium.js';
+import { handleAnnouncementsCommand } from '../../announcements/announcements.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -66,6 +67,18 @@ export function createCommands(
         .setName('sync')
         .setDescription('Owner: give a paying member the Elite welcome: role, script by DM, welcome post')
         .addUserOption((option) => option.setName('member').setDescription('Who to sync (leave empty for yourself)').setRequired(false)),
+    )
+    .addSubcommand((command) =>
+      command
+        .setName('announcements')
+        .setDescription('Owner: list the queued announcements and whether each is posted')
+        .addStringOption((option) =>
+          option
+            .setName('retry')
+            .setDescription('Id of an entry marked UNSURE: check the channel first; this clears it and posts it')
+            .setRequired(false)
+            .setMaxLength(80),
+        ),
     );
 
   return [
@@ -83,6 +96,10 @@ export function createCommands(
         }
         if (subcommand === 'sync') {
           await handleSyncCommand(interaction);
+          return;
+        }
+        if (subcommand === 'announcements') {
+          await handleAnnouncementsCommand(interaction);
           return;
         }
         if (subcommand === 'help') {
