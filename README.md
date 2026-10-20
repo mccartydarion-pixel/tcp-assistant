@@ -207,7 +207,7 @@ The startup log says whether Stripe is ready and in test or live mode. Test and 
 ### Premium script and the Elite role
 
 On a member's **first** payment the bot also:
-- DMs them the Premium script (`Tactical Competitive Pro Release.gpc`) with install steps;
+- DMs them the Premium script (`T.C.P Premium.gpc`) with install steps;
 - gives them the **Elite Supporter** role (`ELITE_ROLE_ID`, or a role with that name);
 - welcomes them, with a ping, in the elite welcome channel (`ELITE_WELCOME_CHANNEL_ID`, or a text channel with "elite" and "welcome" in its name).
 

@@ -20,7 +20,7 @@ import { createPremiumStore, type MarkRecord, type PremiumFile, type PremiumStor
 import { definesIn, markFits, newMark, stampCopy } from './fingerprint.js';
 
 // T.C.P Premium for paying members. On a member's first payment the bot DMs them the premium script
-// (Tactical Competitive Pro Release.gpc), gives them the Elite Supporter role and welcomes them in the
+// (Premium/T.C.P Premium.gpc), gives them the Elite Supporter role and welcomes them in the
 // elite welcome channel. Renewals keep the role; when the subscription ends the role is taken away.
 // The owner uploads the script with /tcp release; it is kept in the database, never in the bot's public
 // repository, and only the scrambled release is accepted (the readable one carries the licence key).
@@ -44,17 +44,17 @@ let onUploaded: () => Promise<void> = async () => {};
  * only z-names.
  */
 export function checkRelease(fileName: string, text: string): { ok: true } | { ok: false; reason: string } {
-  if (!/\.gpc$/i.test(fileName)) return { ok: false, reason: 'That is not a .gpc file. Upload **Tactical Competitive Pro Release.gpc**.' };
+  if (!/\.gpc$/i.test(fileName)) return { ok: false, reason: 'That is not a .gpc file. Upload **T.C.P Premium.gpc** (in the Premium folder).' };
   if (/LICENSE_KEY|license_(update|guard|match|ok)|\btcp_frame\b/i.test(text)) {
     return {
       ok: false,
       reason:
-        'That file is readable, not scrambled. The readable release has your real licence key in it and must never be given out. Upload the scrambled **Tactical Competitive Pro Release.gpc** (built with `--license --scramble`).',
+        'That file is readable, not scrambled. The readable release has your real licence key in it and must never be given out. Upload the scrambled **T.C.P Premium.gpc** (in the Premium folder) (built with `--license --scramble`).',
     };
   }
   const scrambledDefines = text.match(/^define z[0-9a-f]+\s*=/gm)?.length ?? 0;
   if (scrambledDefines < 50) {
-    return { ok: false, reason: 'That does not look like the scrambled T.C.P release. Upload **Tactical Competitive Pro Release.gpc** (built with `--license --scramble`).' };
+    return { ok: false, reason: 'That does not look like the scrambled T.C.P release. Upload **T.C.P Premium.gpc** (in the Premium folder) (built with `--license --scramble`).' };
   }
   return { ok: true };
 }
@@ -443,7 +443,7 @@ export async function handleReleaseCommand(interaction: ChatInputCommandInteract
             `**${current.fileName}**, ${current.content.length.toLocaleString('en-US')} bytes, uploaded <t:${Math.floor(current.uploadedAt / 1000)}:R> (fingerprint \`${current.sha256.slice(0, 12)}\`).\nTo replace it, run \`/tcp release\` again with the new file attached.`,
             { title: 'Premium script', tone: 'success' },
           )
-        : notice('No premium script uploaded yet. Run `/tcp release` and attach **Tactical Competitive Pro Release.gpc**.', { title: 'Premium script', tone: 'warning' }),
+        : notice('No premium script uploaded yet. Run `/tcp release` and attach **T.C.P Premium.gpc** (in the Premium folder).', { title: 'Premium script', tone: 'warning' }),
     );
     return;
   }

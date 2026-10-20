@@ -52,7 +52,7 @@ export function createCommands(
         .setName('release')
         .setDescription('Owner: upload the Premium script, or see which one is live')
         .addAttachmentOption((option) =>
-          option.setName('file').setDescription('Tactical Competitive Pro Release.gpc (the scrambled build)').setRequired(false),
+          option.setName('file').setDescription('T.C.P Premium.gpc from the Premium folder (the scrambled build)').setRequired(false),
         ),
     )
     .addSubcommand((command) =>
