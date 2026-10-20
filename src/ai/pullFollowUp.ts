@@ -10,7 +10,7 @@ export const SCALE_Y_STEP = 5;
 /** How far back an unknown Scale Y goes once it has crossed the balance point: half a step, rounded up. */
 const SCALE_Y_BACK = Math.ceil(SCALE_Y_STEP / 2);
 
-const SCALE_Y_ITEM = 'Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (4/6)';
+const SCALE_Y_ITEM = 'Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7)';
 const ASK_VALUE = 'tell me the Scale Y number it shows';
 
 /**
@@ -20,7 +20,7 @@ const ASK_VALUE = 'tell me the Scale Y number it shows';
 const UNKNOWN_STEP = /^(raise|lower) Scale Y (?:instead\b|by\s+(another\s+)?(\d+))/i;
 
 /** A recording stores the measured pull divided by the current Scale Y, so Scale Y goes back to 100 before a REDO. */
-const REDO_AT_100 = `Move Scale Y to ${SCALE_DEFAULT} first, then REDO that slot (Record, 3/6 on the Workshop page)`;
+const REDO_AT_100 = `Move Scale Y to ${SCALE_DEFAULT} first, then REDO that slot (Record, 4/7 on the Workshop page)`;
 
 type Direction = 'raise' | 'lower';
 

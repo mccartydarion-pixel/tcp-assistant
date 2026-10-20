@@ -46,7 +46,7 @@ describe('Weapon Workshop doc', () => {
     expect(content(WHAT)).toContain('check that you loaded the licensed script from the Discord, not the marketplace one');
     expect(content('Versions')).toContain('It has every feature except the Weapon Workshop, and no lock.');
     expect(content('Versions')).toContain('It has everything in the free version plus the Weapon Workshop');
-    expect(content('Menu Pages')).toContain('T.C.P Premium adds a 27th page, **Workshop** (six items: Weapon, Gun, Record, Scale Y, Scale X, Clear), after Motion Intel. The menu opens on Master, so LEFT once from there goes straight to it.');
+    expect(content('Menu Pages')).toContain('T.C.P Premium adds a 27th page, **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear), after Motion Intel. The menu opens on Master, so LEFT once from there goes straight to it.');
     expect(doc).toContain("26-page menu on the Zen's OLED screen (27 pages in T.C.P Premium)");
   });
 
@@ -59,8 +59,8 @@ describe('Weapon Workshop doc', () => {
   it('walks through a recording with PlayStation and Xbox buttons', () => {
     const steps = content(RECORD);
     expect(steps).toContain('Master and Anti-Recoil on');
-    expect(steps).toContain('L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its six items.');
-    expect(steps).toContain('**Record** (3/6): press X (A). Two short buzzes mean it is ARMED. Close the menu with Circle (B).');
+    expect(steps).toContain('L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its seven items.');
+    expect(steps).toContain('**Record** (4/7): press X (A). Two short buzzes mean it is ARMED. Close the menu with Circle (B).');
     expect(steps).toContain('aim with L2 (LT) first, then hold R2 (RT)');
     expect(steps).toContain('Three long buzzes mean COMPLETE: the pull is saved.');
   });
@@ -299,5 +299,114 @@ describe('Workshop round 7 wording', () => {
     const notes = content('Workshop: notes on recording');
     expect(notes).toContain('Anti Deadzone, switching Anti-Recoil off, or switching on Calibrate Recoil');
     expect(notes).toContain('Changing Anti Deadzone makes every recorded pull reach the game stronger or weaker');
+  });
+});
+
+// Round 8 of the Workshop (2026-10-18): a seventh item, Mag (the rounds in the slot's magazine), third in the
+// list, so Record is 4/7, Scale Y 5/7, Scale X 6/7 and Clear 7/7. The save format changed with it, so the first
+// start of the new script empties the Workshop once.
+describe('Workshop round 8: the Mag item', () => {
+  const workshop = chunks.filter((chunk) => chunk.section === 'Weapon Workshop (Premium)');
+
+  it('walks through the Mag step between Gun and Record, with every item numbered out of seven', () => {
+    const steps = content(RECORD);
+    expect(steps).toContain('2. **Weapon** (1/7): UP/DOWN to pick a slot, W1 to W4. The other six items appear once a slot is picked.');
+    expect(steps).toContain('3. **Gun** (2/7): pick the gun you are holding. T.C.P uses it, with Mag, to know how long your magazine fires.');
+    expect(steps).toContain("Changing the Gun sets Mag to that gun's standard magazine.");
+    expect(steps).toContain('4. **Mag** (3/7): set the number of rounds in the magazine you will fire, 5 to 100 (UP/DOWN; hold X (A) to move 10 at a time).');
+    expect(steps).toContain("It starts at the gun's standard magazine: 30 for most guns, 20 for the LAR, SVAL and VSS, 64 for the BIZON, and 25 for the USG-45, LE-MAS and OTHER.");
+    expect(steps).toContain('for example 30 RND 2.0S');
+    expect(steps).toContain('for example Mag 60 for a 60-round M4 magazine or Mag 20 for a 20-round KA-M magazine');
+    expect(steps).toContain('5. **Record** (4/7): press X (A).');
+    expect(steps).toContain('a progress bar that fills over the whole magazine');
+    expect(steps).toContain('7. **Do it three times.**');
+    expect(steps.indexOf('**Gun** (2/7)')).toBeLessThan(steps.indexOf('**Mag** (3/7)'));
+    expect(steps.indexOf('**Mag** (3/7)')).toBeLessThan(steps.indexOf('**Record** (4/7)'));
+  });
+
+  it('has no six-item numbering left anywhere in the Workshop, and Auto Movement keeps its six items', () => {
+    for (const chunk of workshop) {
+      expect(chunk.content).not.toMatch(/\b[1-7]\/6\b|its six items|other five items/);
+    }
+    expect(doc).not.toMatch(/Workshop\*\* \(six items/);
+    expect(content(REDO)).toContain('go to Clear (7/7)');
+    expect(content('Menu Pages')).toContain('25. Auto Movement (six items: on/off, Stop on ADS, Do 180, Left Time, Right Time, Strafe Amount)');
+  });
+
+  it('says what Clear, a Gun change and a factory reset do to Mag', () => {
+    expect(content(REDO)).toContain("Scale Y and Scale X go back to 100, and Mag goes back to the gun's standard magazine.");
+    expect(content(REDO)).toContain('A factory reset (L1 + R1 + X in the menu) keeps your recordings, guns, Mag and scales; it only sets Weapon back to OFF.');
+    expect(content(REDO)).toContain("different attachments, optics or magazines (set each slot's Mag)");
+    expect(content('Factory reset')).toContain("your Weapon Workshop recordings are kept too, with each slot's Gun, Mag, Scale Y and Scale X");
+  });
+
+  it('says the update empties the Workshop once', () => {
+    expect(content(REDO)).toContain('**The update that added Mag empties the Workshop once.** The way slots are saved changed, so the first start of the new Premium script shows every slot empty and Weapon OFF. Record your guns again; your other settings are kept.');
+  });
+
+  it('lists the Mag among the changes that end a recording, and explains magazines that do not fit', () => {
+    const notes = content(NOTES);
+    expect(notes).toContain('changing the Weapon slot, the Gun, the Mag, Vertical or Horizontal Recoil, Scale Y or Scale X, Anti Deadzone');
+    expect(notes).toContain('Set Mag to the magazine you fire.');
+    expect(notes).toContain('keep holding R2 (RT) on the mark until about 1.5 seconds after you started firing');
+    expect(notes).toContain('With its own 10-round magazine, set Mag to 10 and keep holding R2 (RT) for about a second after the last shot; the card says 20+ RND MAG either way.');
+    const messages = content(MESSAGES);
+    expect(messages).toContain('check that Mag is set to the rounds in your magazine (a 20-round magazine with Mag at 30 runs dry too soon)');
+    expect(messages).toContain("**TOO SHORT / 20+ RND MAG** (VSS): the spray was too short, usually because of the VSS's own 10-round magazine.");
+    expect(messages).toContain('Mag shows the rounds and how long they fire (for example 30 RND 2.0S)');
+  });
+
+  it.each([
+    ['what is the mag item', RECORD],
+    ['how do i set mag size', RECORD],
+    ['what mag size should i use', RECORD],
+    ['what is the mag setting', RECORD],
+    ['does the mag matter', RECORD],
+    ['what should my mag be on the bizon', RECORD],
+    ['magazine size', RECORD],
+    ['magazine', RECORD],
+    ['how many rounds', RECORD],
+    ['how many rounds in my mag', RECORD],
+    ['how many rounds does the m4 have', RECORD],
+    ['i use a 60 round mag', RECORD],
+    ['60 round mag on my m4', RECORD],
+    ['20 round mag for the kam', RECORD],
+    ['i have an extended mag on my akm', RECORD],
+    ['what does mag do in the workshop', RECORD],
+    ['what does 30 RND 2.0S mean', RECORD],
+    ['it says 64 rnd 6.4s', RECORD],
+    ['my recordings are gone after the update', REDO],
+    ['workshop is empty after update', REDO],
+    ['lost my recordings', REDO],
+  ])('"%s" finds %s, as typed and as the bot searches', async (question, heading) => {
+    expect(await top(question)).toEqual([heading]);
+    expect(await top(botQuery(question))).toEqual([heading]);
+  });
+
+  // The Mag aliases must not take the card words that mention a magazine, or questions about other pages.
+  it.each([
+    ['what does 20+ rnd mag mean', MESSAGES],
+    ['it says full mag', MESSAGES],
+    ['it says fire a mag', MESSAGES],
+    ['drop shot hold time', 'Drop Shot and Crouch Shot'],
+    ['how long is the drop shot cooldown', 'Drop Shot and Crouch Shot'],
+    ['how do i turn on double tap', 'Drop Shot and Crouch Shot'],
+    ['what is ads accuracy 2.0', 'ADS Accuracy 2.0'],
+    ['set the vertical', 'Vertical and Horizontal Recoil'],
+    ['what is the left time for moonwalk', 'Auto Movement (moonwalk)'],
+    ['how many pages are there', 'Menu Pages'],
+  ])('"%s" still finds %s', async (question, heading) => {
+    expect(await top(question)).toEqual([heading]);
+  });
+
+  it('tells the assistant about the Mag item', () => {
+    expect(systemPrompt).toContain("Each slot also has a Mag item (the rounds in the magazine the player fires, 5 to 100, default the gun's standard magazine), which sets how long each recorded spray is measured.");
+  });
+
+  it('puts the Mag step in the prompt for a magazine question', async () => {
+    const question = 'i use a 60 round mag on my m4, what do i set';
+    const details = extractQuestionDetails(question);
+    const prompt = buildTCPPrompt({ question, details, retrievedChunks: await retriever.search(buildRetrievalQuery(question, details), 5) });
+    expect(prompt.context).toContain('4. **Mag** (3/7)');
   });
 });

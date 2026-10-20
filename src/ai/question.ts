@@ -127,7 +127,7 @@ export function detectRecordedPull(question: string): boolean | undefined {
 
 // Between "scale y" and its number: "scale y is now at 110", "scale y's at 95%", "scale y went from 100".
 const SCALE_LEAD = String.raw`(?:'s)?\s*(?:(?:is|was|at|to|of|now|on|currently|still|already|set|went|from|back|around|about|(?:up|down)\s+to)\b\s*|[=:]\s*)*`;
-// A number, but not a page position (4/6) and not the start of a longer number.
+// A number, but not a page position (5/7) and not the start of a longer number.
 const SCALE_NUMBER = String.raw`(\d+(?:\.\d+)?)(?!\d|\.\d|\s*\/)\s*%?`;
 // A second number is the one set now: "from 100 to 110", "was 100 now 105", "100 -> 105".
 const SCALE_THEN = String.raw`(?:\s*(?:->|${ARROW}|=>|,?\s*(?:and\s+)?(?:now|then)(?:\s+(?:at|is|to))?|to)\s*${SCALE_NUMBER})?`;

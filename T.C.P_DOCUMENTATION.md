@@ -77,7 +77,7 @@ Press **L2 + SHARE** to swap between ADS profile 1 and profile 2. One rumble pul
 
 ### Factory reset
 
-Inside the menu, hold **L1 + R1 + X** for two seconds. Every setting goes back to its default. A licence code that has already been entered is not affected. In T.C.P Premium, your Weapon Workshop recordings are kept too; only the Weapon slot goes back to OFF.
+Inside the menu, hold **L1 + R1 + X** for two seconds. Every setting goes back to its default. A licence code that has already been entered is not affected. In T.C.P Premium, your Weapon Workshop recordings are kept too, with each slot's Gun, Mag, Scale Y and Scale X; only the Weapon slot goes back to OFF.
 
 ## Menu Pages
 
@@ -110,7 +110,7 @@ The menu has 26 pages, in this order:
 25. Auto Movement (six items: on/off, Stop on ADS, Do 180, Left Time, Right Time, Strafe Amount)
 26. Motion Intel (on/off)
 
-T.C.P Premium adds a 27th page, **Workshop** (six items: Weapon, Gun, Record, Scale Y, Scale X, Clear), after Motion Intel. The menu opens on Master, so LEFT once from there goes straight to it. Every other page keeps its number. The free version has no Workshop page.
+T.C.P Premium adds a 27th page, **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear), after Motion Intel. The menu opens on Master, so LEFT once from there goes straight to it. Every other page keeps its number. The free version has no Workshop page.
 
 ### Defaults and ranges
 
@@ -214,12 +214,13 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 
 Before you start: Master and Anti-Recoil on, your normal in-game sensitivity and attachments, and a wall with a small mark to aim at.
 
-1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its six items.
-2. **Weapon** (1/6): UP/DOWN to pick a slot, W1 to W4. The other five items appear once a slot is picked.
-3. **Gun** (2/6): pick the gun you are holding. T.C.P uses it to know how long a full magazine lasts. The gun list: M4-A1, M16-A2, KA-M, KA-74, KAS-74U, KA-101, LAR, AUR AX, VIKHR, SVAL, VSS, BIZON, SG5-K, USG-45, LE-MAS, and OTHER for a gun that is not listed. The slots start out as W1 M4-A1, W2 KA-M, W3 LAR and W4 VIKHR.
-4. **Record** (3/6): press X (A). Two short buzzes mean it is ARMED. Close the menu with Circle (B).
-5. **Fire a full magazine**: aim with L2 (LT) first, then hold R2 (RT). Keep the crosshair on the mark with the right stick and let go when the gun stops firing. The screen shows REC and a progress bar.
-6. **Do it three times.** Three short buzzes mean the spray counted (SPRAY 1/3, 2/3). After the first counted spray the gun already fires the up/down pull it measured, so sprays 2 and 3 should feel nearly right; reload and fire again within about 20 seconds. Three long buzzes mean COMPLETE: the pull is saved. The screen shows the pull (for example V28 H4) and how consistent your three sprays were: TIGHT, GOOD or LOOSE.
+1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its seven items.
+2. **Weapon** (1/7): UP/DOWN to pick a slot, W1 to W4. The other six items appear once a slot is picked.
+3. **Gun** (2/7): pick the gun you are holding. T.C.P uses it, with Mag, to know how long your magazine fires. The gun list: M4-A1, M16-A2, KA-M, KA-74, KAS-74U, KA-101, LAR, AUR AX, VIKHR, SVAL, VSS, BIZON, SG5-K, USG-45, LE-MAS, and OTHER for a gun that is not listed. The slots start out as W1 M4-A1, W2 KA-M, W3 LAR and W4 VIKHR. Changing the Gun sets Mag to that gun's standard magazine.
+4. **Mag** (3/7): set the number of rounds in the magazine you will fire, 5 to 100 (UP/DOWN; hold X (A) to move 10 at a time). It starts at the gun's standard magazine: 30 for most guns, 20 for the LAR, SVAL and VSS, 64 for the BIZON, and 25 for the USG-45, LE-MAS and OTHER. The page shows the rounds and how long that magazine fires, for example 30 RND 2.0S. Set it to your real magazine, for example Mag 60 for a 60-round M4 magazine or Mag 20 for a 20-round KA-M magazine: T.C.P measures each spray over that time. At the standard magazine nothing changes.
+5. **Record** (4/7): press X (A). Two short buzzes mean it is ARMED. Close the menu with Circle (B).
+6. **Fire a full magazine**: aim with L2 (LT) first, then hold R2 (RT). Keep the crosshair on the mark with the right stick and let go when the gun stops firing. The screen shows REC and a progress bar that fills over the whole magazine.
+7. **Do it three times.** Three short buzzes mean the spray counted (SPRAY 1/3, 2/3). After the first counted spray the gun already fires the up/down pull it measured, so sprays 2 and 3 should feel nearly right; reload and fire again within about 20 seconds. Three long buzzes mean COMPLETE: the pull is saved. The screen shows the pull (for example V28 H4) and how consistent your three sprays were: TIGHT, GOOD or LOOSE.
 
 Taps and bursts shorter than one second are ignored while recording: no buzz, nothing on the screen.
 
@@ -245,19 +246,20 @@ Scale Y and Scale X (50 to 150%, default 100) adjust a recorded pull without rec
 
 - **Redo**: on a slot that already has a pull, the Record item shows REDO with the consistency (for example GOOD +-1.8). Arm it and record three sprays again; the new pull replaces the old one when the session completes. Redo after you change your in-game sensitivity or your attachments.
 - **REDO ONCE**: if you see this on the Record item or the COMPLETE screen, record that slot one more time (a REDO). It means the session started far from what the gun needed (often a gun that kicks much harder or softer than your Vertical Recoil, or the short SVAL and VSS magazines), so one more recording should make the pull more accurate.
-- **Clear**: go to Clear (6/6) and hold X (A) for one second until the bar fills. Four short buzzes mean it is cleared, and Scale Y and Scale X go back to 100. On an empty slot X gives one long buzz and the hint says NOTHING TO CLEAR.
-- **Four slots, any guns.** The same gun in two slots is fine, for example with different attachments or optics.
-- Recordings are saved through power-off. A factory reset (L1 + R1 + X in the menu) keeps your recordings; it only sets Weapon back to OFF.
+- **Clear**: go to Clear (7/7) and hold X (A) for one second until the bar fills. Four short buzzes mean it is cleared, Scale Y and Scale X go back to 100, and Mag goes back to the gun's standard magazine. On an empty slot X gives one long buzz and the hint says NOTHING TO CLEAR.
+- **Four slots, any guns.** The same gun in two slots is fine, for example with different attachments, optics or magazines (set each slot's Mag).
+- Recordings are saved through power-off. A factory reset (L1 + R1 + X in the menu) keeps your recordings, guns, Mag and scales; it only sets Weapon back to OFF.
+- **The update that added Mag empties the Workshop once.** The way slots are saved changed, so the first start of the new Premium script shows every slot empty and Weapon OFF. Record your guns again; your other settings are kept.
 
 ### Workshop messages
 
 What the recorder card or the Workshop page says, and the fix:
 
-- **The card's big label** says what the recorder is doing: **ARMED** (waiting for a spray; AIM AT MARK, or REPLACES on a slot that already has a pull, and FIRE A MAG; if Drop on Fire or Lean Spam is switched on, a pause mark with DROP, LEAN or DROP+LEAN shows they are paused), **REC** (measuring a spray; KEEP AIMING, UNTIL EMPTY), **ACCEPTED** (the spray counted: SPRAY 1/3 or 2/3 and that spray's pull), **DISCARDED** (the spray was thrown out; the lines under it say why, see the list below), **COMPLETE** (pull saved) and **STOPPED** (nothing saved). On the Workshop page, Record shows READY on an empty slot, Weapon shows STD V/H when your Vertical and Horizontal fire (no pull), and Clear shows EMPTY once a slot has no pull.
-- **TOO SHORT / FULL MAG**: the spray was too short to measure. Fire a full magazine.
-- **TOO SHORT / HOLD LONGER**: you let go too soon after the last shot. Keep holding R2 (RT) for a moment after the gun stops (mostly the SVAL and VSS).
-- **TOO SHORT / 20+ RND MAG** (VSS): its own 10-round magazine is too short to measure. Use a 20- or 30-round magazine.
-- **HOLD LONGER / 20+ RND MAG** (VSS): you let go too soon after the last shot. Hold R2 (RT) a moment after the gun stops, and record with a 20- or 30-round magazine.
+- **The card's big label** says what the recorder is doing: **ARMED** (waiting for a spray; AIM AT MARK, or REPLACES on a slot that already has a pull, and FIRE A MAG; if Drop on Fire or Lean Spam is switched on, a pause mark with DROP, LEAN or DROP+LEAN shows they are paused), **REC** (measuring a spray; KEEP AIMING, UNTIL EMPTY; the bar fills over the whole magazine Mag is set to), **ACCEPTED** (the spray counted: SPRAY 1/3 or 2/3 and that spray's pull), **DISCARDED** (the spray was thrown out; the lines under it say why, see the list below), **COMPLETE** (pull saved) and **STOPPED** (nothing saved). On the Workshop page, Mag shows the rounds and how long they fire (for example 30 RND 2.0S), Record shows READY on an empty slot, Weapon shows STD V/H when your Vertical and Horizontal fire (no pull), and Clear shows EMPTY once a slot has no pull.
+- **TOO SHORT / FULL MAG**: the spray was too short to measure. Fire a full magazine, and check that Mag is set to the rounds in your magazine (a 20-round magazine with Mag at 30 runs dry too soon).
+- **TOO SHORT / HOLD LONGER**: you let go too soon after the last shot. Keep holding R2 (RT) for a moment after the gun stops (mostly the SVAL and VSS, or a very short magazine).
+- **TOO SHORT / 20+ RND MAG** (VSS): the spray was too short, usually because of the VSS's own 10-round magazine. Use a 20- or 30-round magazine (Mag 20 or 30). With the 10-round magazine, set Mag to 10 and keep holding R2 (RT) on the mark for about a second after the last shot.
+- **HOLD LONGER / 20+ RND MAG** (VSS): you let go too soon after the last shot. Hold R2 (RT) a moment after the gun stops (about a second with the 10-round magazine at Mag 10), or record with a 20- or 30-round magazine.
 - **STICK MOVED / FIRE AGAIN**: the stick moved too much (tracking sideways or a big sweep). Hold the mark steady and fire again. If it keeps happening on an empty slot while you hold still, the gun needs more sideways pull than your Horizontal Recoil: set Horizontal closer first.
 - **STICK MOVED / VERTICAL UP**: you had to pull the stick far down to hold the mark, so the gun needs more than your Vertical Recoil gives. Raise Vertical Recoil and record again. **SCALE Y UP** is the same when re-recording a slot with a pull: raise Scale Y.
 - **OFF PATTERN**: this spray did not match your first one closely enough. Fire again the same way: full magazine, steady on the mark.
@@ -289,9 +291,11 @@ The controller rumbles to tell you what the recorder is doing:
 
 - While the recorder is armed, Drop on Fire and Lean Spam pause (going prone or leaning moves your view). They work again when the session ends.
 - Opening the menu during a spray cancels that spray (CANCELLED); the recorder stays armed.
-- These end a recording and save nothing (one short buzz): X (A) on Record again, changing the Weapon slot, the Gun, Vertical or Horizontal Recoil, Scale Y or Scale X, Anti Deadzone, switching Anti-Recoil off, or switching on Calibrate Recoil. Clear and Master off end it too.
+- These end a recording and save nothing (one short buzz): X (A) on Record again, changing the Weapon slot, the Gun, the Mag, Vertical or Horizontal Recoil, Scale Y or Scale X, Anti Deadzone, switching Anti-Recoil off, or switching on Calibrate Recoil. Clear and Master off end it too.
 - Before recording an empty slot, set Vertical Recoil roughly right for that gun. A gun far stronger than your Vertical can end in STICK MOVED / VERTICAL UP.
-- VSS: record with a 20- or 30-round magazine. SVAL and VSS: hold R2 (RT) a moment after the last shot.
+- Set Mag to the magazine you fire. At the wrong Mag a big magazine is only partly measured, and a small one runs dry before the window ends (TOO SHORT / FULL MAG if you let go as it empties).
+- A very short magazine (about 15 rounds or fewer on a fast gun such as the M4-A1) still records: keep holding R2 (RT) on the mark until about 1.5 seconds after you started firing.
+- VSS: record with a 20- or 30-round magazine (Mag 20 or 30). With its own 10-round magazine, set Mag to 10 and keep holding R2 (RT) for about a second after the last shot; the card says 20+ RND MAG either way. SVAL and VSS: hold R2 (RT) a moment after the last shot.
 - The recording measures what the game received from T.C.P and your thumb together, so hold the mark as steadily as you can.
 - Changing your in-game sensitivity or attachments changes what a gun needs: REDO that slot. Changing Anti Deadzone makes every recorded pull reach the game stronger or weaker: REDO the slots, or adjust their Scale Y and Scale X.
 

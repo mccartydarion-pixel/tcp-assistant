@@ -289,3 +289,13 @@ describe('syncing an info channel', () => {
     expect(channel.log).toEqual({ bulk: [], single: [], edits: 0, sent: 0 });
   });
 });
+
+describe('FAQ: the Weapon Workshop answer', () => {
+  it('mentions the Mag item in one short clause and still fits a field', () => {
+    const fields = buildInfoPost('faq', linked).embeds.flatMap((embed) => embed.toJSON().fields ?? []);
+    const workshop = fields.find((field) => field.name === 'What is the Weapon Workshop?');
+    expect(workshop?.value).toContain('Pick a slot and gun, set **Mag** to the rounds in your magazine, arm **Record**, then fire three full magazines at a mark on a wall');
+    expect(workshop?.value).toContain('It is the last page (27/27)');
+    expect(workshop!.value.length).toBeLessThanOrEqual(1024);
+  });
+});

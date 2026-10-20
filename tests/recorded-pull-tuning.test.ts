@@ -39,7 +39,7 @@ describe('fixed tuning replies on a recorded pull', () => {
 
   it('says where Scale Y is, and that Vertical is locked, when the value is not known', async () => {
     const text = await reply('TEST_RESULT', { onRecordedPull: true, vertical: 25, currentSymptom: 'CLIMBING' });
-    expect(text).toBe('Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (4/6), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
+    expect(text).toBe('Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
     expect(text).not.toContain('try 26');
   });
 
@@ -52,7 +52,7 @@ describe('fixed tuning replies on a recorded pull', () => {
     expect(await reply('TEST_RESULT', { onRecordedPull: true, scaleY: 100, currentSymptom: 'PULLING_DOWN' }))
       .toBe('Since Scale Y 100 pulls down, lower Scale Y to 95 next (press Down 5 times) and retest.');
     expect(await reply('TEST_RESULT', { onRecordedPull: true, vertical: 25, previousVertical: 24, currentSymptom: 'PULLING_DOWN' }))
-      .toBe('Vertical Recoil is locked while a recorded pull is selected, so lower Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (4/6), then press Down 5 times (-5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
+      .toBe('Vertical Recoil is locked while a recorded pull is selected, so lower Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Down 5 times (-5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
   });
 
   it('keeps Scale Y when it is stable or fixed, and says it saves when the menu closes', async () => {
@@ -75,11 +75,11 @@ describe('fixed tuning replies on a recorded pull', () => {
     expect(await reply('TEST_RESULT', { onRecordedPull: true, scaleY: 148, currentSymptom: 'CLIMBING' }))
       .toBe('Since Scale Y 148 is still climbing, raise Scale Y to 150 next (press Up 2 times). Keep Scale X unchanged so we are testing one variable.');
     expect(await reply('TEST_RESULT', { onRecordedPull: true, scaleY: 150, currentSymptom: 'CLIMBING' }))
-      .toBe('Scale Y is already at its 150 maximum. Move Scale Y to 100 first, then REDO that slot (Record, 3/6 on the Workshop page), so the new recording has room to go either way.');
+      .toBe('Scale Y is already at its 150 maximum. Move Scale Y to 100 first, then REDO that slot (Record, 4/7 on the Workshop page), so the new recording has room to go either way.');
     expect(await reply('TEST_RESULT', { onRecordedPull: true, scaleY: 53, currentSymptom: 'PULLING_DOWN' }))
       .toBe('Since Scale Y 53 pulls down, lower Scale Y to 50 next (press Down 3 times) and retest.');
     expect(await reply('TEST_RESULT', { onRecordedPull: true, scaleY: 50, currentSymptom: 'PULLING_DOWN' }))
-      .toBe('Scale Y is already at its 50 minimum. Move Scale Y to 100 first, then REDO that slot (Record, 3/6 on the Workshop page) and hold the mark steady while you record, so the new recording has room to go either way.');
+      .toBe('Scale Y is already at its 50 minimum. Move Scale Y to 100 first, then REDO that slot (Record, 4/7 on the Workshop page) and hold the mark steady while you record, so the new recording has room to go either way.');
   });
 
   it('never mentions Vertical in a reply that changes or keeps Scale Y', () => {
@@ -211,7 +211,7 @@ describe('Scale Y and Scale X values', () => {
   });
 
   it('does not read a page position or a step as a value', () => {
-    expect(extractQuestionDetails('scale y (4/6) just buzzes').scaleY).toBeUndefined();
+    expect(extractQuestionDetails('scale y (5/7) just buzzes').scaleY).toBeUndefined();
     expect(extractQuestionDetails('should i raise scale y by 5').scaleY).toBeUndefined();
   });
 
@@ -315,7 +315,7 @@ function aiTurn(memory: ConversationMemory, session: ConversationSession, questi
   return intent;
 }
 
-const UNKNOWN_CLIMB_REPLY = 'Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (4/6), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.';
+const UNKNOWN_CLIMB_REPLY = 'Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.';
 const PULL_OR_STD_REPLY = 'Before we change anything: does the home screen show PULL or STD for this gun? On PULL, Vertical and Horizontal Recoil are locked and the gun is tuned with Scale Y on the Workshop page (27/27); on STD or with Weapon OFF, your Vertical and Horizontal Recoil fire as set.';
 
 describe('a Vertical that buzzes or is locked means a pull fires', () => {
@@ -343,7 +343,7 @@ describe('a Vertical that buzzes or is locked means a pull fires', () => {
 
   it('reads a Scale Y that buzzes as an empty slot, but not the PULL: SCALE Y hint', () => {
     expect(detectRecordedPull('scale y just buzzes')).toBe(false);
-    expect(detectRecordedPull('scale y is at 4/6 and buzzes')).toBe(false);
+    expect(detectRecordedPull('scale y is at 5/7 and buzzes')).toBe(false);
     expect(detectRecordedPull('vertical says PULL: SCALE Y and buzzes')).toBe(true);
   });
 
@@ -586,7 +586,7 @@ describe('at the ends of Scale Y', () => {
   it('moves Scale Y to 100 for the REDO and starts the search again', async () => {
     const { memory, session } = newSession();
     expect(await turn(memory, session, 'W1 PULL V30 H2 scale y 150 still climbing'))
-      .toBe('Scale Y is already at its 150 maximum. Move Scale Y to 100 first, then REDO that slot (Record, 3/6 on the Workshop page), so the new recording has room to go either way.');
+      .toBe('Scale Y is already at its 150 maximum. Move Scale Y to 100 first, then REDO that slot (Record, 4/7 on the Workshop page), so the new recording has room to go either way.');
     expect(session.tuning).toMatchObject({ scaleY: 100 });
     for (const field of ['previousScaleY', 'scaleYClimbs', 'scaleYPullsDown', 'pullVertical', 'pullHorizontal'] as const) {
       expect(session.tuning[field]).toBeUndefined();
@@ -693,5 +693,27 @@ describe('plain test answers', () => {
     const { memory, session } = newSession();
     session.tuning = { onRecordedPull: true, scaleY: 105, waitingForTestResult: true };
     expect(memory.updateFromQuestion(session, extractQuestionDetails('is stable core on?'), 'is stable core on?')).toBeNull();
+  });
+});
+
+// Round 8 added Mag as the Workshop's third item, so Record moved to 4/7 and Scale Y to 5/7.
+describe('Workshop item numbers in the recorded-pull replies (seven items)', () => {
+  it('sends the player to Scale Y as item 5/7 and to Record as item 4/7, never to a six-item number', () => {
+    const replies = [
+      recordedPullReply('TEST_RESULT', { onRecordedPull: true, vertical: 25, currentSymptom: 'CLIMBING' }),
+      recordedPullReply('TEST_RESULT', { onRecordedPull: true, vertical: 25, currentSymptom: 'PULLING_DOWN' }),
+      recordedPullReply('TEST_RESULT', { onRecordedPull: true, scaleY: 150, currentSymptom: 'CLIMBING' }),
+      recordedPullReply('TEST_RESULT', { onRecordedPull: true, scaleY: 50, currentSymptom: 'PULLING_DOWN' }),
+    ];
+    expect(replies[0]).toContain('L1/R1 to Scale Y (5/7)');
+    expect(replies[1]).toContain('L1/R1 to Scale Y (5/7)');
+    expect(replies[2]).toContain('REDO that slot (Record, 4/7 on the Workshop page)');
+    expect(replies[3]).toContain('REDO that slot (Record, 4/7 on the Workshop page)');
+    for (const text of replies) expect(text).not.toMatch(/\b[1-7]\/6\b/);
+  });
+
+  it('does not read the item number 5/7 as a Scale Y value', () => {
+    expect(extractQuestionDetails('scale y (5/7) buzzes').scaleY).toBeUndefined();
+    expect(extractQuestionDetails('record (4/7) says ready').scaleY).toBeUndefined();
   });
 });
