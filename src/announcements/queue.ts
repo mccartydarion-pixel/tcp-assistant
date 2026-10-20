@@ -12,7 +12,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     // Premium round 8. Set ready: true once the round-8 build is uploaded with /tcp release.
     id: '2026-10-workshop-mag',
     date: '2026-10-20',
-    ready: false,
+    ready: true,
     title: '🎯 WORKSHOP UPGRADE: THE MAG ITEM IS HERE',
     description:
       'The Weapon Workshop just got **sharper**. 💎\n\n' +
@@ -32,7 +32,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     // Free version. Set ready: true once the new free build is on the marketplace.
     id: '2026-10-free-profiles',
     date: '2026-10-20',
-    ready: false,
+    ready: true,
     title: '🔫 FREE UPDATE: WEAPON PROFILES',
     description:
       'The **free** T.C.P just levelled up. 🚀\n\n' +
