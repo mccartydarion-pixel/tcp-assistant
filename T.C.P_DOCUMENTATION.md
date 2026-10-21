@@ -13,7 +13,7 @@ It does four main jobs:
 - **Movement and utility**: Auto Run, Automatic Aim, Follow Lean, Lean Spam, Drop Shot / Crouch Shot, Auto Movement (moonwalk) and more.
 - **Controller tweaks**: Hair Triggers, Deadzone and Anti Deadzone.
 
-T.C.P Premium also has the **Weapon Workshop**: a recoil pull you record yourself for each of up to four guns (see Weapon Workshop (Premium)).
+T.C.P Premium also has the **Weapon Workshop**: a recoil pull you record yourself for each of up to four guns (see Weapon Workshop (Premium)). Since the Gen 7 update (October 2026) Premium also runs the **Gen 7 recoil engine**, which delivers the recoil pull more intelligently (see Gen 7 Recoil Engine (Premium)), and its ADS Accuracy settings are intent-aware (see ADS Accuracy 2.0).
 
 T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server latency and stamina effects that no script can remove. It makes recoil and aiming more consistent; the player still has to aim.
 
@@ -22,7 +22,7 @@ T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server
 There are two ways to get T.C.P:
 
 - **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop, and no lock.
-- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, and needs an unlock code from the Discord (see Licence and Unlock Codes).
+- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, the Gen 7 recoil engine and the intent-aware ADS Accuracy 2.0, and needs an unlock code from the Discord (see Licence and Unlock Codes).
 
 Where to get each one is under Downloading the script: the free version from the **Download** button in the DayZ channel, Premium in your direct messages after you **Subscribe** (or with **Download Premium**).
 
@@ -164,6 +164,8 @@ Turn Strength sets how much of the flick and tracking weakening applies: at 100 
 
 When you stop firing, the pull fades out over a fraction of a second instead of cutting off, so the aim does not jump.
 
+In **T.C.P Premium** the Gen 7 recoil engine handles all of this (see Gen 7 Recoil Engine (Premium)): the pull lets go per axis, so tracking sideways keeps the vertical pull, it gives way faster than it comes back, and it comes off within a few hundredths of a second when you stop firing. Vertical, Horizontal and Turn Strength still mean the same thing.
+
 ### Turn Strength
 
 Turn Strength (0 to 100, default 100) sets how much moving the right stick while you fire weakens the recoil pull. (A fast flick weakens it a lot, steady tracking a little; letting the stick rest near centre for a moment restores it.) It does not set how strong the pull is; Vertical and Horizontal do that.
@@ -299,9 +301,38 @@ The controller rumbles to tell you what the recorder is doing:
 - The recording measures what the game received from T.C.P and your thumb together, so hold the mark as steadily as you can.
 - Changing your in-game sensitivity or attachments changes what a gun needs: REDO that slot. Changing Anti Deadzone makes every recorded pull reach the game stronger or weaker: REDO the slots, or adjust their Scale Y and Scale X.
 
+## Gen 7 Recoil Engine (Premium)
+
+### What Gen 7 is
+
+Gen 7 is how **T.C.P Premium** delivers the recoil pull since the October 2026 update. It does not change how strong the pull is: Vertical and Horizontal (or a recorded Workshop pull) are still the baseline, and Gen 7 never adds power. It changes **how** that pull is delivered while you move the stick:
+
+- **Per axis**: when you track sideways, only the sideways pull gives way; the vertical pull keeps holding the gun down. When you correct up or down, the sideways pull is left alone.
+- **Your stick wins, fast**: a flick, snap, turn or direction reversal lets the pull go within a few hundredths of a second, and it comes back slowly as your thumb settles, so the script never fights a deliberate move.
+- **A steady hold locks in**: hold the aim still and the full pull settles on it.
+- **Clean release**: when you stop firing the pull comes off almost at once, so single shots and short bursts do not nudge the aim.
+- **Re-pulls feel continuous**: fire again within a tenth of a second and the pull picks up where it left off.
+
+There is nothing to set up. The free version uses the earlier Stable Core delivery, which works the same way at a fixed rate on both axes together.
+
+### Gen 7 and your settings
+
+- **Vertical and Horizontal** set the pull's size, exactly as before. Tune them the same way (or record a Workshop pull).
+- **Turn Strength** still sets how much moving the stick weakens the pull: 100 is the full effect, 0 means your stick never weakens it.
+- **Motion Intel** makes no difference in Premium: with Gen 7 running, on or off feel the same. Leave it off.
+- **Anti Deadzone** still lifts the pull as before.
+
+### Gen 7 tuning tips
+
+- The gun climbs while you correct up or down: raise Vertical a little, as before.
+- The gun feels like it lets go when you make small sideways adjustments: that is the engine giving way to your thumb; keep the adjustment smooth and it holds. Lowering Turn Strength keeps more of the pull while you move.
+- Groups feel tighter while tracking than while standing still: that is expected. Tracking sideways no longer weakens the vertical pull.
+
 ## ADS Accuracy 2.0
 
 ADS Accuracy shapes the right stick while you hold L2. With every setting at its default (Precision 0, Easing 0, Steady Hold 0, Response 100, Fire Sens 100, ADS Vertical 100), the aim is simply your stick times ADS Sens. Change one setting at a time.
+
+In **T.C.P Premium** (since the Gen 7 update) Precision, Response and Easing are **intent-aware**: behind the same four settings the script reads how you are moving the stick (a tiny correction, a smooth track, a fast correction, a snap, a turn, a reversal) and applies each setting where it helps. Small movements get the precision, smooth tracking stays natural, corrections stay fast, reversals are immediate and turns pass straight through. **ADS Sens is never changed by it**: Precision in Premium does not slow the stick. The free version keeps the behaviour described in each section below under "Free version".
 
 ### ADS Sens
 
@@ -317,7 +348,9 @@ Fire Sens (20 to 100, default 100 = off) is your aiming speed while shooting, as
 
 ### Precision
 
-Precision (default 0 = off) slows the stick near the centre for fine aiming, then smoothly returns to full speed further out. At 100 the centre is 40% slower. Good for long-range shots. Values of 20 to 40 are typical.
+**Premium:** Precision (default 0 = off) sets how steady tiny aiming movements are. It smooths small, controlled stick movements near the centre (within about 15% of the stick) so fine adjustments land cleanly, and it fades out as you move further or faster, so it never slows a track, a correction or a turn. It does not reduce sensitivity: a stick held at 20 still reads 20. At 100 the micro-aim smoothing is about 30 ms. Values of 30 to 60 are typical for long-range aiming; 0 is the raw stick.
+
+**Free version:** Precision slows the stick near the centre for fine aiming, then smoothly returns to full speed further out. At 100 the centre is 40% slower. Values of 20 to 40 are typical.
 
 ### Easing
 
@@ -330,9 +363,13 @@ Easing (default 0 = off) smooths the stick so small jerks in your thumb are roun
 
 Most players use 8 to 20.
 
+**Premium:** the Easing you set is the most that ever applies. The script reduces it as you move: about 80% of it for small controlled aiming, 40% while tracking, 15% during a fast correction, and none at all during a snap, a turn or a reversal, and it drops it further the more energetically you move or when you strafe hard. It comes back gradually once your thumb settles, so a correction is never followed by a sudden lag.
+
 ### Response
 
 Response (default 100) decides when Easing is skipped. Fast flicks skip the smoothing so they stay instant. At 100 almost any quick movement skips it; at 0 almost nothing does. Lowering Response does not make aiming slower; it makes more of your movement get smoothed. Response only matters when Easing is above 0.
+
+**Premium:** Response is raised by itself when you track (+5) or correct fast (+10), goes to 100 during a snap, a turn or a reversal, and rises a little while you strafe. Your setting is the starting point for calm aiming.
 
 ### Steady Hold
 
@@ -402,7 +439,7 @@ Anti Deadzone (0 to 40, default 0 = off) skips over DayZ's own deadzone, so smal
 
 ### Motion Intel
 
-Motion Intel (default off) watches how you move the stick and can weaken the recoil pull further during fast movement, on top of Turn Strength. It only ever weakens the pull (less recoil control), never strengthens it. Most players should leave it off.
+Motion Intel (default off) watches how you move the stick and can weaken the recoil pull further during fast movement, on top of Turn Strength. It only ever weakens the pull (less recoil control), never strengthens it. Most players should leave it off. In **T.C.P Premium** it makes no difference at all: the Gen 7 engine already reads the stick, and on or off feel the same.
 
 ## Tuning Guide
 
@@ -426,11 +463,11 @@ If the gun drifts right, lower Horizontal Recoil a little (toward negative); if 
 
 ### Hard to stay on target while shooting
 
-Check in-game sensitivity first. If the gun climbs when you steer or track mid-burst, lower Turn Strength (around 40) so moving the stick weakens the pull less. For steadier small corrections, lower Fire Sens to around 75 or add a little Easing (10 to 15).
+Check in-game sensitivity first. If the gun climbs when you steer or track mid-burst, lower Turn Strength (around 40) so moving the stick weakens the pull less (in Premium, tracking sideways already keeps the vertical pull; lower Turn Strength if it still climbs while you correct). For steadier small corrections, lower Fire Sens to around 75, add a little Easing (10 to 15), or in Premium raise Precision (30 to 60).
 
 ### Aim feels too fast or overshoots
 
-Lower ADS Sens a little, or add Precision (20 to 40) for finer control near the centre.
+Lower ADS Sens a little. In the free version, Precision (20 to 40) also slows the centre for finer control; in Premium, Precision steadies small movements instead of slowing them, so use ADS Sens for speed and Precision (30 to 60) for steadiness.
 
 ### Aim feels laggy or floaty
 

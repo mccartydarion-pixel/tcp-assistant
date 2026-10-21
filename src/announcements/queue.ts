@@ -9,6 +9,28 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // Gen 7 recoil engine, Gen 7.1 and the intent-aware ADS Accuracy 2.0 (Premium, 2026-10-21).
+    id: '2026-10-gen7-engine',
+    date: '2026-10-21',
+    ready: true,
+    title: '🔥 PREMIUM UPDATE: THE GEN 7 RECOIL ENGINE',
+    description:
+      'The biggest T.C.P Premium update yet is **live**. 💎\n\n' +
+      '**Gen 7** is a new way of delivering your recoil pull. Same Vertical, same Horizontal, same Workshop pulls, but now the script **reads your thumb** every 4 ms and gets out of the way the moment you move on purpose.\n\n' +
+      '🎯 **Track sideways and the gun stays down.** The pull lets go per axis: a sideways track keeps the vertical hold.\n' +
+      '⚡ **Your stick wins, fast.** Flicks, snaps, turns and reversals release the pull in a few hundredths of a second; it comes back smoothly as you settle.\n' +
+      '🧊 **Clean release.** Stop firing and the pull is gone almost at once. No more nudge after a burst.\n' +
+      '🔬 **High-resolution aim reading** (Gen 7.1): the stick is read at its full native resolution, so even a third of a unit counts.\n\n' +
+      '🎮 **ADS Accuracy 2.0 is now intent-aware.** Precision, Response and Easing apply themselves where they help: steady on tiny corrections, natural while tracking, instant on snaps and turns. **Precision no longer slows your stick**: it steadies it.',
+    fields: [
+      { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings carry over. Motion Intel makes no difference now: leave it off.', inline: false },
+      { name: '🎯 Tips', value: 'Tuned Precision for a slow centre before? Set it 30 to 60 for steadiness and use **ADS Sens** for speed. Everything else: same values as before.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-gen7-engine.gif',
+    ping: '@everyone',
+  },
+  {
     // Premium round 8. Set ready: true once the round-8 build is uploaded with /tcp release.
     id: '2026-10-workshop-mag',
     date: '2026-10-20',
