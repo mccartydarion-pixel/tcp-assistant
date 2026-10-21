@@ -13,7 +13,7 @@ It does four main jobs:
 - **Movement and utility**: Auto Run, Automatic Aim, Follow Lean, Lean Spam, Drop Shot / Crouch Shot, Auto Movement (moonwalk) and more.
 - **Controller tweaks**: Hair Triggers, Deadzone and Anti Deadzone.
 
-T.C.P Premium also has the **Weapon Workshop**: a recoil pull you record yourself for each of up to four guns (see Weapon Workshop (Premium)). Since the Gen 7 update (October 2026) Premium also runs the **Gen 7 recoil engine**, which delivers the recoil pull more intelligently (see Gen 7 Recoil Engine (Premium)), and its ADS Accuracy settings are intent-aware (see ADS Accuracy 2.0).
+T.C.P Premium also has the **Weapon Workshop**: a recoil pull you record yourself for each of up to four guns (see Weapon Workshop (Premium)). Since the October 2026 updates Premium also runs the **Gen 8 Stable Core**, the recoil engine that delivers the recoil pull intelligently around your Workshop pull (see Gen 8 Stable Core (Premium)), and its ADS Accuracy settings are intent-aware (see ADS Accuracy 2.0).
 
 T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server latency and stamina effects that no script can remove. It makes recoil and aiming more consistent; the player still has to aim.
 
@@ -164,7 +164,7 @@ Turn Strength sets how much of the flick and tracking weakening applies: at 100 
 
 When you stop firing, the pull fades out over a fraction of a second instead of cutting off, so the aim does not jump.
 
-In **T.C.P Premium** the Gen 7 recoil engine handles all of this (see Gen 7 Recoil Engine (Premium)): the pull lets go per axis, so tracking sideways keeps the vertical pull, it gives way faster than it comes back, and it comes off within a few hundredths of a second when you stop firing. Vertical, Horizontal and Turn Strength still mean the same thing.
+In **T.C.P Premium** the Gen 8 Stable Core handles all of this (see Gen 8 Stable Core (Premium)): the pull lets go per axis, so tracking sideways keeps the vertical pull, it gives way faster than it comes back, and it comes off within a few hundredths of a second when you stop firing. Vertical, Horizontal and Turn Strength still mean the same thing.
 
 ### Turn Strength
 
@@ -301,32 +301,34 @@ The controller rumbles to tell you what the recorder is doing:
 - The recording measures what the game received from T.C.P and your thumb together, so hold the mark as steadily as you can.
 - Changing your in-game sensitivity or attachments changes what a gun needs: REDO that slot. Changing Anti Deadzone makes every recorded pull reach the game stronger or weaker: REDO the slots, or adjust their Scale Y and Scale X.
 
-## Gen 7 Recoil Engine (Premium)
+## Gen 8 Stable Core (Premium)
 
-### What Gen 7 is
+### What Gen 8 is
 
-Gen 7 is how **T.C.P Premium** delivers the recoil pull since the October 2026 update. It does not change how strong the pull is: Vertical and Horizontal (or a recorded Workshop pull) are still the baseline, and Gen 7 never adds power. It changes **how** that pull is delivered while you move the stick:
+Gen 8, the Workshop Adaptive Stable Core, is how **T.C.P Premium** delivers the recoil pull since the 21 October 2026 update. It is the final anti-recoil generation of T.C.P: it was tested on real hardware (DayZ on a PlayStation 5 through the Cronus Zen) and player approved, and it is built around the Weapon Workshop. It does not change how strong the pull is: your recorded Workshop pull (or Vertical and Horizontal when no slot is selected) is still the baseline, and Gen 8 never adds power to it or changes what you recorded. It decides **how much of that pull to deliver right now** so the script never fights you:
 
-- **Per axis**: when you track sideways, only the sideways pull gives way; the vertical pull keeps holding the gun down. When you correct up or down, the sideways pull is left alone.
-- **Your stick wins, fast**: a flick, snap, turn or direction reversal lets the pull go within a few hundredths of a second, and it comes back slowly as your thumb settles, so the script never fights a deliberate move.
-- **A steady hold locks in**: hold the aim still and the full pull settles on it.
+- **Three regimes**, read from your thumb every 4 ms. **Precision**: a steady hold gets the whole pull, held calmly. **Combat**: tracking or correcting, the axis you are moving gives way (to about 80%, or 55% during a fast correction) while the other axis keeps the pull. **Maneuver**: a snap, turn or hard reversal lets the pull go almost entirely, and it comes back smoothly as your thumb settles.
+- **Per axis**: tracking sideways keeps the vertical pull holding the gun down; correcting up or down leaves the sideways pull alone.
+- **Built around your recording**: a TIGHT recording is held more calmly than a LOOSE one or one that says REDO ONCE (the engine ignores smaller wobbles of your thumb before it changes anything). The pull itself is delivered exactly as recorded, scaled only by your Scale Y and Scale X.
+- **Small corrections stay yours**: a tiny reversal or a brief correction inside the aim's centre never makes the pull collapse; pulling down yourself shares the pull, so you win.
 - **Clean release**: when you stop firing the pull comes off almost at once, so single shots and short bursts do not nudge the aim.
-- **Re-pulls feel continuous**: fire again within a tenth of a second and the pull picks up where it left off.
 
-There is nothing to set up. The free version uses the earlier Stable Core delivery, which works the same way at a fixed rate on both axes together.
+There is nothing to set up. The free version uses the earlier Stable Core delivery, which works at a fixed rate on both axes together.
 
-### Gen 7 and your settings
+### Gen 8 and your settings
 
-- **Vertical and Horizontal** set the pull's size, exactly as before. Tune them the same way (or record a Workshop pull).
+- **Workshop pulls, Vertical and Horizontal** set the pull's size, exactly as before. Record a slot, or tune Vertical and Horizontal, the same way.
+- **Scale Y and Scale X** still scale a recorded pull, once, as before.
 - **Turn Strength** still sets how much moving the stick weakens the pull: 100 is the full effect, 0 means your stick never weakens it.
-- **Motion Intel** makes no difference in Premium: with Gen 7 running, on or off feel the same. Leave it off.
+- **Motion Intel** makes no difference in Premium: with Gen 8 running, on or off feel the same. Leave it off.
 - **Anti Deadzone** still lifts the pull as before.
 
-### Gen 7 tuning tips
+### Gen 8 tuning tips
 
-- The gun climbs while you correct up or down: raise Vertical a little, as before.
+- The gun climbs while you hold steady: raise Vertical (or Scale Y) a little. Gen 8 delivers the whole pull in a steady hold, so if you used to add a touch of thumb yourself, you may find you can lower Vertical a unit instead.
 - The gun feels like it lets go when you make small sideways adjustments: that is the engine giving way to your thumb; keep the adjustment smooth and it holds. Lowering Turn Strength keeps more of the pull while you move.
-- Groups feel tighter while tracking than while standing still: that is expected. Tracking sideways no longer weakens the vertical pull.
+- A slot that says REDO ONCE or LOOSE is held a little less calmly: record it again for the full effect.
+- Groups feel tighter while tracking than while standing still: that is expected. Tracking sideways does not weaken the vertical pull.
 
 ## ADS Accuracy 2.0
 
@@ -439,7 +441,7 @@ Anti Deadzone (0 to 40, default 0 = off) skips over DayZ's own deadzone, so smal
 
 ### Motion Intel
 
-Motion Intel (default off) watches how you move the stick and can weaken the recoil pull further during fast movement, on top of Turn Strength. It only ever weakens the pull (less recoil control), never strengthens it. Most players should leave it off. In **T.C.P Premium** it makes no difference at all: the Gen 7 engine already reads the stick, and on or off feel the same.
+Motion Intel (default off) watches how you move the stick and can weaken the recoil pull further during fast movement, on top of Turn Strength. It only ever weakens the pull (less recoil control), never strengthens it. Most players should leave it off. In **T.C.P Premium** it makes no difference at all: the Gen 8 engine already reads the stick, and on or off feel the same.
 
 ## Tuning Guide
 

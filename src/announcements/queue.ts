@@ -9,6 +9,29 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // Gen 8, the Workshop Adaptive Stable Core: the final anti-recoil generation, hardware tested (Premium, 2026-10-21).
+    id: '2026-10-gen8-stable-core',
+    date: '2026-10-21',
+    ready: true,
+    title: '💎 PREMIUM UPDATE: GEN 8 STABLE CORE IS HERE',
+    description:
+      'Tested on the Zen, in DayZ, on a PS5. The verdict from the first session: **"feels freaking amazing."** 🔥\n\n' +
+      '**Gen 8** is the final form of T.C.P recoil control, built around your **Weapon Workshop** pull. It reads your thumb every 4 ms and delivers exactly as much of your recorded pull as you want right now, in three regimes:\n\n' +
+      '🎯 **PRECISION**: hold steady and you get the whole pull, held calm. No chatter, no fade.\n' +
+      '🏃 **COMBAT**: tracking or correcting, only the axis you move gives way. The other keeps the gun down.\n' +
+      '⚡ **MANEUVER**: snap, turn, hard reversal: the pull lets go and your stick wins, then it comes back smoothly.\n\n' +
+      '🔫 **Your recording, as recorded.** A TIGHT Workshop recording is held calmer than a LOOSE one, and nothing is ever added to your pull.\n' +
+      '📏 **Long range.** 25-50 m already felt good. 75-200 m, where it could get unstable, now feels much better.\n' +
+      '🧊 **Clean release** and small corrections that stay yours: a tiny reversal never collapses the pull.',
+    fields: [
+      { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings and Workshop recordings carry over. Motion Intel still makes no difference: leave it off.', inline: false },
+      { name: '🎯 Tip', value: 'Gen 8 delivers your **whole** pull in a steady hold. If you used to add a touch of thumb yourself, try Vertical (or Scale Y) one step lower. A slot that says REDO ONCE: record it again for the calmest hold.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-gen8-stable-core.gif',
+    ping: '@everyone',
+  },
+  {
     // Gen 7 recoil engine, Gen 7.1 and the intent-aware ADS Accuracy 2.0 (Premium, 2026-10-21).
     id: '2026-10-gen7-engine',
     date: '2026-10-21',
