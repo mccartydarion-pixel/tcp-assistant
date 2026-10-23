@@ -589,7 +589,7 @@ If your subscription does not renew by itself, the bot sends you a direct messag
 
 ### Asking the assistant
 
-Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. To keep the channel tidy, a solved thread is cleared away 5 minutes later, and a thread with no messages for a day is cleared away too; ask again any time. You can also @mention the assistant anywhere, or use the /tcp ask command.
+Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. To keep the channel tidy, a solved thread is cleared away 5 minutes later, and a thread with no messages for a day is cleared away too; ask again any time. The assistant only answers in the help channel (#ask-tcp) and in your support ticket: if you @mention it or use /tcp ask anywhere else, it points you to #ask-tcp instead.
 
 ### Opening a support ticket
 

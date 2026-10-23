@@ -36,6 +36,7 @@ import {
 } from '../tickets/ticketSystem.js';
 import { isTicketTopic } from '../tickets/ticketRules.js';
 import { serverMapFor } from '../server/serverMap.js';
+import { askChannelRedirect } from './askChannel.js';
 
 export function registerEvents(
   client: Client,
@@ -132,6 +133,20 @@ export function registerEvents(
     const route = determineMessageRoute({ isTicket, mentionsBot: isMentioned, activeSession });
     logger.info(`[TCP Message] Route: ${route}`);
     if (route === 'IGNORE') return;
+
+    // The assistant answers only in the help channel (#ask-tcp, handled above) and in support tickets. An
+    // @mention anywhere else gets a pointer to the help channel; a plain message there is left alone.
+    if (!isTicket && env.HELP_CHANNEL_ID) {
+      if (route === 'MENTION') {
+        logger.info('[TCP Message] Outside the help channel: pointing to it');
+        try {
+          await message.reply(notice(askChannelRedirect(), { tone: 'muted' }));
+        } catch (error) {
+          logger.warn({ err: error }, '[TCP Message] Could not point the member to the help channel');
+        }
+      }
+      return;
+    }
 
     const isOwner = Boolean(env.OWNER_USER_ID) && message.author.id === env.OWNER_USER_ID;
     if (isOwner) {

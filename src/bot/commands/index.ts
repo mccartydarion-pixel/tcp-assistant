@@ -15,6 +15,7 @@ import { serverMapFor } from '../../server/serverMap.js';
 import { ticketAudience } from '../../tickets/ticketSystem.js';
 import { handleReleaseCommand, handleSyncCommand, handleTraceCommand } from '../../premium/premium.js';
 import { handleAnnouncementsCommand } from '../../announcements/announcements.js';
+import { askChannelRedirect, assistantAllowedIn } from '../askChannel.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
@@ -141,6 +142,14 @@ export function createCommands(
 
         const question = interaction.options.getString('question', true).trim();
         console.info('[TCP Command] /tcp ask received');
+        // Only in the help channel (#ask-tcp) and its threads, or in a support ticket; elsewhere, a pointer there.
+        const askChannel = interaction.channel;
+        const parentId = askChannel && 'parentId' in askChannel ? askChannel.parentId : null;
+        const isTicket = Boolean(env.SUPPORT_CATEGORY_ID) && parentId === env.SUPPORT_CATEGORY_ID;
+        if (!assistantAllowedIn({ channelId: interaction.channelId, parentId, isTicket })) {
+          await interaction.reply({ ...notice(askChannelRedirect(), { tone: 'muted' }), ephemeral: true });
+          return;
+        }
         console.info('[TCP Intent] Checking special intent');
         if (interaction.guildId) {
           const intent = specialIntentRouter.check(interaction.guildId, interaction.channelId, interaction.user.id, question);
@@ -180,7 +189,7 @@ export function createCommands(
 export function helpEmbed() {
   const lines = [
     env.HELP_CHANNEL_ID
-      ? `**Ask a question:** post it in <#${env.HELP_CHANNEL_ID}>, no @mention needed, or use \`/tcp ask\`.`
+      ? `**Ask a question:** post it in <#${env.HELP_CHANNEL_ID}>, no @mention needed. The assistant only answers there (and in your support ticket).`
       : '**Ask a question:** @mention **T.C.P. Assistant**, or use `/tcp ask`.',
     '**Open a ticket:** for anything the assistant cannot solve, press **Open a ticket** on the support panel.',
     '**Start over:** `/tcp reset-session` clears your conversation with the assistant.',
