@@ -4,16 +4,16 @@ This is the authoritative reference for T.C.P. Assistant. It describes T.C.P ver
 
 ## Overview
 
-T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a 26-page menu on the Zen's OLED screen (27 pages in T.C.P Premium).
+T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a menu on the Zen's OLED screen: 26 pages in T.C.P Premium, 27 in the free version.
 
 It does four main jobs:
 
 - **Anti-recoil**: pulls the aim down (and sideways) by a fixed amount while you fire, so the gun stays on target.
-- **ADS Accuracy 2.0**: shapes how the right stick feels while aiming down sights.
+- **Aim shaping**: shapes how the right stick feels while aiming down sights (ADS Accuracy 2.0 in the free version, F.A.S.T. 2.0 in Premium).
 - **Movement and utility**: Auto Run, Automatic Aim, Follow Lean, Lean Spam, Drop Shot / Crouch Shot, Auto Movement (moonwalk) and more.
 - **Controller tweaks**: Hair Triggers, Deadzone and Anti Deadzone.
 
-T.C.P Premium also has the **Weapon Workshop**: a recoil pull you record yourself for each of up to four guns (see Weapon Workshop (Premium)). Since the October 2026 updates Premium also runs the **Gen 8 Stable Core**, the recoil engine that delivers the recoil pull intelligently around your Workshop pull (see Gen 8 Stable Core (Premium)), and its ADS Accuracy settings are intent-aware (see ADS Accuracy 2.0).
+T.C.P Premium also has the **Weapon Workshop**: a recoil pull you record yourself for each of up to four guns (see Weapon Workshop (Premium)). Since the October 2026 updates Premium also runs the **Gen 8 Stable Core**, the recoil engine that delivers the recoil pull intelligently around your Workshop pull (see Gen 8 Stable Core (Premium)), which reads your thumb through **ACG**, the Adaptive Control Guardian; and your aim while aiming down sights is shaped by **F.A.S.T. 2.0** (see F.A.S.T. 2.0 (Premium)).
 
 T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server latency and stamina effects that no script can remove. It makes recoil and aiming more consistent; the player still has to aim.
 
@@ -21,8 +21,8 @@ T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server
 
 There are two ways to get T.C.P:
 
-- **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop, and no lock.
-- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, the Gen 7 recoil engine and the intent-aware ADS Accuracy 2.0, and needs an unlock code from the Discord (see Licence and Unlock Codes).
+- **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop and Premium's engines (Gen 8 with ACG, and F.A.S.T. 2.0), and no lock. It has three manual Weapon Profiles instead.
+- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, the Gen 8 Stable Core with ACG and F.A.S.T. 2.0 aim shaping (in place of the free version's ADS Accuracy and Motion Intel), and needs an unlock code from the Discord (see Licence and Unlock Codes).
 
 Where to get each one is under Downloading the script: the free version from the **Download** button in the DayZ channel, Premium in your direct messages after you **Subscribe** (or with **Download Premium**).
 
@@ -81,7 +81,7 @@ Inside the menu, hold **L1 + R1 + X** for two seconds. Every setting goes back t
 
 ## Menu Pages
 
-The menu has 26 pages, in this order:
+The free version's menu has 27 pages, in this order:
 
 1. Master Controls (on/off)
 2. Anti Recoil (on/off)
@@ -109,8 +109,9 @@ The menu has 26 pages, in this order:
 24. Steady Hold
 25. Auto Movement (six items: on/off, Stop on ADS, Do 180, Left Time, Right Time, Strafe Amount)
 26. Motion Intel (on/off)
+27. Weapon Profiles (free version only: three manual profiles, P1 to P3, each its own Vertical and Horizontal for one gun; OFF uses Vertical and Horizontal)
 
-T.C.P Premium adds a 27th page, **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear), after Motion Intel. The menu opens on Master, so LEFT once from there goes straight to it. Every other page keeps its number. The free version has no Workshop page.
+**T.C.P Premium** has 26 pages. Pages 1 to 25 are in the same order, but pages 3 and 21 to 24 are the F.A.S.T. 2.0 pages: 3 F.A.S.T. (on/off), 21 Micro Precision, 22 Track Response, 23 Turn Release, 24 Recovery Speed (see F.A.S.T. 2.0 (Premium)). Premium has no Motion Intel or Weapon Profiles page; page 26 is the **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear). The menu opens on Master, so LEFT once from there goes straight to the last page. The free version has no Workshop page.
 
 ### Defaults and ranges
 
@@ -129,6 +130,7 @@ T.C.P Premium adds a 27th page, **Workshop** (seven items: Weapon, Gun, Mag, Rec
 | Response | 0 to 100 | 100 |
 | Easing | 0 to 100 (0 = off) | 0 |
 | Steady Hold | 0 to 5 (0 = off) | 0 |
+| Micro Precision, Track Response, Turn Release, Recovery Speed (Premium) | 0 to 100 | 50 |
 | Lean Time | 80 to 600 ms | 200 |
 | Drop Hold Time | 300 to 1500 ms | 700 |
 | Drop Cooldown | 0 to 5000 ms | 1500 |
@@ -136,7 +138,7 @@ T.C.P Premium adds a 27th page, **Workshop** (seven items: Weapon, Gun, Mag, Rec
 | Left Time / Right Time | 40 to 600 ms | 180 |
 | Strafe Amount | 10 to 100 | 100 |
 
-On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off. Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE. Drop Shot is on, but with Double Tap and Drop on Fire both off it does nothing until you switch one of them on.
+On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off. Precision, Response, Easing and Steady Hold are the free version's; in Premium those pages are the F.A.S.T. 2.0 settings, 50 each, and the ADS Accuracy page is F.A.S.T. (on). Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE. Drop Shot is on, but with Double Tap and Drop on Fire both off it does nothing until you switch one of them on.
 
 ## Anti-Recoil
 
@@ -208,7 +210,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 - **Four slots**, W1 to W4. Any gun can go in any slot.
 - Each slot holds **one steady pull** (a Vertical and a Horizontal value) for one gun. It is not a recoil pattern: DayZ gives every shot of a magazine the same expected kick, so one steady pull is what a gun needs.
 - **Weapon OFF** (the default): T.C.P fires your Vertical and Horizontal Recoil exactly as before.
-- Where it is: the last menu page, **Workshop** (page 27/27). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
+- Where it is: the last menu page, **Workshop** (page 26/26; 27/27 on Premium files from before 22 October 2026). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
 - **Premium only.** T.C.P Premium is the licensed version from the Discord: $7 a month or $70 a year, unlocked with a code from the licence channel (see Licence and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the licence panel (licensed downloads from before the Workshop do not have it).
 - You can use it with a PlayStation or an Xbox controller; it works the same on both. Button names here are PlayStation first, Xbox in brackets.
 
@@ -216,7 +218,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 
 Before you start: Master and Anti-Recoil on, your normal in-game sensitivity and attachments, and a wall with a small mark to aim at.
 
-1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its seven items.
+1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 26/26. L1/R1 (LB/RB) moves between its seven items.
 2. **Weapon** (1/7): UP/DOWN to pick a slot, W1 to W4. The other six items appear once a slot is picked.
 3. **Gun** (2/7): pick the gun you are holding. T.C.P uses it, with Mag, to know how long your magazine fires. The gun list: M4-A1, M16-A2, KA-M, KA-74, KAS-74U, KA-101, LAR, AUR AX, VIKHR, SVAL, VSS, BIZON, SG5-K, USG-45, LE-MAS, and OTHER for a gun that is not listed. The slots start out as W1 M4-A1, W2 KA-M, W3 LAR and W4 VIKHR. Changing the Gun sets Mag to that gun's standard magazine.
 4. **Mag** (3/7): set the number of rounds in the magazine you will fire, 5 to 100 (UP/DOWN; hold X (A) to move 10 at a time). It starts at the gun's standard magazine: 30 for most guns, 20 for the LAR, SVAL and VSS, 64 for the BIZON, and 25 for the USG-45, LE-MAS and OTHER. The page shows the rounds and how long that magazine fires, for example 30 RND 2.0S. Set it to your real magazine, for example Mag 60 for a 60-round M4 magazine or Mag 20 for a 20-round KA-M magazine: T.C.P measures each spray over that time. At the standard magazine nothing changes.
@@ -320,7 +322,7 @@ There is nothing to set up. The free version uses the earlier Stable Core delive
 - **Workshop pulls, Vertical and Horizontal** set the pull's size, exactly as before. Record a slot, or tune Vertical and Horizontal, the same way.
 - **Scale Y and Scale X** still scale a recorded pull, once, as before.
 - **Turn Strength** still sets how much moving the stick weakens the pull: 100 is the full effect, 0 means your stick never weakens it.
-- **Motion Intel** makes no difference in Premium: with Gen 8 running, on or off feel the same. Leave it off.
+- **Motion Intel** is not in Premium since 22 October 2026: Gen 8 reads your thumb through ACG instead (see below).
 - **Anti Deadzone** still lifts the pull as before.
 
 ### Gen 8 tuning tips
@@ -330,11 +332,48 @@ There is nothing to set up. The free version uses the earlier Stable Core delive
 - A slot that says REDO ONCE or LOOSE is held a little less calmly: record it again for the full effect.
 - Groups feel tighter while tracking than while standing still: that is expected. Tracking sideways does not weaken the vertical pull.
 
+### ACG, the Adaptive Control Guardian
+
+Since 22 October 2026 Gen 8 reads your thumb through **ACG**, the Adaptive Control Guardian. ACG watches the stick every 4 ms at high resolution and works out what you are doing (holding steady, tracking, correcting, snapping, reversing) and how sure it can be. It also checks every tick that everything is in order; if something is not (the menu is open, the Workshop recorder is armed, a timing hiccup), the recoil pull falls back to the simple Stable Core delivery for that moment instead of guessing. It replaced the older Motion Intel and Core layers. It was tested on real hardware before it went in: it feels the same as Gen 8 did, with a cleaner, lighter engine underneath. F.A.S.T. 2.0 reads your thumb through ACG too. There is nothing to set.
+
+## F.A.S.T. 2.0 (Premium)
+
+### What F.A.S.T. 2.0 is
+
+F.A.S.T. 2.0 (Free Aim Stability Technology) shapes your own right stick while you aim down sights in **T.C.P Premium**, since the 22 October 2026 update. It replaces Premium's old ADS Accuracy shaping (Precision, Response, Easing, Steady Hold): one system instead of four sliders. It was tested on real hardware (DayZ on a PlayStation 5 through the Cronus Zen) before it went in. It is not aim assist: it never moves your aim on its own, never looks at the screen and never touches the recoil pull. It only shapes the stick input you give it.
+
+Every 4 ms it reads your thumb through ACG (see ACG, the Adaptive Control Guardian) and blends three responses:
+
+- **Micro**: fine aim near the centre. Small stick movements are made finer, so tiny corrections land precisely. Full stick is always full stick.
+- **Track**: smooth tracking, a gentle curve through the middle of the stick.
+- **Turn**: your raw stick. A big movement, a snap or a hard reversal passes straight through, so turns are never held back.
+
+It moves between them smoothly, per axis: while you track sideways, the axis you are not moving keeps more fine control. When it is unsure what your thumb is doing (a shaky, jittery stick), it stays closer to your raw stick rather than guessing. While the Weapon Workshop recorder is armed, or with Anti Recoil switched off, it gives your plain stick times ADS Sens.
+
+### F.A.S.T. 2.0 settings
+
+The F.A.S.T. pages are the old ADS pages, renamed. Each is 0 to 100 and starts at **50**: the first time the update runs it sets all four to 50 for both ADS profiles, once. Your ADS Sens, ADS Vertical and Fire Sens carry over and work exactly as before (ADS Sens is applied once).
+
+- **F.A.S.T.** (page 3, on/off, default on): switches the whole aiming system. Off gives your raw stick.
+- **Micro Precision** (page 21): how much finer fine aim gets, and how wide the fine-aim zone is. Higher is finer.
+- **Track Response** (page 22): 50 is your stick exactly. Higher makes the middle of the stick a little faster for tracking, lower a little slower.
+- **Turn Release** (page 23): how early and how fast big movements switch to your raw stick. Higher releases sooner.
+- **Recovery Speed** (page 24): how fast fine aim comes back after a turn or snap, once your thumb settles. Higher is faster.
+
+### F.A.S.T. 2.0 tuning tips
+
+- Start at 50 on all four and play a few fights before changing anything. Change one setting at a time, 5 or 10 at a time.
+- Tiny corrections feel twitchy or overshoot: raise Micro Precision.
+- Tracking a moving player feels slow: raise Track Response. It feels too fast: lower it.
+- Turns or flicks feel held back: raise Turn Release.
+- Fine aim feels slow to come back after a turn: raise Recovery Speed.
+- Overall too fast or too slow: that is ADS Sens, not F.A.S.T.
+
 ## ADS Accuracy 2.0
 
-ADS Accuracy shapes the right stick while you hold L2. With every setting at its default (Precision 0, Easing 0, Steady Hold 0, Response 100, Fire Sens 100, ADS Vertical 100), the aim is simply your stick times ADS Sens. Change one setting at a time.
+This section is the **free version's** ADS Accuracy. T.C.P Premium uses F.A.S.T. 2.0 instead (see F.A.S.T. 2.0 (Premium)); ADS Sens, ADS Vertical, Fire Sens and ADS Profiles below work the same in both.
 
-In **T.C.P Premium** (since the Gen 7 update) Precision, Response and Easing are **intent-aware**: behind the same four settings the script reads how you are moving the stick (a tiny correction, a smooth track, a fast correction, a snap, a turn, a reversal) and applies each setting where it helps. Small movements get the precision, smooth tracking stays natural, corrections stay fast, reversals are immediate and turns pass straight through. **ADS Sens is never changed by it**: Precision in Premium does not slow the stick. The free version keeps the behaviour described in each section below under "Free version".
+ADS Accuracy shapes the right stick while you hold L2. With every setting at its default (Precision 0, Easing 0, Steady Hold 0, Response 100, Fire Sens 100, ADS Vertical 100), the aim is simply your stick times ADS Sens. Change one setting at a time.
 
 ### ADS Sens
 
@@ -350,9 +389,7 @@ Fire Sens (20 to 100, default 100 = off) is your aiming speed while shooting, as
 
 ### Precision
 
-**Premium:** Precision (default 0 = off) sets how steady tiny aiming movements are. It smooths small, controlled stick movements near the centre (within about 15% of the stick) so fine adjustments land cleanly, and it fades out as you move further or faster, so it never slows a track, a correction or a turn. It does not reduce sensitivity: a stick held at 20 still reads 20. At 100 the micro-aim smoothing is about 30 ms. Values of 30 to 60 are typical for long-range aiming; 0 is the raw stick.
-
-**Free version:** Precision slows the stick near the centre for fine aiming, then smoothly returns to full speed further out. At 100 the centre is 40% slower. Values of 20 to 40 are typical.
+Precision slows the stick near the centre for fine aiming, then smoothly returns to full speed further out. At 100 the centre is 40% slower. Values of 20 to 40 are typical.
 
 ### Easing
 
@@ -365,13 +402,9 @@ Easing (default 0 = off) smooths the stick so small jerks in your thumb are roun
 
 Most players use 8 to 20.
 
-**Premium:** the Easing you set is the most that ever applies. The script reduces it as you move: about 80% of it for small controlled aiming, 40% while tracking, 15% during a fast correction, and none at all during a snap, a turn or a reversal, and it drops it further the more energetically you move or when you strafe hard. It comes back gradually once your thumb settles, so a correction is never followed by a sudden lag.
-
 ### Response
 
 Response (default 100) decides when Easing is skipped. Fast flicks skip the smoothing so they stay instant. At 100 almost any quick movement skips it; at 0 almost nothing does. Lowering Response does not make aiming slower; it makes more of your movement get smoothed. Response only matters when Easing is above 0.
-
-**Premium:** Response is raised by itself when you track (+5) or correct fast (+10), goes to 100 during a snap, a turn or a reversal, and rises a little while you strafe. Your setting is the starting point for calm aiming.
 
 ### Steady Hold
 
@@ -379,7 +412,7 @@ Steady Hold (0 to 5, default 0 = off) absorbs thumb tremor. The aim only moves o
 
 ### ADS Profiles
 
-There are two ADS profiles. Each stores its own ADS Sens, Precision, Response, Easing and Steady Hold. Switch on the ADS Profile page, or with L2 + SHARE on a PlayStation controller. A common setup is one profile for close range and one for long range.
+There are two ADS profiles. Each stores its own ADS Sens, Precision, Response, Easing and Steady Hold (in Premium: ADS Sens, Micro Precision, Track Response, Turn Release and Recovery Speed). Switch on the ADS Profile page, or with L2 + SHARE on a PlayStation controller. A common setup is one profile for close range and one for long range.
 
 ## Movement and Utility
 
@@ -441,7 +474,7 @@ Anti Deadzone (0 to 40, default 0 = off) skips over DayZ's own deadzone, so smal
 
 ### Motion Intel
 
-Motion Intel (default off) watches how you move the stick and can weaken the recoil pull further during fast movement, on top of Turn Strength. It only ever weakens the pull (less recoil control), never strengthens it. Most players should leave it off. In **T.C.P Premium** it makes no difference at all: the Gen 8 engine already reads the stick, and on or off feel the same.
+Motion Intel (default off) watches how you move the stick and can weaken the recoil pull further during fast movement, on top of Turn Strength. It only ever weakens the pull (less recoil control), never strengthens it. Most players should leave it off. It is in the free version only: **T.C.P Premium** has no Motion Intel page since 22 October 2026, because Gen 8 reads the stick through ACG.
 
 ## Tuning Guide
 
@@ -465,15 +498,15 @@ If the gun drifts right, lower Horizontal Recoil a little (toward negative); if 
 
 ### Hard to stay on target while shooting
 
-Check in-game sensitivity first. If the gun climbs when you steer or track mid-burst, lower Turn Strength (around 40) so moving the stick weakens the pull less (in Premium, tracking sideways already keeps the vertical pull; lower Turn Strength if it still climbs while you correct). For steadier small corrections, lower Fire Sens to around 75, add a little Easing (10 to 15), or in Premium raise Precision (30 to 60).
+Check in-game sensitivity first. If the gun climbs when you steer or track mid-burst, lower Turn Strength (around 40) so moving the stick weakens the pull less (in Premium, tracking sideways already keeps the vertical pull; lower Turn Strength if it still climbs while you correct). For steadier small corrections, lower Fire Sens to around 75, and in the free version add a little Easing (10 to 15); in Premium raise Micro Precision a little.
 
 ### Aim feels too fast or overshoots
 
-Lower ADS Sens a little. In the free version, Precision (20 to 40) also slows the centre for finer control; in Premium, Precision steadies small movements instead of slowing them, so use ADS Sens for speed and Precision (30 to 60) for steadiness.
+Lower ADS Sens a little. In the free version, Precision (20 to 40) also slows the centre for finer control; in Premium, Micro Precision makes fine aim near the centre finer, so use ADS Sens for speed and Micro Precision for fine control.
 
 ### Aim feels laggy or floaty
 
-Easing is too high. Lower it. Also check Steady Hold is 0 to 2.
+Free version: Easing is too high. Lower it. Also check Steady Hold is 0 to 2. Premium has no Easing: if aiming feels slow to come back after a turn, raise Recovery Speed; if turns feel held back, raise Turn Release.
 
 ### Small movements do nothing, then the aim jumps
 

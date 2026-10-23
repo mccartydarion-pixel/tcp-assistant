@@ -9,6 +9,49 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // ACG, the Adaptive Control Guardian: the intelligence and guardian layer under Gen 8 (Premium, 2026-10-22).
+    id: '2026-10-acg-guardian',
+    date: '2026-10-22',
+    ready: true,
+    title: '🧠 PREMIUM UPDATE: MEET ACG, THE ADAPTIVE CONTROL GUARDIAN',
+    description:
+      'Gen 8 just got a brand new brain. 🔥\n\n' +
+      '**ACG** is the new layer that reads your thumb for the Gen 8 Stable Core. Every 4 ms, at high resolution, it works out exactly what you are doing and how sure it can be:\n\n' +
+      '👁️ **OBSERVE**: your stick, read finer than ever.\n' +
+      '🧩 **INTERPRET**: steady hold, tracking, correcting, snapping, reversing.\n' +
+      '🛡️ **GUARD**: it checks every single tick. Menu open, recorder armed, a timing hiccup? It falls back safely for that moment instead of guessing.\n\n' +
+      'It replaces the old Motion Intel and Core layers with one cleaner, lighter engine.\n\n' +
+      '🎮 **Tested on the Zen, in DayZ, on a PS5**, A/B against the hardware-proven Gen 8 build. The verdict: **"feels the same as the proven Gen 8 build."** No added drag, no twitchiness, no delay. The feel you trust, on a smarter foundation.',
+    fields: [
+      { name: '🛠️ Nothing to set up', value: 'ACG runs by itself. Your settings and Workshop recordings carry over. The Motion Intel page is gone from Premium: ACG does its job now.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-acg-guardian.gif',
+    ping: 'none',
+  },
+  {
+    // F.A.S.T. 2.0, Free Aim Stability Technology: Premium's aim shaping, in place of ADS Accuracy (2026-10-22).
+    id: '2026-10-fast2',
+    date: '2026-10-22',
+    ready: true,
+    title: '🎯 PREMIUM UPDATE: F.A.S.T. 2.0 IS LIVE',
+    description:
+      '**Free Aim Stability Technology.** Your aim, shaped by how you actually move. 🔥\n\n' +
+      'F.A.S.T. 2.0 replaces the old ADS Accuracy sliders with one system that reads your thumb through ACG every 4 ms and blends three responses, per axis:\n\n' +
+      '🔬 **MICRO**: tiny corrections made finer, so they land exactly where you want. Full stick is still full stick.\n' +
+      '🏃 **TRACK**: smooth, natural tracking through the middle of the stick.\n' +
+      '⚡ **TURN**: snaps, big turns and hard reversals pass straight through. Never held back.\n\n' +
+      'Track sideways and the axis you are not moving keeps its fine control. Not aim assist: it never moves your aim on its own, and it never touches your recoil pull.\n\n' +
+      '🎮 **Tested on the Zen, in DayZ, on a PS5**, A/B against the old ADS shaping. The verdict: **"F.A.S.T. 2.0 feels good."**',
+    fields: [
+      { name: '🎛️ Four controls, all start at 50', value: 'The old ADS pages, renamed: **Micro Precision** (finer fine aim), **Track Response** (mid-stick tracking speed), **Turn Release** (turns pass through sooner), **Recovery Speed** (fine aim comes back faster). The update sets all four to 50 once. Your ADS Sens, ADS Vertical and Fire Sens carry over.', inline: false },
+      { name: '🎯 Tip', value: 'Play a few fights at 50 before changing anything, then move one control 5 or 10 at a time. Overall speed is still **ADS Sens**.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-fast2.gif',
+    ping: '@everyone',
+  },
+  {
     // Gen 8, the Workshop Adaptive Stable Core: the final anti-recoil generation, hardware tested (Premium, 2026-10-21).
     id: '2026-10-gen8-stable-core',
     date: '2026-10-21',

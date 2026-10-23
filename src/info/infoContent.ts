@@ -160,7 +160,7 @@ function faq(links: InfoLinks): InfoSection[] {
       fields: [
         {
           name: 'What does Premium add?',
-          value: 'Everything in the free version **plus the Weapon Workshop** (a 27th menu page). $7 a month or $70 a year. You get the **Elite Supporter** role and the script in your DMs.',
+          value: 'Everything in the free version **plus the Weapon Workshop**, the **Gen 8** recoil engine with **ACG** and **F.A.S.T. 2.0** aim shaping. $7 a month or $70 a year. You get the **Elite Supporter** role and the script in your DMs.',
         },
         {
           name: 'How do I buy or cancel?',
@@ -173,7 +173,7 @@ function faq(links: InfoLinks): InfoSection[] {
         {
           name: 'What is the Weapon Workshop?',
           value:
-            'Four slots (W1–W4). Pick a slot and gun, set **Mag** to the rounds in your magazine, arm **Record**, then fire three full magazines at a mark on a wall: T.C.P saves the steady pull that gun needs and uses it whenever that slot is selected. Fine-tune with **Scale Y / Scale X**. It is the last page (27/27): **L2 + OPTIONS**, then **LEFT** once. Not there? Get the latest with **Download Premium**.',
+            'Four slots (W1–W4). Pick a slot and gun, set **Mag** to the rounds in your magazine, arm **Record**, then fire three full magazines at a mark on a wall: T.C.P saves the steady pull that gun needs and uses it whenever that slot is selected. Fine-tune with **Scale Y / Scale X**. It is the last page (26/26): **L2 + OPTIONS**, then **LEFT** once. Not there? Get the latest with **Download Premium**.',
         },
         {
           name: 'My code doesn\'t work',

@@ -44,10 +44,10 @@ describe('Weapon Workshop doc', () => {
   it('says the Workshop is Premium only, wherever the versions are described', () => {
     expect(content(WHAT)).toContain('The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T.C.P Discord. It is not in the free marketplace version.');
     expect(content(WHAT)).toContain('check that you loaded the licensed script from the Discord, not the marketplace one');
-    expect(content('Versions')).toContain('It has every feature except the Weapon Workshop, and no lock.');
+    expect(content('Versions')).toContain('It has every feature except the Weapon Workshop and Premium');
     expect(content('Versions')).toContain('It has everything in the free version plus the Weapon Workshop');
-    expect(content('Menu Pages')).toContain('T.C.P Premium adds a 27th page, **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear), after Motion Intel. The menu opens on Master, so LEFT once from there goes straight to it.');
-    expect(doc).toContain("26-page menu on the Zen's OLED screen (27 pages in T.C.P Premium)");
+    expect(content('Menu Pages')).toContain('page 26 is the **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear). The menu opens on Master, so LEFT once from there goes straight to the last page.');
+    expect(doc).toContain("a menu on the Zen's OLED screen: 26 pages in T.C.P Premium, 27 in the free version");
   });
 
   it('no longer says there are no weapon profiles, and says what each version uses', () => {
@@ -59,7 +59,7 @@ describe('Weapon Workshop doc', () => {
   it('walks through a recording with PlayStation and Xbox buttons', () => {
     const steps = content(RECORD);
     expect(steps).toContain('Master and Anti-Recoil on');
-    expect(steps).toContain('L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its seven items.');
+    expect(steps).toContain('L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 26/26. L1/R1 (LB/RB) moves between its seven items.');
     expect(steps).toContain('**Record** (4/7): press X (A). Two short buzzes mean it is ARMED. Close the menu with Circle (B).');
     expect(steps).toContain('aim with L2 (LT) first, then hold R2 (RT)');
     expect(steps).toContain('Three long buzzes mean COMPLETE: the pull is saved.');
@@ -277,7 +277,7 @@ describe('Workshop in the prompt and canned answers', () => {
 
   it('tells the assistant that Vertical, Horizontal and Calibrate are locked while a recorded pull is selected', () => {
     expect(systemPrompt).toContain('While a Workshop slot with a recorded pull is selected (the home screen shows the slot and a PULL badge), Vertical Recoil, Horizontal Recoil and Calibrate Recoil are locked');
-    expect(systemPrompt).toContain('tune that gun with Scale Y and Scale X on the Workshop page, the last menu page (27/27, LEFT once from Master), or set Weapon OFF');
+    expect(systemPrompt).toContain('tune that gun with Scale Y and Scale X on the Workshop page, the last menu page (26/26 in current Premium, LEFT once from Master), or set Weapon OFF');
   });
 
   it('no longer denies weapon profiles, and points to the Workshop in Premium', async () => {

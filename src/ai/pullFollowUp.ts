@@ -10,7 +10,7 @@ export const SCALE_Y_STEP = 5;
 /** How far back an unknown Scale Y goes once it has crossed the balance point: half a step, rounded up. */
 const SCALE_Y_BACK = Math.ceil(SCALE_Y_STEP / 2);
 
-const SCALE_Y_ITEM = 'Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7)';
+const SCALE_Y_ITEM = 'Workshop page (26/26, LEFT once from Master), L1/R1 to Scale Y (5/7)';
 const ASK_VALUE = 'tell me the Scale Y number it shows';
 
 /**
@@ -123,7 +123,7 @@ export function recordedPullReply(intent: FollowUpIntent, state: TuningState, de
 
   if (unsureOfPull(details)) {
     if (currentSymptom === 'STABLE') return 'Perfect. Keep what you have; it saves when you close the menu.';
-    return 'Before we change anything: does the home screen show PULL or STD for this gun? On PULL, Vertical and Horizontal Recoil are locked and the gun is tuned with Scale Y on the Workshop page (27/27); on STD or with Weapon OFF, your Vertical and Horizontal Recoil fire as set.';
+    return 'Before we change anything: does the home screen show PULL or STD for this gun? On PULL, Vertical and Horizontal Recoil are locked and the gun is tuned with Scale Y on the Workshop page (26/26); on STD or with Weapon OFF, your Vertical and Horizontal Recoil fire as set.';
   }
   if (currentSymptom === 'STABLE') return `Perfect. ${keepScaleY(scaleY)}`;
   if (scaleY === undefined) return unknownValue(currentSymptom === 'CLIMBING' ? 'raise' : 'lower', state);
