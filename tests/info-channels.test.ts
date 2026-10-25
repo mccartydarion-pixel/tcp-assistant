@@ -135,7 +135,7 @@ describe('info posts', () => {
 
   it('says what the knowledge doc says', () => {
     const all = INFO_KEYS.map((key) => JSON.stringify(buildInfoPost(key, unlinked).embeds.map((embed) => embed.toJSON()))).join('\n');
-    expect(all).toContain('$7 a month');
+    expect(all).toContain('$15 a month');
     expect(all).toContain('$70 a year');
     expect(all).toMatch(/no free trial/i);
     expect(all).toContain('Elite Supporter');

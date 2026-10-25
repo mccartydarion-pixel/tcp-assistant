@@ -22,7 +22,7 @@ T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server
 There are two ways to get T.C.P:
 
 - **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop and Premium's engines (Gen 8 with ACG, and F.A.S.T. 2.0), and no lock. It has three manual Weapon Profiles instead.
-- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, the Gen 8 Stable Core with ACG and F.A.S.T. 2.0 aim shaping (in place of the free version's ADS Accuracy and Motion Intel), and needs an unlock code from the Discord (see License and Unlock Codes).
+- **T.C.P Premium**, the licensed version from the T.C.P Discord ($15 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, the Gen 8 Stable Core with ACG and F.A.S.T. 2.0 aim shaping (in place of the free version's ADS Accuracy and Motion Intel), and needs an unlock code from the Discord (see License and Unlock Codes).
 
 Where to get each one is under Downloading the script: the free version from the **Download** button in the DayZ channel, Premium in your direct messages after you **Subscribe** (or with **Download Premium**).
 
@@ -39,7 +39,7 @@ New to T.C.P? The welcome channel has a **Start here** panel with buttons for a 
 There is no separate download channel. Where you get T.C.P depends on the version:
 
 - **Free version:** go to the DayZ channel (the one with the T.C.P for DayZ post) and press **Download**, then sign in to the GPC Library with Discord. It needs no code.
-- **T.C.P Premium:** press **Subscribe** ($7 a month) or **Yearly** ($70 a year) in the license channel. Already subscribed monthly? Press **Manage subscription** and switch to yearly there; the bot extends your license to the end of the new year. When your payment goes through, the bot sends the Premium script to your direct messages and gives you the Elite Supporter role. No DM (your DMs are closed), lost the file, or want the newest version? Press **Download Premium** on the license panel and it is sent to you privately.
+- **T.C.P Premium:** press **Subscribe** ($15 a month) or **Yearly** ($70 a year) in the license channel. Already subscribed monthly? Press **Manage subscription** and switch to yearly there; the bot extends your license to the end of the new year. When your payment goes through, the bot sends the Premium script to your direct messages and gives you the Elite Supporter role. No DM (your DMs are closed), lost the file, or want the newest version? Press **Download Premium** on the license panel and it is sent to you privately.
 
 Then add the file to Zen Studio and program it to a slot on your Cronus Zen. Asking for the file in the help channel or a ticket does not get it to you faster; use the buttons above.
 
@@ -211,7 +211,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 - Each slot holds **one steady pull** (a Vertical and a Horizontal value) for one gun. It is not a recoil pattern: DayZ gives every shot of a magazine the same expected kick, so one steady pull is what a gun needs.
 - **Weapon OFF** (the default): T.C.P fires your Vertical and Horizontal Recoil exactly as before.
 - Where it is: the last menu page, **Workshop** (page 27/27; it was page 26 of 26 on Premium files from 22 to 24 October 2026). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
-- **Premium only.** T.C.P Premium is the licensed version from the Discord: $7 a month or $70 a year, unlocked with a code from the license channel (see License and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the license panel (licensed downloads from before the Workshop do not have it).
+- **Premium only.** T.C.P Premium is the licensed version from the Discord: $15 a month or $70 a year, unlocked with a code from the license channel (see License and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the license panel (licensed downloads from before the Workshop do not have it).
 - You can use it with a PlayStation or an Xbox controller; it works the same on both. Button names here are PlayStation first, Xbox in brackets.
 
 ### Workshop: recording step by step
