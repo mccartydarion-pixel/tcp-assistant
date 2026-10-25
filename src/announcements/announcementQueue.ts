@@ -21,8 +21,8 @@ export interface QueuedAnnouncement {
   url?: string;
   /** A file name in assets/announcements/ (gif, png, jpg or webp), shown as the embed's image. */
   gif?: string;
-  /** '@everyone', a role ID (digits), or 'none' / left out for no ping. */
-  ping?: '@everyone' | 'none' | (string & {});
+  /** '@everyone', 'elite' (the Elite Supporter role, found when posting), a role ID (digits), or 'none' / left out for no ping. */
+  ping?: '@everyone' | 'elite' | 'none' | (string & {});
 }
 
 export type QueueStatus = 'posted' | 'sending' | 'pending' | 'draft' | 'expired';
@@ -46,6 +46,8 @@ export interface QueueDeps {
   assetDir: string;
   now: number;
   log: QueueLog;
+  /** The Elite Supporter role's ID, for entries that ping 'elite'; null when the server has no such role. */
+  eliteRoleId?: () => Promise<string | null>;
 }
 
 export interface QueueRunReport {
@@ -121,8 +123,8 @@ export function checkEmbed(entry: QueuedAnnouncement): string[] {
   const total = embedTextLength(entry);
   if (total > EMBED_LIMITS.total) errors.push(`${name}: ${total} characters in all (title, description, fields, footer); Discord allows ${EMBED_LIMITS.total}.`);
   if (entry.url !== undefined && !/^https?:\/\/\S+$/i.test(entry.url)) errors.push(`${name}: url must start with https:// and contain no spaces.`);
-  if (entry.ping !== undefined && entry.ping !== 'none' && entry.ping !== '@everyone' && !ROLE_PATTERN.test(entry.ping)) {
-    errors.push(`${name}: ping must be '@everyone', a role ID (digits only) or 'none', not "${entry.ping}".`);
+  if (entry.ping !== undefined && entry.ping !== 'none' && entry.ping !== '@everyone' && entry.ping !== 'elite' && !ROLE_PATTERN.test(entry.ping)) {
+    errors.push(`${name}: ping must be '@everyone', 'elite', a role ID (digits only) or 'none', not "${entry.ping}".`);
   }
   return errors;
 }
@@ -262,7 +264,17 @@ export async function runAnnouncementQueue(queue: readonly QueuedAnnouncement[],
     return report;
   }
 
-  for (const entry of due) {
+  for (const dueEntry of due) {
+    let entry = dueEntry;
+    // 'elite' becomes the Elite Supporter role's ID; without the role the entry waits (and says why).
+    if (entry.ping === 'elite') {
+      const roleId = (await deps.eliteRoleId?.().catch(() => null)) ?? null;
+      if (!roleId) {
+        fail(`"${entry.id}" pings the Elite Supporter role, but the bot could not find it, so it was not posted. It is tried again on the next start.`);
+        continue;
+      }
+      entry = { ...entry, ping: roleId };
+    }
     if (!(await store.claim(entry.id, now))) {
       log.info(`[TCP Announcements] "${entry.id}" is already recorded; not posting it again.`);
       continue;

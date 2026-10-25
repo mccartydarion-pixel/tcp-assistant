@@ -310,6 +310,29 @@ describe('embed limits', () => {
     expect(none.content).toBeUndefined();
     expect(none.allowedMentions).toEqual({ parse: [] });
     expect(checkEmbed(entry('bad-ping', '2026-10-19', { ping: 'everyone' }))[0]).toMatch(/ping/);
+    expect(checkEmbed(entry('elite-ping', '2026-10-19', { ping: 'elite' }))).toEqual([]);
+  });
+
+  it("pings the Elite Supporter role for 'elite', found when posting", async () => {
+    const h = harness();
+    const report = await runAnnouncementQueue([entry('for-elite', '2026-10-19', { ping: 'elite' })], {
+      ...h.deps,
+      eliteRoleId: async () => '222222222222222222',
+    });
+    expect(report.posted).toEqual(['for-elite']);
+    expect(h.sent[0].content).toBe('<@&222222222222222222>');
+    expect(h.sent[0].allowedMentions).toEqual({ parse: [], roles: ['222222222222222222'] });
+  });
+
+  it("holds an 'elite' entry when the role cannot be found, and posts it on a later start", async () => {
+    const h = harness();
+    const queue = [entry('for-elite', '2026-10-19', { ping: 'elite' })];
+    const first = await runAnnouncementQueue(queue, { ...h.deps, eliteRoleId: async () => null });
+    expect(first.posted).toEqual([]);
+    expect(first.errors[0]).toMatch(/Elite Supporter role/);
+    expect(h.sent).toHaveLength(0);
+    const later = await runAnnouncementQueue(queue, { ...h.deps, eliteRoleId: async () => '222222222222222222' });
+    expect(later.posted).toEqual(['for-elite']);
   });
 });
 

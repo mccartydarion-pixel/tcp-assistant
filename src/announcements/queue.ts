@@ -9,6 +9,23 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // Price notice for current subscribers: $15 a month / $150 a year from 2026-11-01 (owner, 2026-10-25).
+    id: '2026-10-price-update',
+    date: '2026-10-25',
+    ready: true,
+    title: '📢 T.C.P PREMIUM PRICE UPDATE',
+    description:
+      'A heads-up for our Elite Supporters, a week ahead. 💎\n\n' +
+      'From **November 1**, T.C.P Premium is **$15 a month** or **$150 a year** (2 months free on yearly).\n\n' +
+      '🗓️ **Your subscription moves to the new price at your first renewal on or after November 1.** Nothing changes before then.\n' +
+      '🔧 Thanks to you, Premium keeps getting the Weapon Workshop, Gen 8, F.A.S.T. 2.0, Drop Roll and every update after them.',
+    fields: [
+      { name: '💳 Your plan', value: 'See your renewal date in the **Elite Hub** with **My plan**, and change or cancel any time with **Manage subscription**.', inline: false },
+      { name: '❓ Questions', value: 'Ask in **#ask-tcp** or open a support ticket.', inline: false },
+    ],
+    ping: 'elite',
+  },
+  {
     // Server boost reward: a month of Premium per boost, another every 30 days of boosting (bot, 2026-10-25).
     id: '2026-10-boost-premium',
     date: '2026-10-25',

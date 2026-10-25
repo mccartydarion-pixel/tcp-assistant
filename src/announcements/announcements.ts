@@ -8,6 +8,7 @@ import { notice, tcpEmbed } from '../bot/embeds.js';
 import { createAnnouncementStore, type AnnouncementStore } from './announcementStore.js';
 import { describeQueue, runAnnouncementQueue, type QueueRunReport, type QueueStatus } from './announcementQueue.js';
 import { ANNOUNCEMENT_QUEUE } from './queue.js';
+import { eliteRole } from '../premium/premium.js';
 
 // Posts the code-written announcements (queue.ts) on start, and the owner's /tcp announcements command.
 
@@ -28,6 +29,11 @@ function runQueue(client: Client): Promise<QueueRunReport> {
       getChannel: (channelId) => fetchSendableChannel(client, channelId),
       assetDir: ANNOUNCEMENT_ASSET_DIR,
       now: Date.now(),
+      eliteRoleId: async () => {
+        const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
+        await guild.roles.fetch();
+        return eliteRole(guild)?.id ?? null;
+      },
       log: {
         info: (message) => logger.info(message),
         warn: (message) => logger.warn(message),
