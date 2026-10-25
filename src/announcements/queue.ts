@@ -23,7 +23,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     fields: [
       { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings and Workshop recordings carry over.', inline: false },
       { name: '🎯 Tip', value: 'If a gun still climbs in a long spray, raise its **Scale Y** 3 to 5. A pull a touch strong is easy to hold; a touch weak climbs. Record an M4 with a 60-round mag at **Mag 60** so the Workshop measures the whole spray.', inline: false },
-      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-thumb-fix.gif',
     ping: '@everyone',
@@ -41,8 +41,8 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
       '🔁 **Clean every time.** Extra taps never restart it, a triple tap never doubles it, and nothing is ever left held down.\n' +
       '🔫 **Your aim and recoil are untouched.** Drop Roll never moves a stick and never touches your trigger.',
     fields: [
-      { name: '🛠️ Switch it on', value: 'Off by default. Menu, **Drop Shot** page, press **R1** until it reads **8/8 Drop Roll**, press **X** for ON. It uses Drop Shot\'s **Hold Time** for the drop: if you only crouch, raise Hold Time.', inline: false },
-      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+      { name: '🛠️ Switch it on', value: 'Off by default. It has its own menu page, **Drop Roll** (LEFT twice from Master): press **X** for ON. **Hold Time** and **Tap Speed** are on the same page: if you only crouch, raise Hold Time.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-drop-roll.gif',
     ping: '@everyone',
@@ -63,7 +63,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
       '🎮 **Tested on the Zen, in DayZ, on a PS5**, A/B against the hardware-proven Gen 8 build. The verdict: **"feels the same as the proven Gen 8 build."** No added drag, no twitchiness, no delay. The feel you trust, on a smarter foundation.',
     fields: [
       { name: '🛠️ Nothing to set up', value: 'ACG runs by itself. Your settings and Workshop recordings carry over. The Motion Intel page is gone from Premium: ACG does its job now.', inline: false },
-      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-acg-guardian.gif',
     ping: 'none',
@@ -85,7 +85,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     fields: [
       { name: '🎛️ Four controls, all start at 50', value: 'The old ADS pages, renamed: **Micro Precision** (finer fine aim), **Track Response** (mid-stick tracking speed), **Turn Release** (turns pass through sooner), **Recovery Speed** (fine aim comes back faster). The update sets all four to 50 once. Your ADS Sens, ADS Vertical and Fire Sens carry over.', inline: false },
       { name: '🎯 Tip', value: 'Play a few fights at 50 before changing anything, then move one control 5 or 10 at a time. Overall speed is still **ADS Sens**.', inline: false },
-      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-fast2.gif',
     ping: '@everyone',
@@ -108,7 +108,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     fields: [
       { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings and Workshop recordings carry over. Motion Intel still makes no difference: leave it off.', inline: false },
       { name: '🎯 Tip', value: 'Gen 8 delivers your **whole** pull in a steady hold. If you used to add a touch of thumb yourself, try Vertical (or Scale Y) one step lower. A slot that says REDO ONCE: record it again for the calmest hold.', inline: false },
-      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-gen8-stable-core.gif',
     ping: '@everyone',
@@ -130,7 +130,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     fields: [
       { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings carry over. Motion Intel makes no difference now: leave it off.', inline: false },
       { name: '🎯 Tips', value: 'Tuned Precision for a slow centre before? Set it 30 to 60 for steadiness and use **ADS Sens** for speed. Everything else: same values as before.', inline: false },
-      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-gen7-engine.gif',
     ping: '@everyone',
@@ -150,7 +150,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     fields: [
       { name: '🛠️ How', value: 'Workshop page (**L2 + OPTIONS**, then **LEFT**) → **Mag** (3/7) → **Up/Down** (hold **X** for 10).', inline: false },
       { name: '⚠️ One-time reset', value: 'This update clears the Workshop **once**. Record your guns again (3 mags each) and you are back in business. Your other settings are kept.', inline: false },
-      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Questions? Ask in **#ask-tcp**.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-workshop-mag.gif',
     ping: '@everyone',
@@ -169,7 +169,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
       '✅ Profile **OFF** (the default) plays exactly like before.',
     fields: [
       { name: '🛠️ How', value: 'Open the menu (**L2 + OPTIONS**), press **LEFT** once → **PROFILES** → **Up/Down** to pick P1-P3, **L1/R1** to set its V and H.', inline: false },
-      { name: '💎 Want it recorded for you?', value: '**T.C.P Premium** has the **Weapon Workshop**: spray 3 mags at a wall and it records the exact pull each gun needs. Press **Subscribe** on the licence panel.', inline: false },
+      { name: '💎 Want it recorded for you?', value: '**T.C.P Premium** has the **Weapon Workshop**: spray 3 mags at a wall and it records the exact pull each gun needs. Press **Subscribe** on the license panel.', inline: false },
       { name: '⬇️ Get it', value: 'Grab the latest free version from the marketplace. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-free-profiles.gif',

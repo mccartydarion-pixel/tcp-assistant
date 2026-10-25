@@ -49,7 +49,7 @@ export function checkRelease(fileName: string, text: string): { ok: true } | { o
     return {
       ok: false,
       reason:
-        'That file is readable, not scrambled. The readable release has your real licence key in it and must never be given out. Upload the scrambled **T.C.P Premium.gpc** (in the Premium folder) (built with `--license --scramble`).',
+        'That file is readable, not scrambled. The readable release has your real license key in it and must never be given out. Upload the scrambled **T.C.P Premium.gpc** (in the Premium folder) (built with `--license --scramble`).',
     };
   }
   const scrambledDefines = text.match(/^define z[0-9a-f]+\s*=/gm)?.length ?? 0;
@@ -161,8 +161,8 @@ export function eliteWelcomeMessage(member: { id: string; displayName: string; a
         description: [
           `Thanks for supporting T.C.P.${roleName ? ` You're now an **${roleName}**.` : ''}`,
           '',
-          '**Your Premium script is in your DMs.** No DM? Press **Download Premium** on the licence panel.',
-          licenceChannelId ? `Need a code for your Zen? Press **Generate** in <#${licenceChannelId}>.` : 'Need a code for your Zen? Press **Generate** on the licence panel.',
+          '**Your Premium script is in your DMs.** No DM? Press **Download Premium** on the license panel.',
+          licenceChannelId ? `Need a code for your Zen? Press **Generate** in <#${licenceChannelId}>.` : 'Need a code for your Zen? Press **Generate** on the license panel.',
         ].join('\n'),
       }),
     ],
@@ -181,9 +181,9 @@ export function premiumFileMessage(file: Pick<PremiumFile, 'fileName' | 'content
           '`2` Load that slot. On the lock screen press **X** (**A** on Xbox) to see your number.',
           licenceChannelId
             ? `\`3\` Get your code with **Generate** in <#${licenceChannelId}> and enter it on the Zen.`
-            : '`3` Get your code with **Generate** on the licence panel and enter it on the Zen.',
+            : '`3` Get your code with **Generate** on the license panel and enter it on the Zen.',
           '',
-          'Keep this file to yourself: it only unlocks with your own code, and every copy is personal to the member it was sent to. When a new version comes out, press **Download Premium** on the licence panel.',
+          'Keep this file to yourself: it only unlocks with your own code, and every copy is personal to the member it was sent to. When a new version comes out, press **Download Premium** on the license panel.',
         ].join('\n'),
       }),
     ],
@@ -264,7 +264,7 @@ async function welcomeElite(client: Client, discordUserId: string, first: boolea
         client,
         'Premium script not delivered',
         current
-          ? `<@${discordUserId}> has DMs closed, so the script could not be sent. They can press **Download Premium** on the licence panel.`
+          ? `<@${discordUserId}> has DMs closed, so the script could not be sent. They can press **Download Premium** on the license panel.`
           : `<@${discordUserId}> paid, but no script is uploaded yet. Upload it with \`/tcp release\`; they can then press **Download Premium**.`,
         'warning',
       );
@@ -355,7 +355,7 @@ export async function handlePremiumInteraction(interaction: Interaction): Promis
   const allowed = owner || (await isEliteMember(interaction.client, interaction.user.id)) || (await isSubscriber(interaction.user.id));
   if (!allowed) {
     await interaction.editReply(
-      notice(`Download Premium is for **${eliteRoleName(interaction.client)}s**. Press **Subscribe** on the licence panel to join.`, { tone: 'muted' }),
+      notice(`Download Premium is for **${eliteRoleName(interaction.client)}s**. Press **Subscribe** on the license panel to join.`, { tone: 'muted' }),
     );
     return true;
   }
@@ -473,7 +473,7 @@ export async function handleReleaseCommand(interaction: ChatInputCommandInteract
   await store.save(file);
   current = file;
   // The first upload adds Download Premium to the licence panel.
-  if (first) await onUploaded().catch((error: unknown) => logger.warn({ err: error }, '[TCP Premium] Could not refresh the licence panel'));
+  if (first) await onUploaded().catch((error: unknown) => logger.warn({ err: error }, '[TCP Premium] Could not refresh the license panel'));
   logger.info(`[TCP Premium] Owner uploaded ${file.fileName} (${content.length} bytes, ${file.sha256.slice(0, 12)})`);
   await interaction.editReply(
     notice(

@@ -171,7 +171,7 @@ export function registerEvents(
       if (!question) {
         // A screenshot posted on its own, or a bare message in a ticket, is for the owner, not a prompt to ask again.
         if (isTicket || message.attachments.size > 0) return;
-        await message.reply(notice('How can I help with T.C.P.? Ask me anything about the script, your licence or this server.'));
+        await message.reply(notice('How can I help with T.C.P.? Ask me anything about the script, your license or this server.'));
         return;
       }
 

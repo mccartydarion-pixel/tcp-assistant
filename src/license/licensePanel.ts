@@ -42,6 +42,7 @@ const MY_LICENCE_ID = `${PREFIX}mine`;
 export const ADMIN_USER_SELECT_ID = `${PREFIX}admin-user`;
 const ADMIN_ADD_ID = `${PREFIX}admin-add:`;
 const ADMIN_REVOKE_ID = `${PREFIX}admin-revoke:`;
+const ADMIN_RESET_CODES_ID = `${PREFIX}admin-reset-codes:`;
 const ADMIN_DAYS_MODAL_ID = `${PREFIX}admin-days:`;
 const ADMIN_DAYS_INPUT_ID = `${PREFIX}days`;
 const ADMIN_ACTIVE_ID = `${PREFIX}admin-active`;
@@ -61,7 +62,7 @@ let store: LicenseStore | null = null;
 
 export function buildLicensePanel() {
   const embed = new EmbedBuilder()
-    .setTitle('T.C.P. Licence Generator')
+    .setTitle('T.C.P. License Generator')
     .setColor(PANEL_COLOUR)
     .setDescription(
       [
@@ -75,11 +76,11 @@ export function buildLicensePanel() {
         'Every so often the script asks for a new code. Come back here and press **Generate** again.',
         '',
         'Codes are for **Elite Supporters** only.',
-        'Press **My licence** any time to see how many days you have left.',
+        'Press **My license** any time to see how many days you have left.',
         ...(paymentsEnabled()
           ? [
               '',
-              `**T.C.P Premium${priceText() ? `: ${[priceText(), yearlyPriceText()].filter(Boolean).join(' or ')}` : ''}.** Press **Subscribe**${yearlyPriceText() ? ' (or **Yearly**)' : ''} to become an Elite Supporter: you get the role, the Premium script in your DMs and your codes. Every payment adds days to your licence automatically; cancel any time with **Manage subscription**.`,
+              `**T.C.P Premium${priceText() ? `: ${[priceText(), yearlyPriceText()].filter(Boolean).join(' or ')}` : ''}.** Press **Subscribe**${yearlyPriceText() ? ' (or **Yearly**)' : ''} to become an Elite Supporter: you get the role, the Premium script in your DMs and your codes. Every payment adds days to your license automatically; cancel any time with **Manage subscription**.`,
             ]
           : []),
       ].join('\n'),
@@ -98,13 +99,13 @@ export function licencePanelRows(): ActionRowBuilder<ButtonBuilder>[] {
   ];
   const plans = planButtons();
   const manage = manageButton();
-  const account = [new ButtonBuilder().setCustomId(MY_LICENCE_ID).setLabel('My licence').setStyle(ButtonStyle.Secondary), ...(manage ? [manage] : [])];
+  const account = [new ButtonBuilder().setCustomId(MY_LICENCE_ID).setLabel('My license').setStyle(ButtonStyle.Secondary), ...(manage ? [manage] : [])];
   return [use, plans, account].filter((row) => row.length > 0).map((row) => new ActionRowBuilder<ButtonBuilder>().addComponents(...row));
 }
 
 /** How a member renews: Subscribe when payments are on, else a ticket. */
 function renewHint(): string {
-  return paymentsEnabled() ? 'Press **Subscribe** on the licence panel to renew.' : 'Open a support ticket to renew.';
+  return paymentsEnabled() ? 'Press **Subscribe** on the license panel to renew.' : 'Open a support ticket to renew.';
 }
 
 /**
@@ -151,7 +152,7 @@ export async function grantPaidUntil(client: Client, discordUserId: string, unti
 
 export function buildAdminPanel() {
   const embed = new EmbedBuilder()
-    .setTitle('T.C.P. Licence Admin')
+    .setTitle('T.C.P. License Admin')
     .setColor(ADMIN_COLOUR)
     .setDescription(
       [
@@ -186,11 +187,11 @@ export async function refreshLicensePanel(client: Client): Promise<void> {
 
 export async function ensureLicensePanel(client: Client): Promise<void> {
   if (!env.LICENSE_CHANNEL_ID) {
-    logger.info('[TCP License] LICENSE_CHANNEL_ID not set; licence generator disabled.');
+    logger.info('[TCP License] LICENSE_CHANNEL_ID not set; license generator disabled.');
     return;
   }
   if (!licenseKey) {
-    logger.error('[TCP License ERROR] LICENSE_SECRET is missing or malformed; licence generator disabled.');
+    logger.error('[TCP License ERROR] LICENSE_SECRET is missing or malformed; license generator disabled.');
     return;
   }
   try {
@@ -212,7 +213,7 @@ export async function ensureLicensePanel(client: Client): Promise<void> {
       logger.warn('[TCP License] Using the local SQLite file in production; subscriptions will be lost on redeploy. Point DATABASE_URL at Postgres.');
     }
   } catch (error) {
-    logger.error({ err: error }, '[TCP License ERROR] Could not open the licence records; licence generator disabled.');
+    logger.error({ err: error }, '[TCP License ERROR] Could not open the license records; license generator disabled.');
     return;
   }
 
@@ -226,6 +227,12 @@ export async function ensureLicensePanel(client: Client): Promise<void> {
   }
 }
 
+/** Since when a member's codes count toward the daily limit and the sharing alert: the window's start, or the
+ *  owner's last Reset code usage if that is later. */
+async function usageSince(records: LicenseStore, userId: string, since: number): Promise<number> {
+  return Math.max(since, await records.codeUsageResetAt(userId));
+}
+
 function describeSubscription(expiresAt: number | null, now: number): string {
   const days = daysLeft(expiresAt, now);
   if (expiresAt === null) return 'No subscription.';
@@ -237,6 +244,7 @@ function describeSubscription(expiresAt: number | null, now: number): string {
 function adminButtons(userId: string) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId(`${ADMIN_ADD_ID}${userId}`).setLabel('Add days').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`${ADMIN_RESET_CODES_ID}${userId}`).setLabel('Reset code usage').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${ADMIN_REVOKE_ID}${userId}`).setLabel('End access').setStyle(ButtonStyle.Danger),
   );
 }
@@ -246,7 +254,12 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
   const id = interaction.customId;
   const isReport = id === ADMIN_ACTIVE_ID || id === ADMIN_EXPIRING_ID || id === ADMIN_CODES_ID;
   const isAdmin =
-    isReport || id === ADMIN_USER_SELECT_ID || id.startsWith(ADMIN_ADD_ID) || id.startsWith(ADMIN_REVOKE_ID) || id.startsWith(ADMIN_DAYS_MODAL_ID);
+    isReport ||
+    id === ADMIN_USER_SELECT_ID ||
+    id.startsWith(ADMIN_ADD_ID) ||
+    id.startsWith(ADMIN_REVOKE_ID) ||
+    id.startsWith(ADMIN_RESET_CODES_ID) ||
+    id.startsWith(ADMIN_DAYS_MODAL_ID);
   if (!isAdmin) return false;
 
   if (!env.OWNER_USER_ID || interaction.user.id !== env.OWNER_USER_ID) {
@@ -281,9 +294,9 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
   if (interaction.isUserSelectMenu()) {
     const userId = interaction.values[0]!;
     const expiresAt = await records.getExpiry(userId);
-    const issuedToday = await records.countCodesSince(userId, now - DAY_MS);
+    const issuedToday = await records.countCodesSince(userId, await usageSince(records, userId, now - DAY_MS));
     const embed = new EmbedBuilder()
-      .setTitle('Member licence')
+      .setTitle('Member license')
       .setColor(ADMIN_COLOUR)
       .setDescription(`<@${userId}>\n${describeSubscription(expiresAt, now)}\nCodes generated in the last day: ${issuedToday}`);
     await interaction.reply({ embeds: [embed], components: [adminButtons(userId)], ephemeral: true });
@@ -305,6 +318,21 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
       .setTitle('Add subscription days')
       .addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(input));
     await interaction.showModal(modal);
+    return true;
+  }
+
+  if (interaction.isButton() && id.startsWith(ADMIN_RESET_CODES_ID)) {
+    const userId = id.slice(ADMIN_RESET_CODES_ID.length);
+    await records.resetCodeUsage(userId, now);
+    logger.info(`[TCP License] Owner reset the code usage of ${userId}`);
+    await interaction.reply({
+      ...notice(
+        `Code usage reset for <@${userId}>. Their daily count is back to 0, so they can generate codes again now (up to ${env.LICENSE_MAX_CODES} in the next day), and the 7-day code-sharing check starts again from now. The codes they already have keep working, and they stay in **Recent codes**. A Zen's own power-up count lives on the Zen: a new code gives it a full count.`,
+        { title: 'Code usage reset', tone: 'success' },
+      ),
+      ephemeral: true,
+      allowedMentions: { parse: [] },
+    });
     return true;
   }
 
@@ -378,7 +406,7 @@ function eliteOnlyReply(client: Client) {
 async function flagSharing(client: Client, records: LicenseStore, userId: string, now: number): Promise<void> {
   if (!env.LOG_CHANNEL_ID) return;
   try {
-    const codes = await records.listCodesSince(userId, now - SHARING_WINDOW_MS);
+    const codes = await records.listCodesSince(userId, await usageSince(records, userId, now - SHARING_WINDOW_MS));
     if (codes.length < SHARING_ALERT_ZENS) return;
     logger.warn(`[TCP License] ${userId} has made codes for ${codes.length} different Zens in 7 days`);
     const channel = await client.channels.fetch(env.LOG_CHANNEL_ID);
@@ -425,13 +453,13 @@ export async function memberLicenceEmbed(userId: string, heading: string): Promi
     expiresAt: subscription?.expiresAt ?? null,
     hadTrial: subscription?.trialGrantedAt != null,
     onTrial: subscription !== null && isOnTrial(subscription, env.LICENSE_TRIAL_DAYS),
-    codesToday: await store.countCodesSince(userId, now - DAY_MS),
+    codesToday: await store.countCodesSince(userId, await usageSince(store, userId, now - DAY_MS)),
     maxPerDay: env.LICENSE_MAX_CODES,
     latest: await store.latestCodeFor(userId),
     now,
     isOwner: Boolean(env.OWNER_USER_ID) && userId === env.OWNER_USER_ID,
     renewHint: renewHint(),
-    joinHint: paymentsEnabled() ? 'Press **Subscribe** on the licence panel to join.' : 'Open a support ticket to join.',
+    joinHint: paymentsEnabled() ? 'Press **Subscribe** on the license panel to join.' : 'Open a support ticket to join.',
   });
   const payment = await subscriptionSummary(userId);
   return new EmbedBuilder()
@@ -446,17 +474,17 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   if (!interaction.customId.startsWith(PREFIX)) return false;
 
   if (!licenseKey || !store) {
-    await interaction.reply({ ...notice('The licence generator is not set up yet. Please let the owner know.', { tone: 'muted' }), ephemeral: true });
+    await interaction.reply({ ...notice('The license generator is not set up yet. Please let the owner know.', { tone: 'muted' }), ephemeral: true });
     return true;
   }
   if (await handleAdmin(interaction, store)) return true;
 
   if (interaction.isButton() && interaction.customId === MY_LICENCE_ID) {
     await interaction.deferReply({ ephemeral: true });
-    const embed = await memberLicenceEmbed(interaction.user.id, 'Your licence');
+    const embed = await memberLicenceEmbed(interaction.user.id, 'Your license');
     const payments = paymentButtons();
     await interaction.editReply({
-      embeds: embed ? [embed] : notice('The licence generator is not set up yet.', { tone: 'muted' }).embeds,
+      embeds: embed ? [embed] : notice('The license generator is not set up yet.', { tone: 'muted' }).embeds,
       components: payments ? [payments] : [],
     });
     return true;
@@ -477,7 +505,7 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
       .setRequired(true);
     const modal = new ModalBuilder()
       .setCustomId(LICENSE_MODAL_ID)
-      .setTitle('T.C.P. Licence')
+      .setTitle('T.C.P. License')
       .addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(input));
     await interaction.showModal(modal);
     return true;
@@ -528,7 +556,7 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   await grantMemberRole(interaction, userId);
 
   const alreadyIssued = await store.hasCode(userId, challenge);
-  const issuedToday = await store.countCodesSince(userId, now - DAY_MS);
+  const issuedToday = await store.countCodesSince(userId, await usageSince(store, userId, now - DAY_MS));
   const decision = decideLicense({ alreadyIssued, issuedToday, maxPerDay: env.LICENSE_MAX_CODES, isOwner });
   if (decision === 'LIMIT') {
     logger.info(`[TCP License] Daily limit reached for ${userId}`);
@@ -542,7 +570,7 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
 
   const code = computeLicenseCode(challenge, licenseKey, tier);
   const embed = new EmbedBuilder()
-    .setTitle('Your T.C.P. licence code')
+    .setTitle('Your T.C.P. license code')
     .setColor(PANEL_COLOUR)
     .addFields(
       { name: 'Your number', value: `\`${challenge}\``, inline: true },
@@ -564,7 +592,7 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
       const logChannel = await interaction.client.channels.fetch(env.LOG_CHANNEL_ID);
       if (logChannel && logChannel.isTextBased() && 'send' in logChannel) {
         await logChannel.send({
-          ...notice(`Licence generated by <@${userId}> for number \`${challenge}\`: ${TIER_USES[tier]} power-ups, ${isOwner ? 'owner' : `${days} days left`}.`, {
+          ...notice(`License generated by <@${userId}> for number \`${challenge}\`: ${TIER_USES[tier]} power-ups, ${isOwner ? 'owner' : `${days} days left`}.`, {
             tone: 'success',
           }),
           allowedMentions: { parse: [] },

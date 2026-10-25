@@ -31,7 +31,7 @@ export interface TicketType {
 export const TICKET_TYPES: TicketType[] = [
   {
     kind: 'licence',
-    label: 'Licence & codes',
+    label: 'License & codes',
     blurb: 'Unlock codes, your subscription, days left.',
     assistantFirst: false,
     callOwner: true,

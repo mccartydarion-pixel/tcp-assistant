@@ -251,8 +251,8 @@ export async function handlePaymentInteraction(interaction: Interaction): Promis
               ? `**${priceLabel}**, renews automatically. Cancel any time.`
               : 'A monthly subscription that renews automatically. Cancel any time.',
           '',
-          'Every payment adds days to your licence straight away; you will get a DM when it does.',
-          'Then press **Generate** on the licence panel for your code.',
+          'Every payment adds days to your license straight away; you will get a DM when it does.',
+          'Then press **Generate** on the license panel for your code.',
           '',
           'This payment link is made for your Discord account, so do not share it. It expires in 24 hours.',
         ].join('\n'),
@@ -351,7 +351,7 @@ async function onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
   const line = invoice.lines.data.find((item) => item.period) ?? invoice.lines.data[0];
   const days = periodDays(line?.period.start, line?.period.end);
   const expiresAt = grantDays ? await grantDays(discordUserId, days) : null;
-  if (expiresAt === null) throw new Error('The licence records are not open, so the paid days could not be added');
+  if (expiresAt === null) throw new Error('The license records are not open, so the paid days could not be added');
   logger.info(`[TCP Payments] ${discordUserId} paid ${amount}; ${days} days added`);
 
   // The days are added: nothing below may fail the event, or Stripe's retry would add them a second time.
@@ -375,7 +375,7 @@ async function onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
   await dm(discordUserId, receipt.title, receipt.description, 'success');
   await ownerLog(
     first ? 'First payment' : 'Renewal paid',
-    `<@${discordUserId}> paid ${amount}: ${days} days added, licence runs until <t:${Math.floor(expiresAt / 1000)}:D>.`,
+    `<@${discordUserId}> paid ${amount}: ${days} days added, license runs until <t:${Math.floor(expiresAt / 1000)}:D>.`,
     'success',
   );
   await hooks.onPaid?.(discordUserId, first).catch((error: unknown) => logger.error({ err: error }, '[TCP Payments ERROR] After-payment step failed'));
@@ -399,7 +399,7 @@ async function onPlanChangePaid(invoice: Stripe.Invoice): Promise<void> {
     return;
   }
   const granted = grantUntil ? await grantUntil(discordUserId, plan.period.end * 1000) : null;
-  if (!granted) throw new Error('The licence records are not open, so the plan change could not extend the licence');
+  if (!granted) throw new Error('The license records are not open, so the plan change could not extend the license');
   logger.info(`[TCP Payments] ${discordUserId} changed plan and paid ${amount}; ${granted.addedDays} days added`);
 
   // The licence is extended: nothing below may fail the event, or Stripe's retry would run it again.
@@ -407,14 +407,14 @@ async function onPlanChangePaid(invoice: Stripe.Invoice): Promise<void> {
     const existing = await store!.getByUser(discordUserId);
     if (existing) await store!.save({ ...existing, status: 'active', currentPeriodEnd: plan.period.end, updatedAt: Date.now() });
   } catch (error) {
-    logger.error({ err: error }, `[TCP Payments ERROR] The licence was extended for ${discordUserId}, but the subscription record could not be saved`);
+    logger.error({ err: error }, `[TCP Payments ERROR] The license was extended for ${discordUserId}, but the subscription record could not be saved`);
   }
   const yearlyPlan = plan.pricing?.price_details?.price === env.STRIPE_YEARLY_PRICE_ID;
   const receipt = planChangeReceipt(granted.addedDays, granted.expiresAt, yearlyPlan ? `the yearly plan (${yearlyLabel})` : '');
   await dm(discordUserId, receipt.title, receipt.description, 'success');
   await ownerLog(
     'Plan changed',
-    `<@${discordUserId}> paid ${amount} to change plan${yearlyPlan ? ' to yearly' : ''}: ${granted.addedDays} days added, licence runs until <t:${Math.floor(granted.expiresAt / 1000)}:D>.`,
+    `<@${discordUserId}> paid ${amount} to change plan${yearlyPlan ? ' to yearly' : ''}: ${granted.addedDays} days added, license runs until <t:${Math.floor(granted.expiresAt / 1000)}:D>.`,
     'success',
   );
   await hooks.onPaid?.(discordUserId, false).catch((error: unknown) => logger.error({ err: error }, '[TCP Payments ERROR] After-payment step failed'));
@@ -427,7 +427,7 @@ async function onInvoiceFailed(invoice: Stripe.Invoice): Promise<void> {
     await dm(
       discordUserId,
       'Your T.C.P payment failed',
-      `Stripe could not take your ${amount} payment. Press **Manage subscription** on the licence panel to update your card; Stripe will try again. Your licence keeps its current days.`,
+      `Stripe could not take your ${amount} payment. Press **Manage subscription** on the license panel to update your card; Stripe will try again. Your license keeps its current days.`,
       'warning',
     );
   }
@@ -441,7 +441,7 @@ async function onSubscriptionChanged(subscription: Stripe.Subscription, deleted:
   const until = after.currentPeriodEnd ? `<t:${after.currentPeriodEnd}:D>` : 'the end of the paid period';
   if (deleted || after.status === 'canceled') {
     if (before?.status === 'canceled') return;
-    await dm(discordUserId, 'Your T.C.P subscription has ended', 'It will not renew. Your licence keeps any days it already has. Press **Subscribe** on the licence panel any time to come back.', 'muted');
+    await dm(discordUserId, 'Your T.C.P subscription has ended', 'It will not renew. Your license keeps any days it already has. Press **Subscribe** on the license panel any time to come back.', 'muted');
     await ownerLog('Subscription ended', `<@${discordUserId}>'s subscription has ended.`, 'muted');
     await hooks.onEnded?.(discordUserId).catch((error: unknown) => logger.error({ err: error }, '[TCP Payments ERROR] Subscription-ended step failed'));
     return;
@@ -466,7 +466,7 @@ async function onChargeProblem(charge: Stripe.Charge | Stripe.Dispute, kind: 're
   const who = discordUserId ? `<@${discordUserId}>` : 'A customer the bot does not know';
   await ownerLog(
     kind === 'refund' ? 'Payment refunded' : 'Payment disputed (chargeback)',
-    `${who}: ${amount}. Their licence days were not changed; use **End access** on the owner panel if they should lose them.`,
+    `${who}: ${amount}. Their license days were not changed; use **End access** on the owner panel if they should lose them.`,
     'danger',
   );
 }

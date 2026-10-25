@@ -58,7 +58,7 @@ export function planChangeReceipt(addedDays: number, expiresAt: number, planLabe
     title: 'Your T.C.P plan changed',
     description: [
       planLabel ? `You are now on **${planLabel}**.` : 'Your new plan is active.',
-      addedDays > 0 ? `**${addedDays} days** added to your licence. It now runs until ${until}.` : `Your licence runs until ${until}.`,
+      addedDays > 0 ? `**${addedDays} days** added to your license. It now runs until ${until}.` : `Your license runs until ${until}.`,
     ].join('\n'),
   };
 }
@@ -69,10 +69,10 @@ export function paymentReceipt(days: number, expiresAt: number, firstPayment: bo
   return {
     title: firstPayment ? 'Welcome to T.C.P Premium' : 'Your T.C.P subscription renewed',
     description: [
-      `Payment received: **${days} days** added to your licence. It now runs until ${until}.`,
+      `Payment received: **${days} days** added to your license. It now runs until ${until}.`,
       licenceChannelId
         ? `Need a code for your Zen? Press **Generate** in <#${licenceChannelId}>.`
-        : 'Need a code for your Zen? Press **Generate** on the licence panel.',
+        : 'Need a code for your Zen? Press **Generate** on the license panel.',
       firstPayment ? 'Each renewal adds more days automatically. Cancel any time with **Manage subscription**.' : '',
     ]
       .filter(Boolean)

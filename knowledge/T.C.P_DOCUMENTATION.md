@@ -4,7 +4,7 @@ This is the authoritative reference for T.C.P. Assistant. It describes T.C.P ver
 
 ## Overview
 
-T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a menu on the Zen's OLED screen: 26 pages in T.C.P Premium, 27 in the free version.
+T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a menu on the Zen's OLED screen: 27 pages in T.C.P Premium, 27 in the free version.
 
 It does four main jobs:
 
@@ -22,16 +22,16 @@ T.C.P cannot guarantee hits. DayZ has its own weapon sway, random recoil, server
 There are two ways to get T.C.P:
 
 - **Free version** on the Cronus marketplace. It has every feature except the Weapon Workshop and Premium's engines (Gen 8 with ACG, and F.A.S.T. 2.0), and no lock. It has three manual Weapon Profiles instead.
-- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, the Gen 8 Stable Core with ACG and F.A.S.T. 2.0 aim shaping (in place of the free version's ADS Accuracy and Motion Intel), and needs an unlock code from the Discord (see Licence and Unlock Codes).
+- **T.C.P Premium**, the licensed version from the T.C.P Discord ($7 a month, or $70 a year with the **Yearly** button; subscribers become **Elite Supporters**). It has everything in the free version plus the Weapon Workshop, the Gen 8 Stable Core with ACG and F.A.S.T. 2.0 aim shaping (in place of the free version's ADS Accuracy and Motion Intel), and needs an unlock code from the Discord (see License and Unlock Codes).
 
 Where to get each one is under Downloading the script: the free version from the **Download** button in the DayZ channel, Premium in your direct messages after you **Subscribe** (or with **Download Premium**).
 
 ## Getting Started
 
-New to T.C.P? The welcome channel has a **Start here** panel with buttons for a quick private guide: getting your licence, downloading the script, settings, getting help and the rules.
+New to T.C.P? The welcome channel has a **Start here** panel with buttons for a quick private guide: getting your license, downloading the script, settings, getting help and the rules.
 
 1. Get the script (see Downloading the script) and load it onto your Cronus Zen with Zen Studio.
-2. T.C.P Premium only: load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the licence channel (see Licence and Unlock Codes). Codes are for Elite Supporters: press **Subscribe** in the licence channel to join. The free version has no lock.
+2. T.C.P Premium only: load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the license channel (see License and Unlock Codes). Codes are for Elite Supporters: press **Subscribe** in the license channel to join. The free version has no lock.
 3. Open the menu with L2 + OPTIONS (LT + Menu on Xbox) and tune from there. The settings channel has setups shared by other players.
 
 ### Downloading the script
@@ -39,7 +39,7 @@ New to T.C.P? The welcome channel has a **Start here** panel with buttons for a 
 There is no separate download channel. Where you get T.C.P depends on the version:
 
 - **Free version:** go to the DayZ channel (the one with the T.C.P for DayZ post) and press **Download**, then sign in to the GPC Library with Discord. It needs no code.
-- **T.C.P Premium:** press **Subscribe** ($7 a month) or **Yearly** ($70 a year) in the licence channel. Already subscribed monthly? Press **Manage subscription** and switch to yearly there; the bot extends your licence to the end of the new year. When your payment goes through, the bot sends the Premium script to your direct messages and gives you the Elite Supporter role. No DM (your DMs are closed), lost the file, or want the newest version? Press **Download Premium** on the licence panel and it is sent to you privately.
+- **T.C.P Premium:** press **Subscribe** ($7 a month) or **Yearly** ($70 a year) in the license channel. Already subscribed monthly? Press **Manage subscription** and switch to yearly there; the bot extends your license to the end of the new year. When your payment goes through, the bot sends the Premium script to your direct messages and gives you the Elite Supporter role. No DM (your DMs are closed), lost the file, or want the newest version? Press **Download Premium** on the license panel and it is sent to you privately.
 
 Then add the file to Zen Studio and program it to a slot on your Cronus Zen. Asking for the file in the help channel or a ticket does not get it to you faster; use the buttons above.
 
@@ -77,7 +77,7 @@ Press **L2 + SHARE** to swap between ADS profile 1 and profile 2. One rumble pul
 
 ### Factory reset
 
-Inside the menu, hold **L1 + R1 + X** for two seconds. Every setting goes back to its default. A licence code that has already been entered is not affected. In T.C.P Premium, your Weapon Workshop recordings are kept too, with each slot's Gun, Mag, Scale Y and Scale X; only the Weapon slot goes back to OFF.
+Inside the menu, hold **L1 + R1 + X** for two seconds. Every setting goes back to its default. A license code that has already been entered is not affected. In T.C.P Premium, your Weapon Workshop recordings are kept too, with each slot's Gun, Mag, Scale Y and Scale X; only the Weapon slot goes back to OFF.
 
 ## Menu Pages
 
@@ -90,7 +90,7 @@ The free version's menu has 27 pages, in this order:
 5. Automatic Aim (on/off)
 6. Follow Lean (on/off)
 7. Lean Spam (four items: on/off, Fire Only, Direction, Lean Time)
-8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance; in Premium an eighth, Drop Roll)
+8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)
 9. Hair Triggers (on/off)
 10. Vertical Recoil
 11. Horizontal Recoil
@@ -111,7 +111,7 @@ The free version's menu has 27 pages, in this order:
 26. Motion Intel (on/off)
 27. Weapon Profiles (free version only: three manual profiles, P1 to P3, each its own Vertical and Horizontal for one gun; OFF uses Vertical and Horizontal)
 
-**T.C.P Premium** has 26 pages. Pages 1 to 25 are in the same order, but pages 3 and 21 to 24 are the F.A.S.T. 2.0 pages: 3 F.A.S.T. (on/off), 21 Micro Precision, 22 Track Response, 23 Turn Release, 24 Recovery Speed (see F.A.S.T. 2.0 (Premium)). Premium has no Motion Intel or Weapon Profiles page; page 26 is the **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear). The menu opens on Master, so LEFT once from there goes straight to the last page. The free version has no Workshop page.
+**T.C.P Premium** has 27 pages. Pages 1 to 25 are in the same order, but pages 3 and 21 to 24 are the F.A.S.T. 2.0 pages: 3 F.A.S.T. (on/off), 21 Micro Precision, 22 Track Response, 23 Turn Release, 24 Recovery Speed (see F.A.S.T. 2.0 (Premium)). Premium has no Motion Intel or Weapon Profiles page; page 26 is **Drop Roll** (three items: on/off, Hold Time, Tap Speed) and page 27 the **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear). The menu opens on Master, so LEFT once from there goes straight to the Workshop, and LEFT twice to Drop Roll. The free version has no Workshop page.
 
 ### Defaults and ranges
 
@@ -210,15 +210,15 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 - **Four slots**, W1 to W4. Any gun can go in any slot.
 - Each slot holds **one steady pull** (a Vertical and a Horizontal value) for one gun. It is not a recoil pattern: DayZ gives every shot of a magazine the same expected kick, so one steady pull is what a gun needs.
 - **Weapon OFF** (the default): T.C.P fires your Vertical and Horizontal Recoil exactly as before.
-- Where it is: the last menu page, **Workshop** (page 26/26; 27/27 on Premium files from before 22 October 2026). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
-- **Premium only.** T.C.P Premium is the licensed version from the Discord: $7 a month or $70 a year, unlocked with a code from the licence channel (see Licence and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the licence panel (licensed downloads from before the Workshop do not have it).
+- Where it is: the last menu page, **Workshop** (page 27/27; it was page 26 of 26 on Premium files from 22 to 24 October 2026). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
+- **Premium only.** T.C.P Premium is the licensed version from the Discord: $7 a month or $70 a year, unlocked with a code from the license channel (see License and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the license panel (licensed downloads from before the Workshop do not have it).
 - You can use it with a PlayStation or an Xbox controller; it works the same on both. Button names here are PlayStation first, Xbox in brackets.
 
 ### Workshop: recording step by step
 
 Before you start: Master and Anti-Recoil on, your normal in-game sensitivity and attachments, and a wall with a small mark to aim at.
 
-1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 26/26. L1/R1 (LB/RB) moves between its seven items.
+1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its seven items.
 2. **Weapon** (1/7): UP/DOWN to pick a slot, W1 to W4. The other six items appear once a slot is picked.
 3. **Gun** (2/7): pick the gun you are holding. T.C.P uses it, with Mag, to know how long your magazine fires. The gun list: M4-A1, M16-A2, KA-M, KA-74, KAS-74U, KA-101, LAR, AUR AX, VIKHR, SVAL, VSS, BIZON, SG5-K, USG-45, LE-MAS, and OTHER for a gun that is not listed. The slots start out as W1 M4-A1, W2 KA-M, W3 LAR and W4 VIKHR. Changing the Gun sets Mag to that gun's standard magazine.
 4. **Mag** (3/7): set the number of rounds in the magazine you will fire, 5 to 100 (UP/DOWN; hold X (A) to move 10 at a time). It starts at the gun's standard magazine: 30 for most guns, 20 for the LAR, SVAL and VSS, 64 for the BIZON, and 25 for the USG-45, LE-MAS and OTHER. The page shows the rounds and how long that magazine fires, for example 30 RND 2.0S. Set it to your real magazine, for example Mag 60 for a 60-round M4 magazine or Mag 20 for a 20-round KA-M magazine: T.C.P measures each spray over that time. At the standard magazine nothing changes.
@@ -455,13 +455,13 @@ Crouch Shot assumes a quick Circle tap crouches in your DayZ setup.
 
 ### Drop Roll (Premium)
 
-Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. It holds Circle to go prone (for Drop Shot's **Hold Time**), then holds L1 or R1 to roll (DayZ rolls with L1 / R1 while prone), then lets go of everything, and your controls are back at once.
+Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. It does the move the way you would by hand: it holds Circle (for its **Hold Time**, 0.7 seconds by default) and, at the same time, taps L1 or R1 fast (about 12 taps a second at the default **Tap Speed**), then lets go of everything, and your controls are back at once.
 
-- **Switch it on**: it is off by default. In the menu, on the Drop Shot page, press R1 until the counter reads 8/8 (Drop Roll), then X for ON.
+- **Switch it on**: it is off by default. It has its own menu page, **Drop Roll** (page 26, LEFT twice from Master): press X for ON. L1/R1 move between its three items: **Drop Roll** (on/off), **Hold Time** (how long Circle is held and the taps run, 200 to 1500 ms, default 700) and **Tap Speed** (how long each tap is down and then up, 20 to 150 ms, default 40). Up/Down change the values (hold X for steps of 10); they are saved when you close the menu.
 - **Single taps are untouched**: one press of L1 or R1 reaches the game straight away as a normal lean. Only a second press of the same button within about a quarter of a second starts Drop Roll, and that second press never reaches the game. Pressing L1 and R1 together never counts.
 - **One at a time**: extra presses during a Drop Roll are ignored, a triple tap rolls once, and there is a short cooldown (0.3 seconds) after each one.
 - **Safe**: it never moves a stick or touches your triggers, so aim and anti-recoil are exactly as before. Opening the menu or switching Master off stops it at once. It does not start while the Workshop recorder is armed or while Drop Shot is holding Circle.
-- **If it only crouches**, raise Drop Shot's Hold Time (Drop Roll uses it for the drop). **If it drops but does not roll**, or rolls twice, report it in #ask-tcp: the roll timing can be adjusted.
+- **If it only crouches or stops short**, raise Hold Time on the Drop Roll page; **if it rolls too far**, lower it. **If the game seems to miss the taps**, raise Tap Speed (try 60); if it wants them faster, lower it.
 
 ### Auto Movement (moonwalk)
 
@@ -550,7 +550,7 @@ Use the **Report a bug** button in the bug report channel. Pick the feature and 
 
 Drawing busy animations on the Zen's screen can briefly interrupt audio passing through it. The home screen is kept nearly static for this reason. If audio cuts while the menu is open, close the menu.
 
-## Licence and Unlock Codes
+## License and Unlock Codes
 
 The licensed version from the Discord (T.C.P Premium) is locked until it is unlocked with a code. The free marketplace version has no lock.
 
@@ -558,7 +558,7 @@ The licensed version from the Discord (T.C.P Premium) is locked until it is unlo
 
 1. Load the script. The screen shows "T.C.P LOCKED" and "PRESS X TO BEGIN".
 2. Press X. The screen shows your five-digit number. It stays the same until you unlock.
-3. In the Discord licence channel, press **Generate** and type your number.
+3. In the Discord license channel, press **Generate** and type your number.
 4. The bot replies privately with a six-digit code.
 5. On the Zen, use UP/DOWN to change a digit, LEFT/RIGHT to move between digits, and X to confirm.
 
@@ -566,7 +566,7 @@ One rumble pulse means it unlocked. "WRONG CODE" with two pulses means the code 
 
 ### Free trial
 
-There is no free trial. Unlock codes are only for **Elite Supporters**. Press **Subscribe** on the licence panel to join: your payment gives you the Elite Supporter role, sends you the Premium script in your DMs and adds your days, and you can press **Generate** straight away.
+There is no free trial. Unlock codes are only for **Elite Supporters**. Press **Subscribe** on the license panel to join: your payment gives you the Elite Supporter role, sends you the Premium script in your DMs and adds your days, and you can press **Generate** straight away.
 
 ### Why it asks for a new code
 
@@ -584,17 +584,17 @@ When they run out, the Zen locks again with a new number and "RENEW IN DISCORD".
 
 ### Checking your days left
 
-Press **My licence** on the licence panel to see, privately, how many days you have left, when your subscription ends, how many power-ups a new code would last, and how many codes you have generated today.
+Press **My license** on the license panel to see, privately, how many days you have left, when your subscription ends, how many power-ups a new code would last, and how many codes you have generated today.
 
 ### Expiry reminders
 
-If your subscription does not renew by itself, the bot sends you a direct message three days before your access ends, and again on its last day. If you have direct messages from server members turned off, the reminder cannot reach you, so check **My licence** instead.
+If your subscription does not renew by itself, the bot sends you a direct message three days before your access ends, and again on its last day. If you have direct messages from server members turned off, the reminder cannot reach you, so check **My license** instead.
 
 ### Problems getting a code
 
-- **"Elite Supporters only"**: codes are only for members with the Elite Supporter role. Press **Subscribe** on the licence panel to join; the role comes with your first payment. If you have paid and still see this, open a support ticket.
-- **"Your T.C.P Premium days have run out"**: press **Subscribe** on the licence panel to renew.
-- **"Generated codes in the last day ... limit"**: a member can get a code for one new number per day. Asking again for the same number does not count.
+- **"Elite Supporters only"**: codes are only for members with the Elite Supporter role. Press **Subscribe** on the license panel to join; the role comes with your first payment. If you have paid and still see this, open a support ticket.
+- **"Your T.C.P Premium days have run out"**: press **Subscribe** on the license panel to renew.
+- **"Generated codes in the last day ... limit"**: a member can get a code for one new number per day. Asking again for the same number does not count. If you need another code sooner (a new Zen, a reset Zen), open a support ticket: the owner can reset your code usage, and you can generate again straight away.
 - **Code not working**: make sure the number typed into Discord is exactly the one on the Zen, and re-enter the code carefully.
 
 ## Getting Help on Discord
@@ -605,7 +605,7 @@ Post your question in the help channel; no @mention is needed. The assistant sta
 
 ### Opening a support ticket
 
-Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **Licence & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the owner can see. For setup and bug tickets the assistant takes a first look; press **Call the owner** if you need them. Licence and payment tickets go straight to the owner. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message.
+Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **License & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the owner can see. For setup and bug tickets the assistant takes a first look; press **Call the owner** if you need them. License and payment tickets go straight to the owner. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message.
 
 ### The Get started button
 

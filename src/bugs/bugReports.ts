@@ -38,7 +38,7 @@ export const BUG_AREAS = [
   'Auto Movement',
   'Auto Run / Aim / Follow Lean',
   'Menu / OLED screen',
-  'Licence / unlock',
+  'License / unlock',
   'Discord bot',
   'Other',
 ] as const;

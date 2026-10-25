@@ -39,7 +39,7 @@ describe('fixed tuning replies on a recorded pull', () => {
 
   it('says where Scale Y is, and that Vertical is locked, when the value is not known', async () => {
     const text = await reply('TEST_RESULT', { onRecordedPull: true, vertical: 25, currentSymptom: 'CLIMBING' });
-    expect(text).toBe('Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (26/26, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
+    expect(text).toBe('Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
     expect(text).not.toContain('try 26');
   });
 
@@ -52,7 +52,7 @@ describe('fixed tuning replies on a recorded pull', () => {
     expect(await reply('TEST_RESULT', { onRecordedPull: true, scaleY: 100, currentSymptom: 'PULLING_DOWN' }))
       .toBe('Since Scale Y 100 pulls down, lower Scale Y to 95 next (press Down 5 times) and retest.');
     expect(await reply('TEST_RESULT', { onRecordedPull: true, vertical: 25, previousVertical: 24, currentSymptom: 'PULLING_DOWN' }))
-      .toBe('Vertical Recoil is locked while a recorded pull is selected, so lower Scale Y instead: Workshop page (26/26, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Down 5 times (-5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
+      .toBe('Vertical Recoil is locked while a recorded pull is selected, so lower Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Down 5 times (-5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.');
   });
 
   it('keeps Scale Y when it is stable or fixed, and says it saves when the menu closes', async () => {
@@ -315,8 +315,8 @@ function aiTurn(memory: ConversationMemory, session: ConversationSession, questi
   return intent;
 }
 
-const UNKNOWN_CLIMB_REPLY = 'Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (26/26, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.';
-const PULL_OR_STD_REPLY = 'Before we change anything: does the home screen show PULL or STD for this gun? On PULL, Vertical and Horizontal Recoil are locked and the gun is tuned with Scale Y on the Workshop page (26/26); on STD or with Weapon OFF, your Vertical and Horizontal Recoil fire as set.';
+const UNKNOWN_CLIMB_REPLY = 'Vertical Recoil is locked while a recorded pull is selected, so raise Scale Y instead: Workshop page (27/27, LEFT once from Master), L1/R1 to Scale Y (5/7), then press Up 5 times (+5%; it starts at 100). Keep Scale X unchanged, and tell me the Scale Y number it shows.';
+const PULL_OR_STD_REPLY = 'Before we change anything: does the home screen show PULL or STD for this gun? On PULL, Vertical and Horizontal Recoil are locked and the gun is tuned with Scale Y on the Workshop page (27/27); on STD or with Weapon OFF, your Vertical and Horizontal Recoil fire as set.';
 
 describe('a Vertical that buzzes or is locked means a pull fires', () => {
   it.each([

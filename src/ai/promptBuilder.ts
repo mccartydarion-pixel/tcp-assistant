@@ -26,7 +26,7 @@ export function buildTuningContext(state: TuningState): string {
 
 /** How the assistant may use the server map: link only channels from it, never invent or guess one. */
 export const SERVER_MAP_INSTRUCTION =
-  'SERVER CHANNELS lists the Discord channels this member can see. When pointing someone to a place in the server (downloads, licence codes, settings, rules, help, tickets), link the channel by writing its <#id> exactly as listed. Never mention or guess a channel that is not listed there.';
+  'SERVER CHANNELS lists the Discord channels this member can see. When pointing someone to a place in the server (downloads, license codes, settings, rules, help, tickets), link the channel by writing its <#id> exactly as listed. Never mention or guess a channel that is not listed there.';
 
 export function buildTCPPrompt(params: {
   question: string;

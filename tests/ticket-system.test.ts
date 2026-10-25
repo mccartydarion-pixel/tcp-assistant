@@ -14,7 +14,7 @@ import {
 
 describe('ticket types', () => {
   it('offers the four types the owner chose, in order', () => {
-    expect(TICKET_TYPES.map((type) => type.label)).toEqual(['Licence & codes', 'Setup & tuning', 'Bug report', 'Payment & other']);
+    expect(TICKET_TYPES.map((type) => type.label)).toEqual(['License & codes', 'Setup & tuning', 'Bug report', 'Payment & other']);
   });
 
   it('lets the assistant look first only at setup and bug tickets, and calls the owner straight away for the rest', () => {

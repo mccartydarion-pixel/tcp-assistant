@@ -83,7 +83,7 @@ export function availableGuides(channels: WelcomeChannels): WelcomeGuide[] {
 }
 
 const LABELS: Record<WelcomeGuide, string> = {
-  licence: 'Get my licence',
+  licence: 'Get my license',
   download: 'Download',
   settings: 'Settings',
   help: 'Get help',
@@ -94,7 +94,7 @@ export function welcomeGuide(guide: WelcomeGuide, channels: WelcomeChannels): st
   switch (guide) {
     case 'licence':
       return [
-        '**Getting your licence**',
+        '**Getting your license**',
         '`1` Load T.C.P on your Cronus Zen and press **X** (**A** on Xbox) on the lock screen to see your five-digit number.',
         `\`2\` Go to <#${channels.licence}> and press **Generate**, then type in your number.`,
         '`3` Enter the six-digit code you get back on the Zen.',

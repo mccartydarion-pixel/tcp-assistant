@@ -11,7 +11,7 @@ function link(id: string | undefined, fallback: string): string {
 function places(links: InfoLinks) {
   return {
     help: link(links.help, '**#ask-tcp**'),
-    licence: link(links.licence, 'the **licence channel**'),
+    licence: link(links.licence, 'the **license channel**'),
     dayz: link(links.dayz, 'the **DayZ channel**'),
     tickets: links.tickets ? `the ticket panel in <#${links.tickets}>` : 'the **ticket panel**',
     bugs: links.bugs ? `<#${links.bugs}>` : undefined,
@@ -97,7 +97,7 @@ function overview(links: InfoLinks): InfoSection[] {
       title: '🆘 Need help?',
       description: [
         `• **Questions:** ask in ${at.help}, no @mention needed. The assistant answers from the T.C.P docs.`,
-        `• **Licence, payments or something it can't fix:** open a ticket from ${at.tickets}.`,
+        `• **License, payments or something it can't fix:** open a ticket from ${at.tickets}.`,
         ...(at.bugs ? [`• **Found a bug?** Report it in ${at.bugs}.`] : []),
         `• Quick answers in ${at.faq}. Please read ${at.rules} and ${at.disclaimer} too.`,
       ].join('\n'),
@@ -173,12 +173,12 @@ function faq(links: InfoLinks): InfoSection[] {
         {
           name: 'What is the Weapon Workshop?',
           value:
-            'Four slots (W1–W4). Pick a slot and gun, set **Mag** to the rounds in your magazine, arm **Record**, then fire three full magazines at a mark on a wall: T.C.P saves the steady pull that gun needs and uses it whenever that slot is selected. Fine-tune with **Scale Y / Scale X**. It is the last page (26/26): **L2 + OPTIONS**, then **LEFT** once. Not there? Get the latest with **Download Premium**.',
+            'Four slots (W1–W4). Pick a slot and gun, set **Mag** to the rounds in your magazine, arm **Record**, then fire three full magazines at a mark on a wall: T.C.P saves the steady pull that gun needs and uses it whenever that slot is selected. Fine-tune with **Scale Y / Scale X**. It is the last page (27/27): **L2 + OPTIONS**, then **LEFT** once. Not there? Get the latest with **Download Premium**.',
         },
         {
           name: 'My code doesn\'t work',
           value:
-            'Check the number you typed in Discord is exactly the one on the Zen, then re-enter the code digit by digit. "Elite Supporters only" means you need an active subscription. Paid and still stuck? Open a **Licence & codes** ticket.',
+            'Check the number you typed in Discord is exactly the one on the Zen, then re-enter the code digit by digit. "Elite Supporters only" means you need an active subscription. Paid and still stuck? Open a **License & codes** ticket.',
         },
       ],
     },
@@ -186,7 +186,7 @@ function faq(links: InfoLinks): InfoSection[] {
       title: '🆘 Still stuck?',
       description: [
         `Ask in ${at.help}, no @mention needed: the assistant replies in a thread. Include your controller, in-game sensitivity and T.C.P values.`,
-        `Licence, payment or bug problems: open a ticket from ${at.tickets}.${at.bugs ? ` Bugs can also go in ${at.bugs}.` : ''}`,
+        `License, payment or bug problems: open a ticket from ${at.tickets}.${at.bugs ? ` Bugs can also go in ${at.bugs}.` : ''}`,
       ].join('\n'),
     },
   ];
@@ -257,7 +257,7 @@ function rules(links: InfoLinks): InfoSection[] {
         '**6. Stay on topic.** Use each channel for what it is for.',
         '**7. Don\'t share the script or codes.** No sharing, leaking, uploading or reselling T.C.P Premium, your downloads or your codes. Premium copies are fingerprinted.',
         '**8. No cracked or modified copies.** Don\'t post, ask for or offer cracked, unlocked or modified copies of T.C.P Premium, or ways around its lock.',
-        `**9. Support in the right place.** Ask questions in ${at.help}; licence, payment and bug problems go in a ticket. Please don't DM staff for support.`,
+        `**9. Support in the right place.** Ask questions in ${at.help}; license, payment and bug problems go in a ticket. Please don't DM staff for support.`,
         '**10. No begging for free access.** Premium is a paid subscription and there is no free trial. Don\'t ask for free codes or copies.',
         '**11. Staff have the final say.** Follow staff instructions. If you disagree, open a ticket instead of arguing in public.',
         '**12. Follow Discord\'s rules.** Discord\'s Terms of Service and Community Guidelines apply here too.',

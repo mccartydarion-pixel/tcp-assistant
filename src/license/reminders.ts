@@ -33,7 +33,7 @@ export function reminderText(
   const what = onTrial ? 'free trial' : 'subscription';
   const title = kind === 'final' ? `Your T.C.P ${what} ends today` : `Your T.C.P ${what} ends in ${days} days`;
   const howToRenew = canSubscribe
-    ? 'press **Subscribe** on the licence panel; each monthly payment adds days automatically.'
+    ? 'press **Subscribe** on the license panel; each monthly payment adds days automatically.'
     : 'open a support ticket in the T.C.P server to renew.';
   const description = [
     kind === 'final'

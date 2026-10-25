@@ -466,7 +466,7 @@ async function createTicket(interaction: ModalSubmitInteraction, type: TicketTyp
     });
 
     if (type.kind === 'licence') {
-      const licence = await memberLicenceEmbed(user.id, 'Licence');
+      const licence = await memberLicenceEmbed(user.id, 'License');
       const payments = paymentButtons();
       if (licence) await channel.send({ embeds: [licence], components: payments ? [payments] : [] });
     }

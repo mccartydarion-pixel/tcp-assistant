@@ -30,6 +30,10 @@ export interface LicenseStore {
   getSubscription(discordUserId: string): Promise<SubscriptionRecord | null>;
   /** This member's most recent code, if any. */
   latestCodeFor(discordUserId: string): Promise<CodeRecord | null>;
+  /** When the owner last reset this member's code usage (0: never). Codes before it no longer count toward the
+   *  daily limit or the code-sharing alert; they stay in the records (Recent codes) and keep working. */
+  codeUsageResetAt(discordUserId: string): Promise<number>;
+  resetCodeUsage(discordUserId: string, at: number): Promise<void>;
   /** True when this reminder was already sent for this subscription end date. */
   hasReminder(discordUserId: string, kind: string, expiresAt: number): Promise<boolean>;
   recordReminder(discordUserId: string, kind: string, expiresAt: number): Promise<void>;
@@ -83,6 +87,26 @@ class PostgresLicenseStore implements LicenseStore {
         PRIMARY KEY (discord_user_id, kind, expires_at)
       );
     `);
+    // One row per member whose code usage the owner reset: the time of the last reset.
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS license_code_resets (
+        discord_user_id TEXT PRIMARY KEY,
+        reset_at BIGINT NOT NULL
+      );
+    `);
+  }
+
+  async codeUsageResetAt(discordUserId: string): Promise<number> {
+    const result = await this.pool.query('SELECT reset_at FROM license_code_resets WHERE discord_user_id = $1', [discordUserId]);
+    return result.rows.length > 0 ? Number(result.rows[0].reset_at) : 0;
+  }
+
+  async resetCodeUsage(discordUserId: string, at: number): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO license_code_resets (discord_user_id, reset_at) VALUES ($1, $2)
+       ON CONFLICT (discord_user_id) DO UPDATE SET reset_at = excluded.reset_at`,
+      [discordUserId, at],
+    );
   }
 
   async getExpiry(discordUserId: string): Promise<number | null> {
@@ -251,7 +275,22 @@ class SqliteLicenseStore implements LicenseStore {
         sentAt INTEGER NOT NULL,
         PRIMARY KEY (discordUserId, kind, expiresAt)
       );
+      CREATE TABLE IF NOT EXISTS licenseCodeResets (
+        discordUserId TEXT PRIMARY KEY,
+        resetAt INTEGER NOT NULL
+      );
     `);
+  }
+
+  async codeUsageResetAt(discordUserId: string): Promise<number> {
+    const row = this.db.prepare('SELECT resetAt FROM licenseCodeResets WHERE discordUserId = ?').get(discordUserId) as { resetAt: number } | undefined;
+    return row ? row.resetAt : 0;
+  }
+
+  async resetCodeUsage(discordUserId: string, at: number): Promise<void> {
+    this.db
+      .prepare('INSERT INTO licenseCodeResets (discordUserId, resetAt) VALUES (?, ?) ON CONFLICT(discordUserId) DO UPDATE SET resetAt = excluded.resetAt')
+      .run(discordUserId, at);
   }
 
   async getExpiry(discordUserId: string): Promise<number | null> {

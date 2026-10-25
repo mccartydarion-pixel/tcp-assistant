@@ -34,7 +34,7 @@ describe('the yearly plan', () => {
     const changed = planChangeReceipt(345, Date.UTC(2027, 9, 16), 'the yearly plan ($70.00/year)');
     expect(changed.title).toBe('Your T.C.P plan changed');
     expect(changed.description).toContain('You are now on **the yearly plan ($70.00/year)**.');
-    expect(changed.description).toContain('**345 days** added to your licence.');
+    expect(changed.description).toContain('**345 days** added to your license.');
     expect(planChangeReceipt(0, Date.UTC(2027, 9, 16), '').description).not.toContain('added');
   });
 });
@@ -123,7 +123,7 @@ describe('switching from monthly to yearly', () => {
     expect(grantedDays).toEqual([365]);
   });
 
-  it('extends the licence to the end of the new yearly period, once', async () => {
+  it('extends the license to the end of the new yearly period, once', async () => {
     const { grantedDays, extendedTo } = setUp();
     const now = start + 10 * DAY;
     const paid = invoice('evt_switch', 'subscription_update', 6533, [
@@ -148,7 +148,7 @@ describe('switching from monthly to yearly', () => {
   });
 });
 
-describe('licence panel layout', () => {
+describe('license panel layout', () => {
   it('puts one purpose on each row: use, plans, account', async () => {
     const { licencePanelRows } = await import('../src/license/licensePanel.js');
     const labels = () => licencePanelRows().map((row) => row.toJSON().components.map((button) => ('label' in button ? button.label : '')));
@@ -158,6 +158,6 @@ describe('licence panel layout', () => {
     expect(rows).toHaveLength(3);
     expect(rows[0]).toEqual(['Generate']);
     expect(rows[1]![0]).toMatch(/^Subscribe/);
-    expect(rows[2]).toEqual(['My licence', 'Manage subscription']);
+    expect(rows[2]).toEqual(['My license', 'Manage subscription']);
   });
 });

@@ -19,11 +19,11 @@ describe('premium release upload', () => {
     expect(checkRelease('Tactical Competitive Pro Release.gpc', scrambled)).toEqual({ ok: true });
   });
 
-  it('refuses the readable release, which carries the real licence key', () => {
+  it('refuses the readable release, which carries the real license key', () => {
     const readable = `${scrambled}\ndefine LICENSE_KEY_A1 = 12345;\n`;
     const result = checkRelease('Tactical Competitive Pro Release (readable).gpc', readable);
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.reason).toContain('licence key');
+    expect(!result.ok && result.reason).toContain('license key');
     expect(checkRelease('x.gpc', 'function license_guard() {}\n' + scrambled).ok).toBe(false);
   });
 

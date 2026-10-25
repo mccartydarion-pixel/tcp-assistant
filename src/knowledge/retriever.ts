@@ -277,13 +277,13 @@ const aliasMap: Record<string, string> = {
   adz: 'Anti Deadzone',
   mie: 'Motion Intel',
   'motion intelligence': 'Motion Intel',
-  license: 'Licence Unlock',
-  licence: 'Licence Unlock',
-  unlock: 'Licence Unlock',
-  key: 'Licence Unlock',
-  generate: 'Licence Unlock',
+  license: 'License Unlock',
+  licence: 'License Unlock',
+  unlock: 'License Unlock',
+  key: 'License Unlock',
+  generate: 'License Unlock',
   trial: 'Free Trial',
-  locked: 'Licence Unlock',
+  locked: 'License Unlock',
 };
 
 export interface KnowledgeRetriever {
