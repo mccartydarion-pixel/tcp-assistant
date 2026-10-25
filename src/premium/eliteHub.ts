@@ -4,6 +4,7 @@ import {
   ButtonStyle,
   ChannelType,
   EmbedBuilder,
+  OverwriteType,
   PermissionFlagsBits,
   type Client,
   type Guild,
@@ -70,11 +71,17 @@ export function eliteHubRows(): ActionRowBuilder<ButtonBuilder>[] {
 /** Who can see the hub: the Elite role and the owner read it; nobody but the bot posts in it. */
 export function eliteHubPermissions(guild: Guild, roleId: string, botId: string, ownerId?: string): OverwriteResolvable[] {
   const read = [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory];
+  // Each entry says whether it is a role or a member: discord.js cannot tell from a bare ID unless that member
+  // happens to be cached (the owner usually is not at startup).
   return [
-    { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
-    { id: roleId, allow: read, deny: [PermissionFlagsBits.SendMessages] },
-    { id: botId, allow: [...read, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.ManageMessages] },
-    ...(ownerId ? [{ id: ownerId, allow: read }] : []),
+    { id: guild.roles.everyone.id, type: OverwriteType.Role, deny: [PermissionFlagsBits.ViewChannel] },
+    { id: roleId, type: OverwriteType.Role, allow: read, deny: [PermissionFlagsBits.SendMessages] },
+    {
+      id: botId,
+      type: OverwriteType.Member,
+      allow: [...read, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.ManageMessages],
+    },
+    ...(ownerId ? [{ id: ownerId, type: OverwriteType.Member, allow: read }] : []),
   ];
 }
 

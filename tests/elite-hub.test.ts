@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PermissionFlagsBits, type Guild } from 'discord.js';
+import { OverwriteType, PermissionFlagsBits, type Guild } from 'discord.js';
 
 // These modules read the bot's environment when they load, so give them the values they need first.
 process.env.DISCORD_TOKEN ??= 'test-token';
@@ -38,6 +38,8 @@ describe('Elite Hub', () => {
     expect(by('elite').deny).toContain(PermissionFlagsBits.SendMessages);
     expect(by('bot').allow).toContain(PermissionFlagsBits.SendMessages);
     expect(by('owner').allow).toContain(PermissionFlagsBits.ViewChannel);
+    // Typed, so an uncached member ID is accepted when the channel is created.
+    expect(overwrites.map((o) => (o as { type?: OverwriteType }).type)).toEqual([OverwriteType.Role, OverwriteType.Role, OverwriteType.Member, OverwriteType.Member]);
     expect(eliteHubPermissions(guild, 'elite', 'bot').some((o) => (o as { id: string }).id === 'owner')).toBe(false);
   });
 });
