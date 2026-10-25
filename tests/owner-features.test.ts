@@ -8,7 +8,7 @@ process.env.DISCORD_TOKEN ??= 'test-token';
 process.env.DISCORD_CLIENT_ID ??= 'test-client';
 process.env.DISCORD_GUILD_ID ??= 'test-guild';
 const { parseAnnouncement, buildAnnouncementEmbed } = await import('../src/owner/announcer.js');
-const { readRecoilForm, readAdsForm, parseSettingValue, cooldownMinutesLeft, buildSettingsCard, applyGuide, SHARE_COOLDOWN_MS } = await import(
+const { readRecoilForm, readAdsForm, readExtrasForm, parseSettingValue, cooldownMinutesLeft, buildSettingsCard, applyGuide, cardVersion, SHARE_COOLDOWN_MS } = await import(
   '../src/settings/settingsPanel.js'
 );
 
@@ -95,11 +95,19 @@ describe('settings sharing', () => {
     expect(readRecoilForm({ ...recoilForm, vertical: '140' })).toEqual({ error: 'Vertical must be between 0 and 100.' });
   });
 
-  it('reads the ADS form, where everything is optional but something is needed', () => {
-    const blank = { adsSens: '', precision: '', easing: '', fireSens: '', notes: '' };
-    expect('error' in readAdsForm(blank)).toBe(true);
-    expect(readAdsForm({ ...blank, adsSens: '60', easing: '12' })).toEqual({ values: { adsSens: 60, easing: 12 }, notes: '' });
-    expect(readAdsForm({ ...blank, notes: ' M4 only ' })).toEqual({ values: {}, notes: 'M4 only' });
+  it("reads each version's ADS form, where everything is optional but something is needed", () => {
+    expect('error' in readAdsForm('Free', {})).toBe(true);
+    expect(readAdsForm('Free', { adsSens: '60', easing: '12' })).toEqual({ values: { adsSens: 60, easing: 12 } });
+    expect(readAdsForm('Free', { steadyHold: '6' })).toEqual({ error: 'Steady Hold must be between 0 and 5.' });
+    expect(readAdsForm('Premium', { microPrecision: '40', recoverySpeed: '65' })).toEqual({ values: { microPrecision: 40, recoverySpeed: 65 } });
+    // A Premium form only reads Premium's pages.
+    expect('error' in readAdsForm('Premium', { easing: '12' })).toBe(true);
+  });
+
+  it('reads Fire Sens and notes, both optional', () => {
+    expect(readExtrasForm({ fireSens: '', notes: ' M4 only ' })).toEqual({ fireSens: undefined, notes: 'M4 only' });
+    expect(readExtrasForm({ fireSens: '75', notes: '' })).toEqual({ fireSens: 75, notes: '' });
+    expect(readExtrasForm({ fireSens: '10', notes: '' })).toEqual({ error: 'Fire Sens must be between 20 and 100.' });
   });
 
   it('limits each member to one share every ten minutes', () => {
@@ -148,5 +156,40 @@ describe('settings sharing', () => {
     ]);
     expect(guide).toContain('Vertical 3 / Horizontal 5');
     expect(applyGuide([])).toBe('This card has no values to apply.');
+  });
+
+  const premium = {
+    ...draft,
+    version: 'Premium' as const,
+    values: { vertical: 28, adsSens: 90, microPrecision: 35, trackResponse: 55, turnRelease: 55, recoverySpeed: 60, fireSens: 80 },
+  };
+
+  it('tags the card with its version and names the F.A.S.T. 2.0 section on Premium', () => {
+    const card = buildSettingsCard(premium, { name: 'Player' }).toJSON();
+    expect(card.description).toBe('**Premium**  ·  **Long range**  ·  **Assault rifle**');
+    expect(card.footer?.text).toMatch(/^T\.C\.P Premium · /);
+    const names = (card.fields ?? []).map((field) => field.name);
+    expect(names).toContain('F.A.S.T. 2.0');
+    expect(names).not.toContain('ADS ACCURACY');
+    expect(names).toEqual(expect.arrayContaining(['Micro Precision', 'Track Response', 'Turn Release', 'Recovery Speed', 'Fire Sens']));
+  });
+
+  it("gives a Premium card's F.A.S.T. pages and says which version it is for", () => {
+    const card = buildSettingsCard(premium, { name: 'Player' }).toJSON();
+    const guide = applyGuide(card.fields ?? [], card.description);
+    expect(guide.split('\n').filter((line) => line.startsWith('`Page'))).toEqual([
+      '`Page 10` Vertical Recoil → **28**',
+      '`Page 18` ADS Sens → **90**',
+      '`Page 20` Fire Sens → **80**',
+      '`Page 21` Micro Precision → **35**',
+      '`Page 22` Track Response → **55**',
+      '`Page 23` Turn Release → **55**',
+      '`Page 24` Recovery Speed → **60**',
+    ]);
+    expect(guide).toContain('Made for **T.C.P Premium**');
+    expect(cardVersion(card.description)).toBe('Premium');
+    expect(cardVersion('**Free**  ·  **Mid range**')).toBe('Free');
+    // Cards posted before the version pick have no tag, and still get their pages.
+    expect(cardVersion('**Long range**  ·  **Assault rifle**')).toBeNull();
   });
 });

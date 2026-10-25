@@ -17,45 +17,69 @@ import { ensurePanel, fetchSendableChannel, repostPanel } from '../bot/panels.js
 import { finalNotice, notice, tcpEmbed } from '../bot/embeds.js';
 
 // Settings sharing, as a short wizard in one private message that updates as the member goes:
-//   1. playstyle and weapon (dropdowns)   2. recoil form   3. optional ADS form   then a preview and Post.
+//   1. version (Premium or Free), playstyle and weapon (dropdowns)   2. recoil form   3. optional ADS form
+//   (the version's own ADS pages)   then optional Fire Sens and notes, a preview and Post.
 // The posted card is a stat sheet with a "How to apply" button that tells anyone which menu page each
 // value goes on. Values are checked against the script's own ranges.
 const PREFIX = 'tcp-settings:';
 export const SETTINGS_BUTTON_ID = `${PREFIX}share`;
+const VERSION_SELECT_ID = `${PREFIX}version`;
 const STYLE_SELECT_ID = `${PREFIX}style`;
 const WEAPON_SELECT_ID = `${PREFIX}weapon`;
 const NEXT_ID = `${PREFIX}next`;
 const EDIT_RECOIL_ID = `${PREFIX}edit-recoil`;
 const ADD_ADS_ID = `${PREFIX}add-ads`;
+const ADD_EXTRAS_ID = `${PREFIX}add-extras`;
 const POST_ID = `${PREFIX}post`;
 const CANCEL_ID = `${PREFIX}cancel`;
 export const APPLY_ID = `${PREFIX}apply`;
 const RECOIL_MODAL_ID = `${PREFIX}m-recoil`;
 const ADS_MODAL_ID = `${PREFIX}m-ads`;
+const EXTRAS_MODAL_ID = `${PREFIX}m-extras`;
 
 const SETTINGS_COLOUR = 0xe8352b;
 export const SHARE_COOLDOWN_MS = 10 * 60 * 1000;
 const DRAFT_LIFETIME_MS = 20 * 60 * 1000;
 
+export const VERSIONS = ['Premium', 'Free'] as const;
+export type Version = (typeof VERSIONS)[number];
 export const PLAYSTYLES = ['Close range', 'Mid range', 'Long range', 'All-round'] as const;
 export const WEAPONS = ['Assault rifle', 'SMG', 'DMR', 'Sniper', 'Shotgun', 'Pistol', 'Any gun'] as const;
 
 // One entry per number a member can share: the card's field name, the menu page it lives on (as shown on
-// the Zen, 1-based), and the range the script accepts.
+// the Zen, 1-based), and the range the script accepts. Pages 21 to 24 differ by version: Premium has the
+// F.A.S.T. 2.0 settings there, the free version ADS Accuracy's. The names differ too, so a card's fields
+// say which version they are from.
 export const SETTING_FIELDS = {
   vertical: { name: 'Vertical', page: 10, menu: 'Vertical Recoil', min: 0, max: 100 },
   horizontal: { name: 'Horizontal', page: 11, menu: 'Horizontal Recoil', min: -50, max: 50 },
   turn: { name: 'Turn Strength', page: 12, menu: 'Turn Strength', min: 0, max: 100 },
   adsSens: { name: 'ADS Sens', page: 18, menu: 'ADS Sens', min: 0, max: 100 },
   fireSens: { name: 'Fire Sens', page: 20, menu: 'Fire Sens', min: 20, max: 100 },
+  microPrecision: { name: 'Micro Precision', page: 21, menu: 'Micro Precision', min: 0, max: 100 },
+  trackResponse: { name: 'Track Response', page: 22, menu: 'Track Response', min: 0, max: 100 },
+  turnRelease: { name: 'Turn Release', page: 23, menu: 'Turn Release', min: 0, max: 100 },
+  recoverySpeed: { name: 'Recovery Speed', page: 24, menu: 'Recovery Speed', min: 0, max: 100 },
   precision: { name: 'Precision', page: 21, menu: 'Precision', min: 0, max: 100 },
+  response: { name: 'Response', page: 22, menu: 'Response', min: 0, max: 100 },
   easing: { name: 'Easing', page: 23, menu: 'Easing', min: 0, max: 100 },
+  steadyHold: { name: 'Steady Hold', page: 24, menu: 'Steady Hold', min: 0, max: 5 },
 } as const;
-type SettingKey = keyof typeof SETTING_FIELDS;
+export type SettingKey = keyof typeof SETTING_FIELDS;
 const RECOIL_KEYS: SettingKey[] = ['vertical', 'horizontal', 'turn'];
-const ADS_KEYS: SettingKey[] = ['adsSens', 'precision', 'easing', 'fireSens'];
+/** Each version's ADS form: five boxes, the most a Discord form holds. */
+export const ADS_KEYS: Record<Version, SettingKey[]> = {
+  Premium: ['adsSens', 'microPrecision', 'trackResponse', 'turnRelease', 'recoverySpeed'],
+  Free: ['adsSens', 'precision', 'response', 'easing', 'steadyHold'],
+};
+const ALL_ADS_KEYS: SettingKey[] = [...new Set([...ADS_KEYS.Premium, ...ADS_KEYS.Free, 'fireSens' as SettingKey])];
+const PLACEHOLDERS: Partial<Record<SettingKey, string>> = {
+  adsSens: '60', microPrecision: '50', trackResponse: '50', turnRelease: '50', recoverySpeed: '50',
+  precision: '30', response: '100', easing: '12', steadyHold: '0',
+};
 
 export interface SettingsDraft {
+  version?: Version;
   playstyle?: string;
   weapon?: string;
   name: string;
@@ -107,19 +131,25 @@ export function readRecoilForm(form: { name: string; vertical: string; horizonta
   return { name, inGame, values };
 }
 
-/** Reads the ADS form. Every box is optional, but at least one value is needed. */
-export function readAdsForm(form: { adsSens: string; precision: string; easing: string; fireSens: string; notes: string }):
-  | { values: Partial<Record<SettingKey, number>>; notes: string }
+/** Reads a version's ADS form. Every box is optional, but at least one value is needed. */
+export function readAdsForm(version: Version, form: Partial<Record<SettingKey, string>>):
+  | { values: Partial<Record<SettingKey, number>> }
   | { error: string } {
   const values: Partial<Record<SettingKey, number>> = {};
-  for (const key of ADS_KEYS) {
-    const parsed = parseSettingValue(key, form[key as 'adsSens' | 'precision' | 'easing' | 'fireSens'], false);
+  for (const key of ADS_KEYS[version]) {
+    const parsed = parseSettingValue(key, form[key] ?? '', false);
     if ('error' in parsed) return parsed;
     if (parsed.value !== undefined) values[key] = parsed.value;
   }
-  const notes = form.notes.trim();
-  if (Object.keys(values).length === 0 && !notes) return { error: 'Fill in at least one ADS value, or press Post it to share without ADS.' };
-  return { values, notes };
+  if (Object.keys(values).length === 0) return { error: 'Fill in at least one ADS value, or press Post it to share without ADS.' };
+  return { values };
+}
+
+/** Reads the Fire Sens and notes form. Both are optional. */
+export function readExtrasForm(form: { fireSens: string; notes: string }): { fireSens?: number; notes: string } | { error: string } {
+  const parsed = parseSettingValue('fireSens', form.fireSens, false);
+  if ('error' in parsed) return parsed;
+  return { fireSens: parsed.value, notes: form.notes.trim() };
 }
 
 /** Minutes until this member may share again, or 0 if they can share now. */
@@ -144,12 +174,12 @@ function padRow(fields: APIEmbedField[]): APIEmbedField[] {
 
 /** The shared card: a stat sheet with the member's name, tags, recoil and ADS values. */
 export function buildSettingsCard(draft: SettingsDraft, author: { name: string; iconURL?: string }, thumbnail?: string): EmbedBuilder {
-  const tags = [draft.playstyle, draft.weapon].filter(Boolean).map((tag) => `**${tag}**`).join('  ·  ');
+  const tags = [draft.version, draft.playstyle, draft.weapon].filter(Boolean).map((tag) => `**${tag}**`).join('  ·  ');
   const embed = new EmbedBuilder()
     .setColor(SETTINGS_COLOUR)
     .setAuthor({ name: author.name, iconURL: author.iconURL })
     .setTitle(draft.name || 'Untitled setup')
-    .setFooter({ text: 'T.C.P v2.0 · Values assume a similar DayZ sensitivity. Tune one setting at a time.' })
+    .setFooter({ text: `T.C.P${draft.version ? ` ${draft.version}` : ''} · Values assume a similar DayZ sensitivity. Tune one setting at a time.` })
     .setTimestamp();
   if (tags) embed.setDescription(tags);
   if (thumbnail) embed.setThumbnail(thumbnail);
@@ -159,18 +189,30 @@ export function buildSettingsCard(draft: SettingsDraft, author: { name: string; 
   if (recoil.length > 0) {
     fields.push({ name: 'ANTI-RECOIL', value: '​', inline: false }, ...padRow(recoil));
   }
-  const ads = valueFields(draft, ADS_KEYS);
+  const ads = valueFields(draft, ALL_ADS_KEYS);
   if (ads.length > 0) {
-    fields.push({ name: 'ADS ACCURACY', value: '​', inline: false }, ...padRow(ads));
+    fields.push({ name: draft.version === 'Premium' ? 'F.A.S.T. 2.0' : 'ADS ACCURACY', value: '​', inline: false }, ...padRow(ads));
   }
   fields.push({ name: 'DayZ in-game sensitivity', value: draft.inGame || '—', inline: false });
   if (draft.notes) fields.push({ name: 'Notes', value: draft.notes, inline: false });
   return embed.addFields(fields);
 }
 
+/** Which version a card was made for, from its tag line; null for cards from before the version pick. */
+export function cardVersion(description: string | null | undefined): Version | null {
+  return VERSIONS.find((version) => (description ?? '').includes(`**${version}**`)) ?? null;
+}
+
 /** "How to apply": which menu page each value on a card goes on, read back from the card's fields. */
-export function applyGuide(fields: { name: string; value: string }[]): string {
+export function applyGuide(fields: { name: string; value: string }[], description?: string | null): string {
   const byName = new Map(fields.map((field) => [field.name, field.value.replace(/`/g, '').trim()]));
+  const version = cardVersion(description);
+  const made =
+    version === 'Premium'
+      ? 'Made for **T.C.P Premium**: pages 21 to 24 are the F.A.S.T. 2.0 pages. On the free version, copy the anti-recoil values only.'
+      : version === 'Free'
+        ? 'Made for the **free version**: pages 21 to 24 are the ADS Accuracy pages. On Premium, copy the anti-recoil values only.'
+        : '';
   const lines = (Object.keys(SETTING_FIELDS) as SettingKey[])
     .filter((key) => byName.has(SETTING_FIELDS[key].name))
     .sort((a, b) => SETTING_FIELDS[a].page - SETTING_FIELDS[b].page)
@@ -179,6 +221,7 @@ export function applyGuide(fields: { name: string; value: string }[]): string {
   const inGame = byName.get('DayZ in-game sensitivity');
   return [
     '**On your Zen:** hold L2 + OPTIONS (LT + Menu on Xbox) to open the menu, LEFT/RIGHT to the page, UP/DOWN to set the value (hold X/A for steps of 10), then Circle/B to save.',
+    ...(made ? ['', made] : []),
     '',
     ...lines,
     '',
@@ -195,12 +238,12 @@ export function buildSettingsPanel() {
         'Found a setup that works? Share it and help the community dial in.',
         '',
         '**How it works**',
-        '`1` Pick your playstyle and weapon',
+        '`1` Pick **Premium** or **Free**, your playstyle and weapon',
         '`2` Enter your anti-recoil values',
-        '`3` Add your ADS values (optional)',
+        '`3` Add your ADS values (optional): F.A.S.T. 2.0 on Premium, ADS Accuracy on Free',
         '`4` Check the preview and post it',
         '',
-        'Every card has a **How to apply** button that shows the exact menu page for each value.',
+        'Every card is tagged **Premium** or **Free** and has a **How to apply** button that shows the exact menu page for each value.',
       ].join('\n'),
     );
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -231,8 +274,14 @@ function selectRow(id: string, placeholder: string, options: readonly string[], 
 function stepOne(draft: SettingsDraft) {
   return {
     content: '',
-    embeds: [tcpEmbed({ title: 'Share my settings · Step 1 of 3', description: 'Pick your playstyle and weapon, then press **Next**.' })],
+    embeds: [
+      tcpEmbed({
+        title: 'Share my settings · Step 1 of 3',
+        description: 'Pick the version your setup is for (**Premium** or **Free**: they have different ADS pages), your playstyle and weapon, then press **Next**.',
+      }),
+    ],
     components: [
+      selectRow(VERSION_SELECT_ID, 'Version: Premium or Free', VERSIONS, draft.version),
       selectRow(STYLE_SELECT_ID, 'Playstyle', PLAYSTYLES, draft.playstyle),
       selectRow(WEAPON_SELECT_ID, 'Weapon', WEAPONS, draft.weapon),
       new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -240,7 +289,7 @@ function stepOne(draft: SettingsDraft) {
           .setCustomId(NEXT_ID)
           .setLabel('Next: anti-recoil')
           .setStyle(ButtonStyle.Primary)
-          .setDisabled(!draft.playstyle || !draft.weapon),
+          .setDisabled(!draft.version || !draft.playstyle || !draft.weapon),
         new ButtonBuilder().setCustomId(CANCEL_ID).setLabel('Cancel').setStyle(ButtonStyle.Secondary),
       ),
     ],
@@ -261,6 +310,7 @@ function previewScreen(draft: SettingsDraft, author: { name: string; iconURL?: s
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId(POST_ID).setLabel('Post it').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId(ADD_ADS_ID).setLabel(draft.hasAds ? 'Edit ADS' : 'Add ADS values').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId(ADD_EXTRAS_ID).setLabel('Fire Sens & notes').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId(EDIT_RECOIL_ID).setLabel('Edit anti-recoil').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId(CANCEL_ID).setLabel('Cancel').setStyle(ButtonStyle.Secondary),
       ),
@@ -290,13 +340,24 @@ function recoilModal(draft: SettingsDraft) {
 
 function adsModal(draft: SettingsDraft) {
   const t = draft.typed;
+  const version = draft.version ?? 'Premium';
   return new ModalBuilder()
     .setCustomId(ADS_MODAL_ID)
-    .setTitle('Step 3 of 3 · ADS (all optional)')
+    .setTitle(`Step 3 of 3 · ${version === 'Premium' ? 'F.A.S.T. 2.0' : 'ADS Accuracy'} (optional)`)
     .addComponents(
-      input('adsSens', 'ADS Sens (0 to 100)', false, '60', t.adsSens),
-      input('precision', 'Precision (0 to 100)', false, '30', t.precision),
-      input('easing', 'Easing (0 to 100)', false, '12', t.easing),
+      ...ADS_KEYS[version].map((key) => {
+        const field = SETTING_FIELDS[key];
+        return input(key, `${field.menu} (${field.min} to ${field.max})`, false, PLACEHOLDERS[key] ?? '', t[key]);
+      }),
+    );
+}
+
+function extrasModal(draft: SettingsDraft) {
+  const t = draft.typed;
+  return new ModalBuilder()
+    .setCustomId(EXTRAS_MODAL_ID)
+    .setTitle('Fire Sens & notes (optional)')
+    .addComponents(
       input('fireSens', 'Fire Sens (20 to 100)', false, '75', t.fireSens),
       input('notes', 'Notes', false, 'Gun, range, playstyle, anything that helps', t.notes, TextInputStyle.Paragraph, 500),
     );
@@ -313,8 +374,8 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
 
   // "How to apply" on a posted card works for anyone, any time.
   if (interaction.isButton() && id === APPLY_ID) {
-    const fields = interaction.message.embeds[0]?.fields ?? [];
-    await interaction.reply({ ...notice(applyGuide(fields), { title: 'How to apply this setup' }), ephemeral: true });
+    const card = interaction.message.embeds[0];
+    await interaction.reply({ ...notice(applyGuide(card?.fields ?? [], card?.description), { title: 'How to apply this setup' }), ephemeral: true });
     return true;
   }
 
@@ -356,6 +417,15 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
   }
 
   if (interaction.isStringSelectMenu()) {
+    if (id === VERSION_SELECT_ID) {
+      const version = VERSIONS.find((v) => v === interaction.values[0]);
+      // Each version has its own ADS pages, so a change of version drops ADS values already typed.
+      if (version && version !== draft.version) {
+        for (const key of ALL_ADS_KEYS) if (key !== 'fireSens') delete draft.values[key];
+        draft.hasAds = false;
+      }
+      draft.version = version;
+    }
     if (id === STYLE_SELECT_ID) draft.playstyle = interaction.values[0];
     if (id === WEAPON_SELECT_ID) draft.weapon = interaction.values[0];
     await interaction.update(stepOne(draft));
@@ -374,6 +444,10 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
     }
     if (id === ADD_ADS_ID) {
       await interaction.showModal(adsModal(draft));
+      return true;
+    }
+    if (id === ADD_EXTRAS_ID) {
+      await interaction.showModal(extrasModal(draft));
       return true;
     }
     if (id === POST_ID) {
@@ -433,16 +507,31 @@ export async function handleSettingsInteraction(interaction: Interaction): Promi
   }
 
   if (id === ADS_MODAL_ID) {
-    for (const key of ['adsSens', 'precision', 'easing', 'fireSens', 'notes']) draft.typed[key] = value(key);
-    const result = readAdsForm({ adsSens: value('adsSens'), precision: value('precision'), easing: value('easing'), fireSens: value('fireSens'), notes: value('notes') });
+    const version = draft.version ?? 'Premium';
+    const form: Partial<Record<SettingKey, string>> = {};
+    for (const key of ADS_KEYS[version]) form[key] = draft.typed[key] = value(key);
+    const result = readAdsForm(version, form);
     if ('error' in result) {
       await interaction.update(previewScreen(draft, author, thumbnail, result.error));
       return true;
     }
-    for (const key of ADS_KEYS) delete draft.values[key];
+    for (const key of ADS_KEYS[version]) delete draft.values[key];
     Object.assign(draft.values, result.values);
-    draft.notes = result.notes;
     draft.hasAds = true;
+    await interaction.update(previewScreen(draft, author, thumbnail));
+    return true;
+  }
+
+  if (id === EXTRAS_MODAL_ID) {
+    for (const key of ['fireSens', 'notes']) draft.typed[key] = value(key);
+    const result = readExtrasForm({ fireSens: value('fireSens'), notes: value('notes') });
+    if ('error' in result) {
+      await interaction.update(previewScreen(draft, author, thumbnail, result.error));
+      return true;
+    }
+    if (result.fireSens === undefined) delete draft.values.fireSens;
+    else draft.values.fireSens = result.fireSens;
+    draft.notes = result.notes;
     await interaction.update(previewScreen(draft, author, thumbnail));
     return true;
   }

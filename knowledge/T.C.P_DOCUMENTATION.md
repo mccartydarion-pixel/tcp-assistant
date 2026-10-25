@@ -32,7 +32,7 @@ New to T.C.P? The welcome channel has a **Start here** panel with buttons for a 
 
 1. Get the script (see Downloading the script) and load it onto your Cronus Zen with Zen Studio.
 2. T.C.P Premium only: load it on the Zen, press X (A on an Xbox controller) on the lock screen, and get your code from the license channel (see License and Unlock Codes). Codes are for Elite Supporters: press **Subscribe** in the license channel to join. The free version has no lock.
-3. Open the menu with L2 + OPTIONS (LT + Menu on Xbox) and tune from there. The settings channel has setups shared by other players.
+3. Open the menu with L2 + OPTIONS (LT + Menu on Xbox) and tune from there. The settings channel has setups shared by other players, each tagged **Premium** or **Free** (their ADS pages differ: F.A.S.T. 2.0 on Premium, ADS Accuracy on Free); press **How to apply** on a card for the exact page of each value, and **Share my settings** to post your own.
 
 ### Downloading the script
 
