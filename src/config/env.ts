@@ -46,6 +46,9 @@ const envSchema = z.object({
   // "Elite Supporter" and a text channel with "elite" and "welcome" in its name.
   ELITE_ROLE_ID: z.string().optional(),
   ELITE_WELCOME_CHANNEL_ID: z.string().optional(),
+  // The Elite Supporters' own panel (their plan, renew, change plan, download, codes). When unset, the bot uses a
+  // text channel with "elite" and "hub" in its name, and creates "💎・elite-hub" (Elite role only) if there is none.
+  ELITE_HUB_CHANNEL_ID: z.string().optional(),
   // 'false' turns the feature off; anything else (or unset) leaves it on.
   LICENSE_REMINDERS: z.string().default('true'),
   WELCOME_GREET: z.string().default('true'),

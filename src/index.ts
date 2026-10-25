@@ -11,6 +11,8 @@ import { registerEvents } from './bot/events.js';
 import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
 import { ConversationMemory } from './ai/conversationMemory.js';
 import { ensureLicensePanel, grantPaidDays, grantPaidUntil, refreshLicensePanel } from './license/licensePanel.js';
+import { startBoostRewards } from './license/boostRewards.js';
+import { ensureEliteHub } from './premium/eliteHub.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
 import { ensureBugPanel } from './bugs/bugReports.js';
 import { ensureReviewPanel } from './reviews/reviews.js';
@@ -183,7 +185,7 @@ async function start(): Promise<void> {
   status.commandsRegistered = await registerCommands(commands);
   logger.info('[TCP Ticket] Ticket Assistant: READY');
   // Before the licence panel, so it shows Subscribe with the live price and Download Premium.
-  await initPremium(client, { isSubscriber: hasLiveSubscription, onUploaded: () => refreshLicensePanel(client) });
+  await initPremium(client, { isSubscriber: hasLiveSubscription, onUploaded: () => Promise.all([refreshLicensePanel(client), ensureEliteHub(client)]).then(() => undefined) });
   await initPayments(client, {
     grantDays: (discordUserId, days) => grantPaidDays(client, discordUserId, days),
     grantUntil: (discordUserId, until) => grantPaidUntil(client, discordUserId, until),
@@ -192,6 +194,8 @@ async function start(): Promise<void> {
   });
   if (paymentsConfigured()) startHttpServer(env.PORT);
   await ensureLicensePanel(client);
+  startBoostRewards(client);
+  await ensureEliteHub(client);
   await initTickets(client, { assistant, memory: conversationMemory });
   await ensureHelpPanel(client);
   startHelpCleanup(client);

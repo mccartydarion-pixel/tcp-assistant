@@ -9,6 +9,7 @@ import { determineMessageRoute, shouldAnswerOwner } from './messageRoute.js';
 import { ConversationMemory } from '../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../ai/question.js';
 import { handleLicenseInteraction } from '../license/licensePanel.js';
+import { isBoostMessage, onBoostMessage, onMemberUpdate } from '../license/boostRewards.js';
 import { handleAnnounceInteraction } from '../owner/announcer.js';
 import { handleSettingsInteraction } from '../settings/settingsPanel.js';
 import { handleBugInteraction } from '../bugs/bugReports.js';
@@ -25,6 +26,7 @@ import {
 import { handleHelpInteraction, handleHelpMessage, isHelpMessage } from '../help/helpChannel.js';
 import { handlePaymentInteraction } from '../payments/stripeBilling.js';
 import { handlePremiumInteraction } from '../premium/premium.js';
+import { handleEliteInteraction } from '../premium/eliteHub.js';
 import { reportUnanswered } from '../ai/unanswered.js';
 import { answerMessages, notice, tcpEmbed } from './embeds.js';
 import {
@@ -54,6 +56,7 @@ export function registerEvents(
           (await handlePremiumInteraction(interaction)) ||
           (await handleHelpInteraction(interaction)) ||
           (await handleLicenseInteraction(interaction)) ||
+          (await handleEliteInteraction(interaction)) ||
           (await handleAnnounceInteraction(interaction)) ||
           (await handleSettingsInteraction(interaction)) ||
           (await handleBugInteraction(interaction)) ||
@@ -111,6 +114,11 @@ export function registerEvents(
     // Members Intent already did, and stop there.
     if (message.type === MessageType.UserJoin) {
       await greetFromJoinMessage(message);
+      return;
+    }
+    // Discord's own "just boosted the server" message: the booster (its author) gets their Premium month.
+    if (isBoostMessage(message.type)) {
+      await onBoostMessage(client, message);
       return;
     }
     // Other system messages (thread created, thread renamed, pins...) carry a member as author but are not questions.
@@ -229,6 +237,12 @@ export function registerEvents(
   client.on(Events.GuildMemberAdd, async (member) => {
     if (!isMemberEventsActive() || member.guild.id !== env.DISCORD_GUILD_ID) return;
     await greetMember(client, newcomerFromMember(member));
+  });
+
+  // Only delivered when the Server Members Intent is on: a member starting to boost gets their Premium month.
+  client.on(Events.GuildMemberUpdate, async (before, member) => {
+    if (!isMemberEventsActive()) return;
+    await onMemberUpdate(client, before, member);
   });
 
   client.on(Events.ChannelCreate, async (channel) => {

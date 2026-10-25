@@ -122,15 +122,33 @@ export async function grantPaidDays(client: Client, discordUserId: string, days:
   return expiresAt;
 }
 
-/** After a payment: the role in LICENSE_MEMBER_ROLE_ID, if set. Best effort. */
-async function giveLicensedRole(client: Client, discordUserId: string): Promise<void> {
+export type BoostGrant = { status: 'granted'; expiresAt: number } | { status: 'too-soon' } | { status: 'unavailable' };
+
+/**
+ * A server-boost reward: adds `days` to a member's licence (on top of the days they have, or from now) and gives
+ * them the member role, unless they had a boost reward less than `everyMs` ago. 'unavailable' when the licence
+ * records are not open yet, so a later check can try again.
+ */
+export async function grantBoostReward(client: Client, discordUserId: string, days: number, everyMs: number): Promise<BoostGrant> {
+  if (!store) return { status: 'unavailable' };
+  const now = Date.now();
+  if (!(await store.claimBoostReward(discordUserId, now, everyMs))) return { status: 'too-soon' };
+  const expiresAt = extendExpiry(await store.getExpiry(discordUserId), days, now);
+  await store.setExpiry(discordUserId, expiresAt);
+  logger.info(`[TCP License] Server boost added ${days} days for ${discordUserId}`);
+  await giveLicensedRole(client, discordUserId, 'T.C.P Premium server boost');
+  return { status: 'granted', expiresAt };
+}
+
+/** After a payment or a boost reward: the role in LICENSE_MEMBER_ROLE_ID, if set. Best effort. */
+async function giveLicensedRole(client: Client, discordUserId: string, reason = 'T.C.P Premium payment'): Promise<void> {
   if (!env.LICENSE_MEMBER_ROLE_ID) return;
   try {
     const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
     const member = await guild.members.fetch(discordUserId);
-    if (!member.roles.cache.has(env.LICENSE_MEMBER_ROLE_ID)) await member.roles.add(env.LICENSE_MEMBER_ROLE_ID, 'T.C.P Premium payment');
+    if (!member.roles.cache.has(env.LICENSE_MEMBER_ROLE_ID)) await member.roles.add(env.LICENSE_MEMBER_ROLE_ID, reason);
   } catch (error) {
-    logger.warn({ err: error }, '[TCP License] Could not give the member role after a payment (left the server, or Manage Roles missing).');
+    logger.warn({ err: error }, '[TCP License] Could not give the member role (left the server, or Manage Roles missing).');
   }
 }
 

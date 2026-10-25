@@ -34,6 +34,10 @@ export interface LicenseStore {
    *  daily limit or the code-sharing alert; they stay in the records (Recent codes) and keep working. */
   codeUsageResetAt(discordUserId: string): Promise<number>;
   resetCodeUsage(discordUserId: string, at: number): Promise<void>;
+  /** Records a server-boost reward as given now, unless this member had one less than `everyMs` ago. True when it
+   *  was recorded (the caller then adds the days), false when the last one is too recent. One statement, so two
+   *  boost events arriving together can never both claim it. */
+  claimBoostReward(discordUserId: string, now: number, everyMs: number): Promise<boolean>;
   /** True when this reminder was already sent for this subscription end date. */
   hasReminder(discordUserId: string, kind: string, expiresAt: number): Promise<boolean>;
   recordReminder(discordUserId: string, kind: string, expiresAt: number): Promise<void>;
@@ -94,6 +98,25 @@ class PostgresLicenseStore implements LicenseStore {
         reset_at BIGINT NOT NULL
       );
     `);
+    // One row per member who has had a server-boost reward: when the last one was given, and how many.
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS license_boost_rewards (
+        discord_user_id TEXT PRIMARY KEY,
+        last_reward_at BIGINT NOT NULL,
+        rewards INTEGER NOT NULL
+      );
+    `);
+  }
+
+  async claimBoostReward(discordUserId: string, now: number, everyMs: number): Promise<boolean> {
+    const result = await this.pool.query(
+      `INSERT INTO license_boost_rewards (discord_user_id, last_reward_at, rewards) VALUES ($1, $2, 1)
+       ON CONFLICT (discord_user_id) DO UPDATE SET last_reward_at = excluded.last_reward_at, rewards = license_boost_rewards.rewards + 1
+       WHERE license_boost_rewards.last_reward_at <= $3
+       RETURNING discord_user_id`,
+      [discordUserId, now, now - everyMs],
+    );
+    return (result.rowCount ?? 0) > 0;
   }
 
   async codeUsageResetAt(discordUserId: string): Promise<number> {
@@ -279,7 +302,24 @@ class SqliteLicenseStore implements LicenseStore {
         discordUserId TEXT PRIMARY KEY,
         resetAt INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS licenseBoostRewards (
+        discordUserId TEXT PRIMARY KEY,
+        lastRewardAt INTEGER NOT NULL,
+        rewards INTEGER NOT NULL
+      );
     `);
+  }
+
+  async claimBoostReward(discordUserId: string, now: number, everyMs: number): Promise<boolean> {
+    const row = this.db
+      .prepare(
+        `INSERT INTO licenseBoostRewards (discordUserId, lastRewardAt, rewards) VALUES (?, ?, 1)
+         ON CONFLICT(discordUserId) DO UPDATE SET lastRewardAt = excluded.lastRewardAt, rewards = rewards + 1
+         WHERE lastRewardAt <= ?
+         RETURNING discordUserId`,
+      )
+      .get(discordUserId, now, now - everyMs);
+    return row !== undefined;
   }
 
   async codeUsageResetAt(discordUserId: string): Promise<number> {

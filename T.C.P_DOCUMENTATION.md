@@ -566,7 +566,19 @@ One rumble pulse means it unlocked. "WRONG CODE" with two pulses means the code 
 
 ### Free trial
 
-There is no free trial. Unlock codes are only for **Elite Supporters**. Press **Subscribe** on the license panel to join: your payment gives you the Elite Supporter role, sends you the Premium script in your DMs and adds your days, and you can press **Generate** straight away.
+There is no free trial. Unlock codes are only for **Elite Supporters**. Press **Subscribe** on the license panel to join: your payment gives you the Elite Supporter role, sends you the Premium script in your DMs and adds your days, and you can press **Generate** straight away. Boosting the server also gets you in free (see Server boost reward).
+
+### Server boost reward
+
+Boost the T.C.P Discord server and you get **1 month (30 days) of T.C.P Premium, free**:
+
+- **Not on Premium yet?** The month starts at once. The bot gives you the Elite Supporter role, sends you the Premium script in your DMs, and you can press **Generate** for your code.
+- **Already Premium?** The 30 days are added on top of the days you already have, so your subscription runs a month longer. A monthly subscription keeps billing as normal; each payment adds its days after the free month.
+- **Keep boosting:** every 30 days you stay boosted, another month is added by itself.
+- **How often:** one month per 30 days of boosting. Stopping and boosting again within 30 days of your last reward adds nothing more until those 30 days are up.
+- **How:** click the server name at the top left, choose **Server Boost**, and boost T.C.P. The bot adds your month the moment you boost and sends you a DM. Check your days any time with **My license**.
+
+If you boosted and nothing arrived after a few minutes, open a support ticket.
 
 ### Why it asks for a new code
 
@@ -582,9 +594,21 @@ A code lasts a set number of power-ups of the script, based on the days left on 
 
 When they run out, the Zen locks again with a new number and "RENEW IN DISCORD". Press Generate again. A new script release can also ask everyone for a fresh code.
 
+### Elite Supporter Hub
+
+Elite Supporters have their own private channel, **💎・elite-hub**, with one panel for everything about their Premium:
+
+- **My plan:** your days left, when your access ends, and your subscription (monthly or yearly, and whether it renews by itself).
+- **Manage subscription:** renew, cancel, switch between monthly and yearly, or update your card.
+- **Subscribe / Yearly:** start your plan again if it has ended, or go yearly. Every payment adds its days to your license.
+- **Download Premium:** the newest Premium script, sent to you privately.
+- **Generate:** your unlock code, the same as on the license panel.
+
+Only members with the Elite Supporter role (and the owner) can see the channel. The license panel's buttons still work the same.
+
 ### Checking your days left
 
-Press **My license** on the license panel to see, privately, how many days you have left, when your subscription ends, how many power-ups a new code would last, and how many codes you have generated today.
+Press **My license** on the license panel (or **My plan** in the Elite Hub) to see, privately, how many days you have left, when your subscription ends, how many power-ups a new code would last, and how many codes you have generated today.
 
 ### Expiry reminders
 

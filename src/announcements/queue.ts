@@ -9,6 +9,25 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // Server boost reward: a month of Premium per boost, another every 30 days of boosting (bot, 2026-10-25).
+    id: '2026-10-boost-premium',
+    date: '2026-10-25',
+    ready: true,
+    title: '🚀 BOOST THE SERVER, GET PREMIUM FREE',
+    description:
+      'Boost the T.C.P server and get **1 month of T.C.P Premium, free**. 🔥\n\n' +
+      '💎 **Not on Premium yet?** Boost and you get a full month of Premium: the Weapon Workshop, Gen 8, F.A.S.T. 2.0, Drop Roll and every update.\n' +
+      '➕ **Already Premium?** Boost and a month is **added to your subscription**, on top of the days you already have.\n' +
+      '🔁 **Keep boosting, keep earning.** Every 30 days you stay boosted, another month is added automatically.\n\n' +
+      '⚡ **Instant.** The moment you boost, the bot adds your month and DMs you. No ticket, no waiting.',
+    fields: [
+      { name: '🚀 How to boost', value: 'Click the server name at the top left, choose **Server Boost**, and boost T.C.P.', inline: false },
+      { name: '⬇️ Then', value: 'Press **Download Premium** on the license panel and **Generate** your code. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-boost-premium.gif',
+    ping: '@everyone',
+  },
+  {
     // The Gen 8 thumb-control fix: the shared pull per axis and on what F.A.S.T. delivers (Premium, 2026-10-24).
     id: '2026-10-thumb-fix',
     date: '2026-10-24',

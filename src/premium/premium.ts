@@ -102,7 +102,7 @@ export function isEliteWelcomeName(name: string): boolean {
 }
 
 /** ELITE_ROLE_ID, else a role called "Elite Supporter". Never one with moderator powers. */
-function eliteRole(guild: Guild): Role | null {
+export function eliteRole(guild: Guild): Role | null {
   const role = env.ELITE_ROLE_ID ? guild.roles.cache.get(env.ELITE_ROLE_ID) : guild.roles.cache.find((r) => isEliteRoleName(r.name));
   if (!role) return null;
   if (!isSafeSelfRole(role)) {
@@ -113,7 +113,7 @@ function eliteRole(guild: Guild): Role | null {
 }
 
 /** ELITE_WELCOME_CHANNEL_ID, else a text channel with "elite" and "welcome" in its name. */
-function eliteWelcomeChannel(guild: Guild): TextChannel | null {
+export function eliteWelcomeChannel(guild: Guild): TextChannel | null {
   const channel = env.ELITE_WELCOME_CHANNEL_ID
     ? guild.channels.cache.get(env.ELITE_WELCOME_CHANNEL_ID)
     : guild.channels.cache.find((c) => c.type === ChannelType.GuildText && isEliteWelcomeName(c.name));
