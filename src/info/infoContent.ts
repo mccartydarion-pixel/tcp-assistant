@@ -67,7 +67,7 @@ function overview(links: InfoLinks): InfoSection[] {
         {
           name: '💎 T.C.P Premium',
           value: [
-            '• **$15 a month** or **$70 a year**',
+            '• **$15 a month** or **$150 a year**',
             '• Everything in Free **+ Weapon Workshop**',
             '• **Elite Supporter** role',
             '• Script sent to your DMs',
@@ -160,7 +160,7 @@ function faq(links: InfoLinks): InfoSection[] {
       fields: [
         {
           name: 'What does Premium add?',
-          value: 'Everything in the free version **plus the Weapon Workshop**, the **Gen 8** recoil engine with **ACG** and **F.A.S.T. 2.0** aim shaping. $15 a month or $70 a year. You get the **Elite Supporter** role and the script in your DMs.',
+          value: 'Everything in the free version **plus the Weapon Workshop**, the **Gen 8** recoil engine with **ACG** and **F.A.S.T. 2.0** aim shaping. $15 a month or $150 a year. You get the **Elite Supporter** role and the script in your DMs.',
         },
         {
           name: 'How do I buy or cancel?',
@@ -229,7 +229,7 @@ function disclaimer(links: InfoLinks): InfoSection[] {
         },
         {
           name: '💳 Subscription & refunds',
-          value: `T.C.P Premium is a subscription ($15 a month or $70 a year) that renews until you cancel. Cancel any time with **Manage subscription** in ${at.licence} to stop the next payment. Refunds are case by case, at the owner's discretion: open a ticket.`,
+          value: `T.C.P Premium is a subscription ($15 a month or $150 a year) that renews until you cancel. Cancel any time with **Manage subscription** in ${at.licence} to stop the next payment. Refunds are case by case, at the owner's discretion: open a ticket.`,
         },
         {
           name: '🔄 Changes',
