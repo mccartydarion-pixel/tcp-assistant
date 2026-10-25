@@ -162,8 +162,14 @@ describe('Drop Shot', () => {
     expect(section).not.toMatch(/always available/i);
   });
 
+  it('documents Drop Roll as a Premium switch, off by default', () => {
+    expect(content('Drop Roll (Premium)')).toContain('double-press L1');
+    expect(content('Drop Roll (Premium)')).toContain('it is off by default');
+    expect(content('Defaults and ranges')).toContain('Drop Roll (Premium) is off.');
+  });
+
   it('lists Double Tap on the menu page and with the defaults', () => {
-    expect(content('Menu Pages')).toContain('8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)');
+    expect(content('Menu Pages')).toContain('8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance; in Premium an eighth, Drop Roll)');
     expect(content('Defaults and ranges')).toContain('Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off.');
   });
 });

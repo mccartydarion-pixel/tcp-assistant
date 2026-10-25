@@ -9,6 +9,45 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // The Gen 8 thumb-control fix: the shared pull per axis and on what F.A.S.T. delivers (Premium, 2026-10-24).
+    id: '2026-10-thumb-fix',
+    date: '2026-10-24',
+    ready: true,
+    title: '🎯 PREMIUM UPDATE: THUMB CONTROL FIX',
+    description:
+      'Your thumb is back in charge of the pull-down. 🔥\n\n' +
+      'We traced a report that the M4 could feel like it spreads instead of staying on your point of aim, and found two real problems in how your own stick and the recoil pull worked together. Both are fixed:\n\n' +
+      '⬇️ **PULL DOWN, IT COUNTS.** Pull down with the gun and it always adds. Before, F.A.S.T. made a light pull finer while the recoil engine still took half of the full stick away, so from a light pull to a firm one your thumb added almost nothing. Now the engine only shares what you actually deliver, the same way the hardware-proven Gen 8 build did.\n' +
+      '↔️ **SIDEWAYS STAYS SIDEWAYS.** Small left-right corrections used to weaken the vertical hold by 3 the moment they passed a light touch. Now each axis is judged on its own: tiny sideways fixes keep the gun down.\n\n' +
+      '🔫 **Nothing else changed.** Same Workshop pull, same Gen 8, same F.A.S.T. 2.0, same settings.',
+    fields: [
+      { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings and Workshop recordings carry over.', inline: false },
+      { name: '🎯 Tip', value: 'If a gun still climbs in a long spray, raise its **Scale Y** 3 to 5. A pull a touch strong is easy to hold; a touch weak climbs. Record an M4 with a 60-round mag at **Mag 60** so the Workshop measures the whole spray.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-thumb-fix.gif',
+    ping: '@everyone',
+  },
+  {
+    // Drop Roll: double L1 / R1 drops prone and rolls left / right (Premium, 2026-10-24).
+    id: '2026-10-drop-roll',
+    date: '2026-10-24',
+    ready: true,
+    title: '🌀 PREMIUM UPDATE: DROP ROLL IS HERE',
+    description:
+      'Get off the line of fire in one move. 🔥\n\n' +
+      '**Double-tap L1** and you drop prone and roll **left**. **Double-tap R1** and you drop prone and roll **right**. One fast, chained move: drop, roll, and your controls are back the instant it ends.\n\n' +
+      '👆 **Single taps stay yours.** One press of L1 or R1 is a normal lean, with no delay. Only a quick second press of the same button starts Drop Roll, and that second press never reaches the game.\n' +
+      '🔁 **Clean every time.** Extra taps never restart it, a triple tap never doubles it, and nothing is ever left held down.\n' +
+      '🔫 **Your aim and recoil are untouched.** Drop Roll never moves a stick and never touches your trigger.',
+    fields: [
+      { name: '🛠️ Switch it on', value: 'Off by default. Menu, **Drop Shot** page, press **R1** until it reads **8/8 Drop Roll**, press **X** for ON. It uses Drop Shot\'s **Hold Time** for the drop: if you only crouch, raise Hold Time.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the licence panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-drop-roll.gif',
+    ping: '@everyone',
+  },
+  {
     // ACG, the Adaptive Control Guardian: the intelligence and guardian layer under Gen 8 (Premium, 2026-10-22).
     id: '2026-10-acg-guardian',
     date: '2026-10-22',

@@ -90,7 +90,7 @@ The free version's menu has 27 pages, in this order:
 5. Automatic Aim (on/off)
 6. Follow Lean (on/off)
 7. Lean Spam (four items: on/off, Fire Only, Direction, Lean Time)
-8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)
+8. Drop Shot (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance; in Premium an eighth, Drop Roll)
 9. Hair Triggers (on/off)
 10. Vertical Recoil
 11. Horizontal Recoil
@@ -138,7 +138,7 @@ The free version's menu has 27 pages, in this order:
 | Left Time / Right Time | 40 to 600 ms | 180 |
 | Strafe Amount | 10 to 100 | 100 |
 
-On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off. Precision, Response, Easing and Steady Hold are the free version's; in Premium those pages are the F.A.S.T. 2.0 settings, 50 each, and the ADS Accuracy page is F.A.S.T. (on). Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE. Drop Shot is on, but with Double Tap and Drop on Fire both off it does nothing until you switch one of them on.
+On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off. Drop Roll (Premium) is off. Precision, Response, Easing and Steady Hold are the free version's; in Premium those pages are the F.A.S.T. 2.0 settings, 50 each, and the ADS Accuracy page is F.A.S.T. (on). Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE. Drop Shot is on, but with Double Tap and Drop on Fire both off it does nothing until you switch one of them on.
 
 ## Anti-Recoil
 
@@ -313,6 +313,7 @@ Gen 8, the Workshop Adaptive Stable Core, is how **T.C.P Premium** delivers the 
 - **Per axis**: tracking sideways keeps the vertical pull holding the gun down; correcting up or down leaves the sideways pull alone.
 - **Built around your recording**: a TIGHT recording is held more calmly than a LOOSE one or one that says REDO ONCE (the engine ignores smaller wobbles of your thumb before it changes anything). The pull itself is delivered exactly as recorded, scaled only by your Scale Y and Scale X.
 - **Small corrections stay yours**: a tiny reversal or a brief correction inside the aim's centre never makes the pull collapse; pulling down yourself shares the pull, so you win.
+- **Your pull-down always counts** (since 24 October 2026): when you pull down with the gun, the engine shares only what F.A.S.T. actually lets through of your thumb, so pulling harder always adds to the pull-down (before, a light pull and a firm one could give the same). Small sideways corrections no longer weaken the vertical pull either: each axis is judged on its own.
 - **Clean release**: when you stop firing the pull comes off almost at once, so single shots and short bursts do not nudge the aim.
 
 There is nothing to set up. The free version uses the earlier Stable Core delivery, which works at a fixed rate on both axes together.
@@ -328,7 +329,8 @@ There is nothing to set up. The free version uses the earlier Stable Core delive
 ### Gen 8 tuning tips
 
 - The gun climbs while you hold steady: raise Vertical (or Scale Y) a little. Gen 8 delivers the whole pull in a steady hold, so if you used to add a touch of thumb yourself, you may find you can lower Vertical a unit instead.
-- The gun feels like it lets go when you make small sideways adjustments: that is the engine giving way to your thumb; keep the adjustment smooth and it holds. Lowering Turn Strength keeps more of the pull while you move.
+- The gun feels like it lets go when you make big sideways moves: that is the engine giving way to your thumb on the axis you move. Small sideways adjustments keep the vertical pull (since 24 October 2026). Lowering Turn Strength keeps more of the pull while you move.
+- The gun climbs in a long spray even though you pull down: raise Scale Y (or Vertical) 3 to 5. A pull a touch strong is easy to hold; a touch weak climbs. For an M4 with a 60-round magazine, record it at Mag 60 so the Workshop measures the whole spray.
 - A slot that says REDO ONCE or LOOSE is held a little less calmly: record it again for the full effect.
 - Groups feel tighter while tracking than while standing still: that is expected. Tracking sideways does not weaken the vertical pull.
 
@@ -450,6 +452,16 @@ Drop Shot changes your stance during a fight. It has two triggers, Double Tap an
 - **Cooldown** (default 1500 ms): stops it dropping you again straight after a drop or stand-up.
 
 Crouch Shot assumes a quick Circle tap crouches in your DayZ setup.
+
+### Drop Roll (Premium)
+
+Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. It holds Circle to go prone (for Drop Shot's **Hold Time**), then holds L1 or R1 to roll (DayZ rolls with L1 / R1 while prone), then lets go of everything, and your controls are back at once.
+
+- **Switch it on**: it is off by default. In the menu, on the Drop Shot page, press R1 until the counter reads 8/8 (Drop Roll), then X for ON.
+- **Single taps are untouched**: one press of L1 or R1 reaches the game straight away as a normal lean. Only a second press of the same button within about a quarter of a second starts Drop Roll, and that second press never reaches the game. Pressing L1 and R1 together never counts.
+- **One at a time**: extra presses during a Drop Roll are ignored, a triple tap rolls once, and there is a short cooldown (0.3 seconds) after each one.
+- **Safe**: it never moves a stick or touches your triggers, so aim and anti-recoil are exactly as before. Opening the menu or switching Master off stops it at once. It does not start while the Workshop recorder is armed or while Drop Shot is holding Circle.
+- **If it only crouches**, raise Drop Shot's Hold Time (Drop Roll uses it for the drop). **If it drops but does not roll**, or rolls twice, report it in #ask-tcp: the roll timing can be adjusted.
 
 ### Auto Movement (moonwalk)
 
