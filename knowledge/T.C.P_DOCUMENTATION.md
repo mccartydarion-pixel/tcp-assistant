@@ -111,7 +111,7 @@ The free version's menu has 27 pages, in this order:
 26. Motion Intel (on/off)
 27. Weapon Profiles (free version only: three manual profiles, P1 to P3, each its own Vertical and Horizontal for one gun; OFF uses Vertical and Horizontal)
 
-**T.C.P Premium** has 27 pages. Pages 1 to 25 are in the same order, but pages 3 and 21 to 24 are the F.A.S.T. 2.0 pages: 3 F.A.S.T. (on/off), 21 Micro Precision, 22 Track Response, 23 Turn Release, 24 Recovery Speed (see F.A.S.T. 2.0 (Premium)). Premium has no Motion Intel or Weapon Profiles page; page 26 is **Drop Roll** (three items: on/off, Hold Time, Tap Speed) and page 27 the **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear). The menu opens on Master, so LEFT once from there goes straight to the Workshop, and LEFT twice to Drop Roll. The free version has no Workshop page.
+**T.C.P Premium** has 27 pages. Pages 1 to 25 are in the same order, but pages 3 and 21 to 24 are the F.A.S.T. 2.0 pages: 3 F.A.S.T. (on/off), 21 Micro Precision, 22 Track Response, 23 Turn Release, 24 Recovery Speed (see F.A.S.T. 2.0 (Premium)). Premium has no Motion Intel or Weapon Profiles page; page 26 is **Drop Roll** (four items: on/off, Roll Delay, Roll Time, Tap Speed) and page 27 the **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear). The menu opens on Master, so LEFT once from there goes straight to the Workshop, and LEFT twice to Drop Roll. The free version has no Workshop page.
 
 ### Defaults and ranges
 
@@ -455,13 +455,13 @@ Crouch Shot assumes a quick Circle tap crouches in your DayZ setup.
 
 ### Drop Roll (Premium)
 
-Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. It does the move the way you would by hand: it holds Circle (for its **Hold Time**, 0.7 seconds by default) and, at the same time, taps L1 or R1 fast (about 12 taps a second at the default **Tap Speed**), then lets go of everything, and your controls are back at once.
+Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. It does the move the way you would by hand: it holds Circle to drop, waits for its **Roll Delay** (0.5 seconds by default) so you are prone first, then, with Circle still held, taps L1 or R1 fast for its **Roll Time** (0.7 seconds by default, about 12 taps a second at the default **Tap Speed**), then lets go of everything, and your controls are back at once.
 
-- **Switch it on**: it is off by default. It has its own menu page, **Drop Roll** (page 26, LEFT twice from Master): press X for ON. L1/R1 move between its three items: **Drop Roll** (on/off), **Hold Time** (how long Circle is held and the taps run, 200 to 1500 ms, default 700) and **Tap Speed** (how long each tap is down and then up, 20 to 150 ms, default 40). Up/Down change the values (hold X for steps of 10); they are saved when you close the menu.
+- **Switch it on**: it is off by default. It has its own menu page, **Drop Roll** (page 26, LEFT twice from Master): press X for ON. L1/R1 move between its four items: **Drop Roll** (on/off), **Roll Delay** (how long Circle is held before the roll starts, 0 to 1500 ms, default 500), **Roll Time** (how long the taps run, Circle still held, 200 to 1500 ms, default 700) and **Tap Speed** (how long each tap is down and then up, 20 to 150 ms, default 40). Up/Down change the values (hold X for steps of 10); they are saved when you close the menu.
 - **Single taps are untouched**: one press of L1 or R1 reaches the game straight away as a normal lean. Only a second press of the same button within about a quarter of a second starts Drop Roll, and that second press never reaches the game. Pressing L1 and R1 together never counts.
 - **One at a time**: extra presses during a Drop Roll are ignored, a triple tap rolls once, and there is a short cooldown (0.3 seconds) after each one.
 - **Safe**: it never moves a stick or touches your triggers, so aim and anti-recoil are exactly as before. Opening the menu or switching Master off stops it at once. It does not start while the Workshop recorder is armed or while Drop Shot is holding Circle.
-- **If it only crouches or stops short**, raise Hold Time on the Drop Roll page; **if it rolls too far**, lower it. **If the game seems to miss the taps**, raise Tap Speed (try 60); if it wants them faster, lower it.
+- **If it rolls before you are prone** (or does not roll at all), raise Roll Delay on the Drop Roll page; if the wait feels long, lower it. **If it stops short**, raise Roll Time; **if it rolls too far**, lower it. **If the game seems to miss the taps**, raise Tap Speed (try 60); if it wants them faster, lower it.
 
 ### Auto Movement (moonwalk)
 

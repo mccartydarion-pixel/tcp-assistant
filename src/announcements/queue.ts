@@ -36,12 +36,12 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
     title: '🌀 PREMIUM UPDATE: DROP ROLL IS HERE',
     description:
       'Get off the line of fire in one move. 🔥\n\n' +
-      '**Double-tap L1** and you drop prone and roll **left**. **Double-tap R1** and you drop prone and roll **right**. One fast, chained move: drop, roll, and your controls are back the instant it ends.\n\n' +
+      '**Double-tap L1** and you drop prone and roll **left**. **Double-tap R1** and you drop prone and roll **right**. One fast, chained move: drop, a half-second to hit the ground, roll, and your controls are back the instant it ends.\n\n' +
       '👆 **Single taps stay yours.** One press of L1 or R1 is a normal lean, with no delay. Only a quick second press of the same button starts Drop Roll, and that second press never reaches the game.\n' +
       '🔁 **Clean every time.** Extra taps never restart it, a triple tap never doubles it, and nothing is ever left held down.\n' +
       '🔫 **Your aim and recoil are untouched.** Drop Roll never moves a stick and never touches your trigger.',
     fields: [
-      { name: '🛠️ Switch it on', value: 'Off by default. It has its own menu page, **Drop Roll** (LEFT twice from Master): press **X** for ON. **Hold Time** and **Tap Speed** are on the same page: if you only crouch, raise Hold Time.', inline: false },
+      { name: '🛠️ Switch it on', value: 'Off by default. It has its own menu page, **Drop Roll** (LEFT twice from Master): press **X** for ON. **Roll Delay**, **Roll Time** and **Tap Speed** are on the same page: if you roll before you are prone, raise Roll Delay.', inline: false },
       { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
     ],
     gif: 'tcp-drop-roll.gif',
