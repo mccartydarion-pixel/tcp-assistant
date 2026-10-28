@@ -4,7 +4,7 @@ This is the authoritative reference for T.C.P. Assistant. It describes T.C.P ver
 
 ## Overview
 
-T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a menu on the Zen's OLED screen: 27 pages in T.C.P Premium, 27 in the free version.
+T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a menu on the Zen's OLED screen: 11 groups in T.C.P Premium (Menu 2.0), 27 pages in the free version.
 
 It does four main jobs:
 
@@ -50,11 +50,11 @@ Button names in this guide are PlayStation names. See Xbox controllers below for
 ### Menu controls
 
 - **Open or close the menu**: hold L2 and press OPTIONS.
-- **Change page**: LEFT and RIGHT on the D-pad.
+- **Change page**: LEFT and RIGHT on the D-pad. In **T.C.P Premium** (Menu 2.0, since 28 October 2026) LEFT and RIGHT step through **11 groups** and the header bar names the group with its number (for example RECOIL 02/11); L1 and R1 step through the group's items, and the name row shows the item with its position (Vertical Recoil 2/6). Every setting works exactly as it did on its own page.
 - **Change a value**: UP and DOWN. Holding UP or DOWN repeats after a short delay.
 - **Change a value faster**: hold X while pressing UP or DOWN to move in steps of 10.
 - **Switch something on or off**: X.
-- **Move between items on a multi-item page** (Lean Spam, Drop Shot, Auto Movement, and the Workshop in Premium): L1 and R1.
+- **Move between items on a multi-item page** (Lean Spam, Drop Shot, Auto Movement, and in Premium every group, Drop Roll and the Workshop): L1 and R1.
 - **Save and exit**: press Circle, or close the menu with L2 + OPTIONS. Settings are saved when the menu closes.
 
 ### Xbox controllers
@@ -111,7 +111,21 @@ The free version's menu has 27 pages, in this order:
 26. Motion Intel (on/off)
 27. Weapon Profiles (free version only: three manual profiles, P1 to P3, each its own Vertical and Horizontal for one gun; OFF uses Vertical and Horizontal)
 
-**T.C.P Premium** has 27 pages. Pages 1 to 25 are in the same order, but pages 3 and 21 to 24 are the F.A.S.T. 2.0 pages: 3 F.A.S.T. (on/off), 21 Micro Precision, 22 Track Response, 23 Turn Release, 24 Recovery Speed (see F.A.S.T. 2.0 (Premium)). Premium has no Motion Intel or Weapon Profiles page; page 26 is **Drop Roll** (seven items: on/off, Roll Delay, Roll Time, Tap Speed, Style, Flick Time, Stand Up) and page 27 the **Workshop** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear). The menu opens on Master, so LEFT once from there goes straight to the Workshop, and LEFT twice to Drop Roll. The free version has no Workshop page.
+**T.C.P Premium** (Menu 2.0, since 28 October 2026) puts its settings in **11 groups** instead of 27 pages. LEFT and RIGHT move between groups, L1 and R1 between a group's items; the header bar shows the group's name and number (RECOIL 02/11) and the name row the item and its position (Vertical Recoil 2/6). The menu opens on MASTER, so LEFT once from there goes straight to the WORKSHOP and LEFT twice to DROP ROLL. The groups, in RIGHT order:
+
+1. **MASTER**: Master Controls (on/off)
+2. **RECOIL**: Anti Recoil, Vertical Recoil, Horizontal Recoil, Turn Strength, Hip Fire Recoil, Calibrate Recoil
+3. **AIM**: ADS Profile, ADS Sens, ADS Horizontal, ADS Vertical, Fire Sens
+4. **F.A.S.T.**: F.A.S.T. (on/off), Micro Precision, Track Response, Turn Release, Recovery Speed (see F.A.S.T. 2.0 (Premium))
+5. **STICK**: Deadzone, Anti Deadzone, Hair Triggers
+6. **ASSISTS**: Auto Run, Automatic Aim, Follow Lean
+7. **LEAN SPAM** (four items: on/off, Fire Only, Direction, Lean Time)
+8. **DROP SHOT** (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)
+9. **DROP ROLL** (six items: on/off, Stand Up, Active Window, Shoulder On, Shoulder Off, LX Reversal; see Drop Roll (Premium))
+10. **MOVEMENT**: Auto Movement (six items: on/off, Stop on ADS, Do 180, Left Time, Right Time, Strafe Amount)
+11. **WORKSHOP** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear)
+
+Every setting keeps its range, default and saved slot; only the way you reach it changed. Premium has no Motion Intel or Weapon Profiles page.
 
 ### Defaults and ranges
 
@@ -125,6 +139,7 @@ The free version's menu has 27 pages, in this order:
 | Anti Deadzone | 0 to 40 (0 = off) | 0 |
 | ADS Sens | 0 to 100 | 90 |
 | ADS Vertical | 25 to 200 | 100 |
+| ADS Horizontal (Premium) | 25 to 100 | 100 |
 | Fire Sens | 20 to 100 (100 = off) | 100 |
 | Precision | 0 to 100 (0 = off) | 0 |
 | Response | 0 to 100 | 100 |
@@ -134,6 +149,9 @@ The free version's menu has 27 pages, in this order:
 | Lean Time | 80 to 600 ms | 200 |
 | Drop Hold Time | 300 to 1500 ms | 700 |
 | Drop Cooldown | 0 to 5000 ms | 1500 |
+| Drop Roll Active Window (Premium) | 100 to 500 ms | 250 |
+| Drop Roll Shoulder On / Shoulder Off (Premium) | 10 to 100 ms | 30 / 30 |
+| Drop Roll LX Reversal (Premium) | 50 to 400 ms | 195 |
 | Do 180 | -1 to 1000 ms (0 = off) | 0 |
 | Left Time / Right Time | 40 to 600 ms | 180 |
 | Strafe Amount | 10 to 100 | 100 |
@@ -210,7 +228,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 - **Four slots**, W1 to W4. Any gun can go in any slot.
 - Each slot holds **one steady pull** (a Vertical and a Horizontal value) for one gun. It is not a recoil pattern: DayZ gives every shot of a magazine the same expected kick, so one steady pull is what a gun needs.
 - **Weapon OFF** (the default): T.C.P fires your Vertical and Horizontal Recoil exactly as before.
-- Where it is: the last menu page, **Workshop** (page 27/27; it was page 26 of 26 on Premium files from 22 to 24 October 2026). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
+- Where it is: the last group, **WORKSHOP** (11/11 since Menu 2.0 of 28 October 2026; before that the last page, 27/27). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
 - **Premium only.** T.C.P Premium is the licensed version from the Discord: $15 a month or $150 a year, unlocked with a code from the license channel (see License and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the license panel (licensed downloads from before the Workshop do not have it).
 - You can use it with a PlayStation or an Xbox controller; it works the same on both. Button names here are PlayStation first, Xbox in brackets.
 
@@ -218,7 +236,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 
 Before you start: Master and Anti-Recoil on, your normal in-game sensitivity and attachments, and a wall with a small mark to aim at.
 
-1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The page shows 27/27. L1/R1 (LB/RB) moves between its seven items.
+1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The header reads WORKSHOP 11/11. L1/R1 (LB/RB) moves between its seven items.
 2. **Weapon** (1/7): UP/DOWN to pick a slot, W1 to W4. The other six items appear once a slot is picked.
 3. **Gun** (2/7): pick the gun you are holding. T.C.P uses it, with Mag, to know how long your magazine fires. The gun list: M4-A1, M16-A2, KA-M, KA-74, KAS-74U, KA-101, LAR, AUR AX, VIKHR, SVAL, VSS, BIZON, SG5-K, USG-45, LE-MAS, and OTHER for a gun that is not listed. The slots start out as W1 M4-A1, W2 KA-M, W3 LAR and W4 VIKHR. Changing the Gun sets Mag to that gun's standard magazine.
 4. **Mag** (3/7): set the number of rounds in the magazine you will fire, 5 to 100 (UP/DOWN; hold X (A) to move 10 at a time). It starts at the gun's standard magazine: 30 for most guns, 20 for the LAR, SVAL and VSS, 64 for the BIZON, and 25 for the USG-45, LE-MAS and OTHER. The page shows the rounds and how long that magazine fires, for example 30 RND 2.0S. Set it to your real magazine, for example Mag 60 for a 60-round M4 magazine or Mag 20 for a 20-round KA-M magazine: T.C.P measures each spray over that time. At the standard magazine nothing changes.
@@ -385,6 +403,8 @@ ADS Sens (default 90) is your overall aiming speed while aiming down sights, as 
 
 ADS Vertical (25 to 200, default 100) changes only the up/down aiming speed. Above 100 makes vertical faster, below 100 slower. Use it to balance the two axes inside the script instead of changing DayZ's own sensitivity (which would also mean retuning Vertical Recoil).
 
+**ADS Horizontal (Premium)**: ADS Horizontal (25 to 100, default 100 = as before) changes only the left/right aiming speed while you hold L2: at 70 your sideways aim is 70% as fast, up/down is unchanged. It is the second item of ADS Vertical's page (L1/R1 between ADS Vertical and ADS Horizontal; in Menu 2.0 the AIM group's item 3/5), per ADS profile, and it never touches the horizontal recoil correction, hip fire or F.A.S.T.'s curves: it scales your own stick after them. Up/Down step 5 (25 with X held).
+
 ### Fire Sens
 
 Fire Sens (20 to 100, default 100 = off) is your aiming speed while shooting, as a percentage of normal. At 75 the stick is 25% slower during a burst, which makes small corrections steadier. It eases in when you pull R2 and back out when you release, so there is no sudden jump.
@@ -455,13 +475,14 @@ Crouch Shot assumes a quick Circle tap crouches in your DayZ setup.
 
 ### Drop Roll (Premium)
 
-Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. By default (**Style FLICK**) it does the instant drop: it holds Circle and flicks the left stick right then left in a split second, which drops you straight to the ground, then, with Circle still held, taps L1 or R1 fast for its **Roll Time** (1.5 seconds by default, about 12 taps a second at the default **Tap Speed**) until you roll, then lets go of everything, and your controls are back at once. **Style SPAM** skips the flick: Circle and the taps start together (after its **Roll Delay**, 0 by default). With **Stand Up** on, it gets you back on your feet after the roll.
+Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. Since 28 October 2026 it runs the move the way the instant drop roll really works: one short window (the **Active Window**, a quarter of a second by default) in which Circle and L2 are held, the roll's shoulder button is tapped fast (**Shoulder On** / **Shoulder Off**, 30 ms each by default) and the left stick is pushed hard to the roll's side, then hard the other way (the **LX Reversal**, at 195 ms by default), all at once. When the window ends everything is released and your controls are back; there is a short cooldown (0.3 seconds) before the next one. With **Stand Up** on, it holds Circle again after the roll to get you back on your feet.
 
-- **Switch it on**: it is off by default. It has its own menu page, **Drop Roll** (page 26, LEFT twice from Master): press X for ON. L1/R1 move between its seven items: **Drop Roll** (on/off), **Roll Delay** (Style SPAM only: how long Circle is held before the taps start, 0 to 1500 ms, default 0), **Roll Time** (how long the taps run, Circle still held, 200 to 1500 ms, default 1500), **Tap Speed** (how long each tap is down and then up, 20 to 150 ms, default 40), **Style** (FLICK, the instant drop, or SPAM; Up/Down swaps it; default FLICK), **Flick Time** (how long each of the two left-stick flicks lasts, 20 to 300 ms, default 80) and **Stand Up** (on/off, default off: stand back up after the roll). Up/Down change the values (hold X for steps of 10); they are saved when you close the menu.
-- **Single taps are untouched**: one press of L1 or R1 reaches the game straight away as a normal lean. Only a second press of the same button within about a quarter of a second starts Drop Roll, and that second press never reaches the game. Pressing L1 and R1 together never counts.
+- **Switch it on**: it is off by default. Open the menu and go to the **DROP ROLL** group (LEFT twice from MASTER): press X for ON. L1/R1 move between its six items: **Drop Roll** (on/off), **Stand Up** (on/off, default off), **Active Window ms** (100 to 500, default 250), **Shoulder On ms** (10 to 100, default 30), **Shoulder Off ms** (10 to 100, default 30) and **LX Reversal ms** (50 to 400, default 195). Up/Down change the values (hold X for steps of 10); they are saved when you close the menu, and a factory reset puts the defaults back.
+- **Dial it in**: the timings depend on your frame rate and setup. If the roll does not come every time, try one timing at a time: the Active Window 230 to 270 first, then the LX Reversal 170 to 220, then the shoulder taps 25 to 40. Change one, close the menu, test 10 rolls, then the next.
+- **Single taps are untouched**: one press of L1 or R1 reaches the game straight away as a normal lean. Only a second press of the same button within about a quarter of a second starts Drop Roll, and that second press never reaches the game. Pressing L1 and R1 together never counts, and a shoulder button held while you switch Master on never counts as a first press.
 - **One at a time**: extra presses during a Drop Roll are ignored, a triple tap rolls once, and there is a short cooldown (0.3 seconds) after each one.
-- **Safe**: it never touches the right stick or your triggers, so aim and anti-recoil are exactly as before. Style FLICK moves the left stick only for the split-second flick; after that the left stick is yours. Opening the menu or switching Master off stops it at once. It does not start while the Workshop recorder is armed or while Drop Shot is holding Circle.
-- **If the drop is not instant**, check Style is FLICK, then try a longer Flick Time (100 to 150). **If it stops short**, raise Roll Time; **if it rolls too far**, lower it. Already used Drop Roll before? Your saved settings keep Style SPAM until you pick FLICK on the page. **If the game seems to miss the taps**, raise Tap Speed (try 60); if it wants them faster, lower it.
+- **Safe**: it never touches the right stick, so your aim and anti-recoil are exactly as before. During the window it owns Circle, L2, the two shoulder buttons and the left stick; the moment it ends they are yours again, and nothing is ever left held down. Opening the menu or switching Master off stops it at once. It does not start while the Workshop recorder is armed or while Drop Shot is holding Circle.
+- **Upgrading**: the old Roll Delay, Roll Time, Tap Speed, Style and Flick Time settings are gone from the page (the new window replaces that whole sequence); your on/off and Stand Up choices are kept, and the four timings start at their defaults.
 
 ### Auto Movement (moonwalk)
 

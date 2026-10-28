@@ -9,6 +9,27 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // Menu 2.0 (11 groups), the Drop Roll page with the one-window move and its four timings, ADS Horizontal Speed, the
+    // input fixes (Premium, 2026-10-28).
+    id: '2026-10-menu2-drop-roll',
+    date: '2026-10-28',
+    ready: true,
+    title: '🧭 PREMIUM UPDATE: MENU 2.0, DROP ROLL REBUILT, ADS HORIZONTAL SPEED',
+    description:
+      'Three upgrades in one drop. 🔥\n\n' +
+      '🧭 **MENU 2.0.** 27 pages are now **11 groups**: MASTER, RECOIL, AIM, F.A.S.T., STICK, ASSISTS, LEAN SPAM, DROP SHOT, DROP ROLL, MOVEMENT, WORKSHOP. **LEFT / RIGHT** picks the group, **L1 / R1** the item, and the header tells you where you are (RECOIL 02/11, Vertical Recoil 2/6). Every setting works exactly as before, with the same ranges, defaults and saved values: it is just two presses away now.\n\n' +
+      '🌀 **DROP ROLL, REBUILT.** The move now runs the way the instant drop roll really works: **one quarter-second window** where Circle and L2 are held, the roll button is tapped fast and the left stick is thrown to the roll side and back, all at once. Double-tap L1 to roll left, R1 to roll right, exactly as before. New on the page: **Active Window**, **Shoulder On**, **Shoulder Off** and **LX Reversal**, the four timings of the window, so you can dial it in to your own setup.\n\n' +
+      '↔️ **ADS HORIZONTAL SPEED.** One setting (25 to 100, default 100 = as before) for your **left-right ADS aim only**. Up-down, hip fire and your recoil pull are untouched, and it is saved per ADS profile. Find it in AIM, right beside ADS Vertical.\n\n' +
+      '🔧 **UNDER THE HOOD.** Your own L3 sprint reaches the game with Master off. The press that closes the menu stays in the menu. A button held while you switch Master on never starts a roll. Settings are written to the Zen only when they change.',
+    fields: [
+      { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings, ADS profiles and Workshop recordings carry over. The Drop Roll switch and Stand Up are kept; its four timings start at 250 / 30 / 30 / 195.', inline: false },
+      { name: '🎯 Dial in Drop Roll', value: 'DROP ROLL group (LEFT twice from MASTER), X for ON. If the roll does not come every time, change one timing at a time: Active Window 230 to 270 first, then LX Reversal 170 to 220, then the shoulder taps 25 to 40. Test 10 rolls between changes.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-menu2.gif',
+    ping: '@everyone',
+  },
+  {
     // Price notice for current subscribers: $15 a month / $150 a year from 2026-11-01 (owner, 2026-10-25).
     id: '2026-10-price-update',
     date: '2026-10-25',
