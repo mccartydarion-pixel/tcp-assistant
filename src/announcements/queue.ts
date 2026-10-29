@@ -9,6 +9,28 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // Rapid Fire and Hip Fire Speed (two new groups), the smoother F.A.S.T. micro blend, the sharper Workshop estimator (Premium, 2026-10-29).
+    id: '2026-10-rapid-hip',
+    date: '2026-10-29',
+    ready: true,
+    title: '🔥 PREMIUM UPDATE: RAPID FIRE, HIP FIRE SPEED, SMOOTHER F.A.S.T., SHARPER WORKSHOP',
+    description:
+      'Two new features and two upgrades under the hood. 🔥\n\n' +
+      '🔫 **RAPID FIRE.** Hold R2 while aiming and a semi-automatic gun fires as fast as you set: **Press ms** and **Release ms**, 20 to 200 each (40 / 40 is about 12 presses a second). Only while you aim, so hip fire, melee and driving are exactly as before. Your recoil pull, the Weapon Workshop, Calibrate, Drop on Fire and Lean Spam all read your real trigger: they never see the pulses. Off by default, in the new **RAPID FIRE** group.\n\n' +
+      '🎯 **HIP FIRE SPEED.** One setting, 25 to 200% (default 100 = as before), for your right stick whenever you are **not** aiming. Pull L2 and your ADS aim is untouched: ADS Sens, ADS Vertical, ADS Horizontal and F.A.S.T. 2.0 stay exactly what they are, and so does Hip Fire Recoil. In the new **HIP FIRE** group, right beside AIM.\n\n' +
+      '🧭 **MENU 2.0: 13 GROUPS.** MASTER, RECOIL, AIM, HIP FIRE, F.A.S.T., STICK, ASSISTS, RAPID FIRE, LEAN SPAM, DROP SHOT, DROP ROLL, MOVEMENT, WORKSHOP. Everything else where it was.\n\n' +
+      '🌊 **F.A.S.T. 2.0, SMOOTHER TRACKING.** The fine-aim blend used to follow ACG\'s confidence tick by tick, so your tracking speed could change under your thumb mid-track. Now it eases in over about 0.3 s and lets go in under 0.1 s. In our model a sideways track went from 109 direction flips to 29; snaps and turns are unchanged. Nothing to set.\n\n' +
+      '🎯 **WORKSHOP, SHARPER RECORDINGS.** A completed recording now stores the average Vertical of sprays 2 and 3, the sprays that fire the session pull and measure near what the gun needs, instead of the middle of all three (spray 1 is still catching up). In our model, over 511 sessions: average error 0.87 to 0.77 units, worst case 5.8 to 4.3. Record exactly as before.\n\n' +
+      '🔬 **AUDITED.** A full long-range stability audit of the recoil engine found the delivered correction constant to the unit over a whole magazine at every loop time. No defect, nothing retuned: Gen 8 stays exactly as hardware-tested.',
+    fields: [
+      { name: '🛠️ Nothing to set up', value: 'Download, flash, play. Your settings, ADS profiles, Workshop recordings and Drop Roll timings carry over. Rapid Fire starts OFF at 40 / 40 and Hip Fire Speed at 100.', inline: false },
+      { name: '🔫 Set up Rapid Fire', value: 'RIGHT seven times from MASTER to RAPID FIRE, X for ON; L1 / R1 to Press ms and Release ms (UP / DOWN step 5, 50 with X held). Try it on a semi-auto first. If the game drops shots, raise Press ms to 60; for a faster rate, lower both.', inline: false },
+      { name: '⬇️ Get it', value: 'Press **Download Premium** on the license panel. Not Premium yet? **Subscribe** there. Questions? Ask in **#ask-tcp**.', inline: false },
+    ],
+    gif: 'tcp-rapid-hip.gif',
+    ping: '@everyone',
+  },
+  {
     // Menu 2.0 (11 groups), the Drop Roll page with the one-window move and its four timings, ADS Horizontal Speed, the
     // input fixes (Premium, 2026-10-28).
     id: '2026-10-menu2-drop-roll',

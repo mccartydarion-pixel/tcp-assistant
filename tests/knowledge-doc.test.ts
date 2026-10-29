@@ -165,9 +165,9 @@ describe('Drop Shot', () => {
   it('documents Drop Roll as a Premium switch, off by default', () => {
     expect(content('Drop Roll (Premium)')).toContain('double-press L1');
     expect(content('Drop Roll (Premium)')).toContain('it is off by default');
-    expect(content('Drop Roll (Premium)')).toContain('go to the **DROP ROLL** group (LEFT twice from MASTER)');
-    expect(content('Menu Pages')).toContain('9. **DROP ROLL** (six items: on/off, Stand Up, Active Window, Shoulder On, Shoulder Off, LX Reversal');
-    expect(content('Defaults and ranges')).toContain('Drop Roll (Premium) is off.');
+    expect(content('Drop Roll (Premium)')).toContain('go to the **DROP ROLL** group (LEFT three times from MASTER');
+    expect(content('Menu Pages')).toContain('11. **DROP ROLL** (six items: on/off, Stand Up, Active Window, Shoulder On, Shoulder Off, LX Reversal');
+    expect(content('Defaults and ranges')).toContain('Drop Roll and Rapid Fire (Premium) are off.');
   });
 
   it('lists Double Tap on the menu page and with the defaults', () => {

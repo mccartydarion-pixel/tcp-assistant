@@ -46,9 +46,9 @@ describe('Weapon Workshop doc', () => {
     expect(content(WHAT)).toContain('check that you loaded the licensed script from the Discord, not the marketplace one');
     expect(content('Versions')).toContain('It has every feature except the Weapon Workshop and Premium');
     expect(content('Versions')).toContain('It has everything in the free version plus the Weapon Workshop');
-    expect(content('Menu Pages')).toContain('11. **WORKSHOP** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear)');
+    expect(content('Menu Pages')).toContain('13. **WORKSHOP** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear)');
     expect(content('Menu Pages')).toContain('The menu opens on MASTER, so LEFT once from there goes straight to the WORKSHOP');
-    expect(doc).toContain("a menu on the Zen's OLED screen: 11 groups in T.C.P Premium (Menu 2.0), 27 pages in the free version");
+    expect(doc).toContain("a menu on the Zen's OLED screen: 13 groups in T.C.P Premium (Menu 2.0), 27 pages in the free version");
   });
 
   it('no longer says there are no weapon profiles, and says what each version uses', () => {
@@ -60,7 +60,7 @@ describe('Weapon Workshop doc', () => {
   it('walks through a recording with PlayStation and Xbox buttons', () => {
     const steps = content(RECORD);
     expect(steps).toContain('Master and Anti-Recoil on');
-    expect(steps).toContain('L2 + OPTIONS (LT + Menu), then LEFT once. The header reads WORKSHOP 11/11. L1/R1 (LB/RB) moves between its seven items.');
+    expect(steps).toContain('L2 + OPTIONS (LT + Menu), then LEFT once. The header reads WORKSHOP 13/13. L1/R1 (LB/RB) moves between its seven items.');
     expect(steps).toContain('**Record** (4/7): press X (A). Two short buzzes mean it is ARMED. Close the menu with Circle (B).');
     expect(steps).toContain('aim with L2 (LT) first, then hold R2 (RT)');
     expect(steps).toContain('Three long buzzes mean COMPLETE: the pull is saved.');

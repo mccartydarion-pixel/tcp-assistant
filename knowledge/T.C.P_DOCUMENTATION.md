@@ -4,7 +4,7 @@ This is the authoritative reference for T.C.P. Assistant. It describes T.C.P ver
 
 ## Overview
 
-T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a menu on the Zen's OLED screen: 11 groups in T.C.P Premium (Menu 2.0), 27 pages in the free version.
+T.C.P (Tactical Competitive Pro) is a Cronus Zen script for DayZ on PlayStation and Xbox, and works with a PlayStation or Xbox controller. It is built for competitive PvP and is tuned entirely from a menu on the Zen's OLED screen: 13 groups in T.C.P Premium (Menu 2.0), 27 pages in the free version.
 
 It does four main jobs:
 
@@ -50,9 +50,9 @@ Button names in this guide are PlayStation names. See Xbox controllers below for
 ### Menu controls
 
 - **Open or close the menu**: hold L2 and press OPTIONS.
-- **Change page**: LEFT and RIGHT on the D-pad. In **T.C.P Premium** (Menu 2.0, since 28 October 2026) LEFT and RIGHT step through **11 groups** and the header bar names the group with its number (for example RECOIL 02/11); L1 and R1 step through the group's items, and the name row shows the item with its position (Vertical Recoil 2/6). Every setting works exactly as it did on its own page.
+- **Change page**: LEFT and RIGHT on the D-pad. In **T.C.P Premium** (Menu 2.0, since 28 October 2026) LEFT and RIGHT step through **13 groups** (11 until 29 October 2026, when HIP FIRE and RAPID FIRE joined) and the header bar names the group with its number (for example RECOIL 02/13); L1 and R1 step through the group's items, and the name row shows the item with its position (Vertical Recoil 2/6). Every setting works exactly as it did on its own page.
 - **Change a value**: UP and DOWN. Holding UP or DOWN repeats after a short delay.
-- **Change a value faster**: hold X while pressing UP or DOWN to move in steps of 10.
+- **Change a value faster**: hold X while pressing UP or DOWN to move in steps of 10 (on the settings that step by 5, ADS Horizontal, Rapid Fire and Hip Fire Speed, ten steps: 25 or 50).
 - **Switch something on or off**: X.
 - **Move between items on a multi-item page** (Lean Spam, Drop Shot, Auto Movement, and in Premium every group, Drop Roll and the Workshop): L1 and R1.
 - **Save and exit**: press Circle, or close the menu with L2 + OPTIONS. Settings are saved when the menu closes.
@@ -111,19 +111,21 @@ The free version's menu has 27 pages, in this order:
 26. Motion Intel (on/off)
 27. Weapon Profiles (free version only: three manual profiles, P1 to P3, each its own Vertical and Horizontal for one gun; OFF uses Vertical and Horizontal)
 
-**T.C.P Premium** (Menu 2.0, since 28 October 2026) puts its settings in **11 groups** instead of 27 pages. LEFT and RIGHT move between groups, L1 and R1 between a group's items; the header bar shows the group's name and number (RECOIL 02/11) and the name row the item and its position (Vertical Recoil 2/6). The menu opens on MASTER, so LEFT once from there goes straight to the WORKSHOP and LEFT twice to DROP ROLL. The groups, in RIGHT order:
+**T.C.P Premium** (Menu 2.0, since 28 October 2026) puts its settings in **13 groups** (11 until 29 October 2026, when HIP FIRE and RAPID FIRE were added) instead of pages. LEFT and RIGHT move between groups, L1 and R1 between a group's items; the header bar shows the group's name and number (RECOIL 02/13) and the name row the item and its position (Vertical Recoil 2/6). The menu opens on MASTER, so LEFT once from there goes straight to the WORKSHOP, LEFT twice to MOVEMENT and LEFT three times to DROP ROLL. The groups, in RIGHT order:
 
 1. **MASTER**: Master Controls (on/off)
 2. **RECOIL**: Anti Recoil, Vertical Recoil, Horizontal Recoil, Turn Strength, Hip Fire Recoil, Calibrate Recoil
 3. **AIM**: ADS Profile, ADS Sens, ADS Horizontal, ADS Vertical, Fire Sens
-4. **F.A.S.T.**: F.A.S.T. (on/off), Micro Precision, Track Response, Turn Release, Recovery Speed (see F.A.S.T. 2.0 (Premium))
-5. **STICK**: Deadzone, Anti Deadzone, Hair Triggers
-6. **ASSISTS**: Auto Run, Automatic Aim, Follow Lean
-7. **LEAN SPAM** (four items: on/off, Fire Only, Direction, Lean Time)
-8. **DROP SHOT** (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)
-9. **DROP ROLL** (six items: on/off, Stand Up, Active Window, Shoulder On, Shoulder Off, LX Reversal; see Drop Roll (Premium))
-10. **MOVEMENT**: Auto Movement (six items: on/off, Stop on ADS, Do 180, Left Time, Right Time, Strafe Amount)
-11. **WORKSHOP** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear)
+4. **HIP FIRE**: Hip Fire Speed (since 29 October 2026; see Hip Fire Speed (Premium))
+5. **F.A.S.T.**: F.A.S.T. (on/off), Micro Precision, Track Response, Turn Release, Recovery Speed (see F.A.S.T. 2.0 (Premium))
+6. **STICK**: Deadzone, Anti Deadzone, Hair Triggers
+7. **ASSISTS**: Auto Run, Automatic Aim, Follow Lean
+8. **RAPID FIRE** (since 29 October 2026; three items: on/off, Press ms, Release ms; see Rapid Fire (Premium))
+9. **LEAN SPAM** (four items: on/off, Fire Only, Direction, Lean Time)
+10. **DROP SHOT** (seven items: on/off, Double Tap, Drop on Fire, Stand Up After, Hold Time, Cooldown, Stance)
+11. **DROP ROLL** (six items: on/off, Stand Up, Active Window, Shoulder On, Shoulder Off, LX Reversal; see Drop Roll (Premium))
+12. **MOVEMENT**: Auto Movement (six items: on/off, Stop on ADS, Do 180, Left Time, Right Time, Strafe Amount)
+13. **WORKSHOP** (seven items: Weapon, Gun, Mag, Record, Scale Y, Scale X, Clear)
 
 Every setting keeps its range, default and saved slot; only the way you reach it changed. Premium has no Motion Intel or Weapon Profiles page.
 
@@ -152,11 +154,13 @@ Every setting keeps its range, default and saved slot; only the way you reach it
 | Drop Roll Active Window (Premium) | 100 to 500 ms | 250 |
 | Drop Roll Shoulder On / Shoulder Off (Premium) | 10 to 100 ms | 30 / 30 |
 | Drop Roll LX Reversal (Premium) | 50 to 400 ms | 195 |
+| Rapid Fire Press / Release (Premium) | 20 to 200 ms | 40 / 40 |
+| Hip Fire Speed (Premium) | 25 to 200 | 100 |
 | Do 180 | -1 to 1000 ms (0 = off) | 0 |
 | Left Time / Right Time | 40 to 600 ms | 180 |
 | Strafe Amount | 10 to 100 | 100 |
 
-On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off. Drop Roll (Premium) is off. Precision, Response, Easing and Steady Hold are the free version's; in Premium those pages are the F.A.S.T. 2.0 settings, 50 each, and the ADS Accuracy page is F.A.S.T. (on). Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE. Drop Shot is on, but with Double Tap and Drop on Fire both off it does nothing until you switch one of them on.
+On/off defaults: Master, Anti Recoil, ADS Accuracy, Auto Run, Automatic Aim, Follow Lean, Drop Shot, Stand Up After, Auto Movement and Stop on ADS are on. Lean Spam, Double Tap, Drop on Fire, Hair Triggers and Motion Intel are off. Drop Roll and Rapid Fire (Premium) are off. Precision, Response, Easing and Steady Hold are the free version's; in Premium those pages are the F.A.S.T. 2.0 settings, 50 each, and the ADS Accuracy page is F.A.S.T. (on). Lean Spam's Fire Only is on and its Direction is BOTH. Drop Shot's Stance is PRONE. Drop Shot is on, but with Double Tap and Drop on Fire both off it does nothing until you switch one of them on.
 
 ## Anti-Recoil
 
@@ -228,7 +232,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 - **Four slots**, W1 to W4. Any gun can go in any slot.
 - Each slot holds **one steady pull** (a Vertical and a Horizontal value) for one gun. It is not a recoil pattern: DayZ gives every shot of a magazine the same expected kick, so one steady pull is what a gun needs.
 - **Weapon OFF** (the default): T.C.P fires your Vertical and Horizontal Recoil exactly as before.
-- Where it is: the last group, **WORKSHOP** (11/11 since Menu 2.0 of 28 October 2026; before that the last page, 27/27). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
+- Where it is: the last group, **WORKSHOP** (13/13 since 29 October 2026, 11/11 from Menu 2.0 of 28 October; before that the last page, 27/27). Open the menu with L2 + OPTIONS (LT + Menu) and press LEFT once.
 - **Premium only.** T.C.P Premium is the licensed version from the Discord: $15 a month or $150 a year, unlocked with a code from the license channel (see License and Unlock Codes). Subscribing gives you the Elite Supporter role and sends you the script in your DMs. The free marketplace version has 26 pages and no Workshop, so if you cannot find the Workshop page, check that you loaded the licensed script from the Discord, not the marketplace one, and that it is the latest copy: press **Download Premium** on the license panel (licensed downloads from before the Workshop do not have it).
 - You can use it with a PlayStation or an Xbox controller; it works the same on both. Button names here are PlayStation first, Xbox in brackets.
 
@@ -236,7 +240,7 @@ The Weapon Workshop is part of **T.C.P Premium**, the licensed script from the T
 
 Before you start: Master and Anti-Recoil on, your normal in-game sensitivity and attachments, and a wall with a small mark to aim at.
 
-1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The header reads WORKSHOP 11/11. L1/R1 (LB/RB) moves between its seven items.
+1. **Open the Workshop**: L2 + OPTIONS (LT + Menu), then LEFT once. The header reads WORKSHOP 13/13. L1/R1 (LB/RB) moves between its seven items.
 2. **Weapon** (1/7): UP/DOWN to pick a slot, W1 to W4. The other six items appear once a slot is picked.
 3. **Gun** (2/7): pick the gun you are holding. T.C.P uses it, with Mag, to know how long your magazine fires. The gun list: M4-A1, M16-A2, KA-M, KA-74, KAS-74U, KA-101, LAR, AUR AX, VIKHR, SVAL, VSS, BIZON, SG5-K, USG-45, LE-MAS, and OTHER for a gun that is not listed. The slots start out as W1 M4-A1, W2 KA-M, W3 LAR and W4 VIKHR. Changing the Gun sets Mag to that gun's standard magazine.
 4. **Mag** (3/7): set the number of rounds in the magazine you will fire, 5 to 100 (UP/DOWN; hold X (A) to move 10 at a time). It starts at the gun's standard magazine: 30 for most guns, 20 for the LAR, SVAL and VSS, 64 for the BIZON, and 25 for the USG-45, LE-MAS and OTHER. The page shows the rounds and how long that magazine fires, for example 30 RND 2.0S. Set it to your real magazine, for example Mag 60 for a 60-round M4 magazine or Mag 20 for a 20-round KA-M magazine: T.C.P measures each spray over that time. At the standard magazine nothing changes.
@@ -319,6 +323,7 @@ The controller rumbles to tell you what the recorder is doing:
 - A very short magazine (about 15 rounds or fewer on a fast gun such as the M4-A1) still records: keep holding R2 (RT) on the mark until about 1.5 seconds after you started firing.
 - VSS: record with a 20- or 30-round magazine (Mag 20 or 30). With its own 10-round magazine, set Mag to 10 and keep holding R2 (RT) for about a second after the last shot; the card says 20+ RND MAG either way. SVAL and VSS: hold R2 (RT) a moment after the last shot.
 - The recording measures what the game received from T.C.P and your thumb together, so hold the mark as steadily as you can.
+- Since 29 October 2026 the stored Vertical is the average of sprays 2 and 3 (they fire the session's own pull and measure near what the gun needs, where spray 1 is still catching up) and the stored Horizontal the middle value of the three. In our model this brought the stored pull closer to the gun's need (average error 0.87 to 0.77 units, the worst case 5.8 to 4.3). Nothing changes in how you record.
 - Changing your in-game sensitivity or attachments changes what a gun needs: REDO that slot. Changing Anti Deadzone makes every recorded pull reach the game stronger or weaker: REDO the slots, or adjust their Scale Y and Scale X.
 
 ## Gen 8 Stable Core (Premium)
@@ -388,6 +393,7 @@ The F.A.S.T. pages are the old ADS pages, renamed. Each is 0 to 100 and starts a
 - Turns or flicks feel held back: raise Turn Release.
 - Fine aim feels slow to come back after a turn: raise Recovery Speed.
 - Overall too fast or too slow: that is ADS Sens, not F.A.S.T.
+- Since 29 October 2026 the fine-aim blend moves smoothly instead of jumping with ACG's confidence tick by tick: it eases in over about 0.3 s and lets go in under 0.1 s, so tracking a target sideways no longer changes speed under your thumb. Snaps and turns are unchanged. There is nothing to set.
 
 ## ADS Accuracy 2.0
 
@@ -460,6 +466,15 @@ Lean Spam (default off) makes you lean left and right repeatedly in a fight, so 
 
 Holding L1 or R1 yourself pauses it. Leaning also moves your own sights, so if your aim feels shaky with it on, raise Lean Time to around 300 for a slower sway.
 
+### Rapid Fire (Premium)
+
+Rapid Fire (T.C.P Premium, since 29 October 2026, off by default) fires a semi-automatic gun as fast as you set while you hold R2 (RT) and aim with L2 (LT). It lets the trigger through for **Press ms** and takes it away for **Release ms** (20 to 200 ms each, steps of 5; the defaults 40 / 40 give about 12 presses a second), from the moment you pull R2, for as long as you hold both triggers. Let go of R2 or L2 and it stops at once.
+
+- **Only while aiming.** R2 without L2 (hip fire) is never pulsed, so a hip-fire shot, melee and driving work exactly as before.
+- **Nothing else sees the pulses.** Every other feature that reads the trigger (the recoil pull, the Weapon Workshop recorder, Calibrate Recoil, Lean Spam) reads your real trigger, so it behaves exactly as before; only what the game receives is pulsed.
+- **Where**: the **RAPID FIRE** group (RIGHT seven times from MASTER). L1/R1 move between its three items: **Rapid Fire** (X for on/off), **Press ms** and **Release ms** (UP/DOWN step 5, 50 with X held). The settings are saved when you close the menu; a factory reset puts them back to off, 40 / 40.
+- **Tuning**: if the game misses shots, raise Press ms (60 or more); for a faster rate lower both. A full-auto gun sprays as before or a little slower, since the game sees the trigger let go between presses.
+
 ### Drop Shot and Crouch Shot
 
 Drop Shot changes your stance during a fight. It has two triggers, Double Tap and Drop on Fire. Both are off by default, so Drop Shot does nothing until you switch one of them on.
@@ -477,7 +492,7 @@ Crouch Shot assumes a quick Circle tap crouches in your DayZ setup.
 
 Drop Roll is one chained move: **double-press L1** to drop prone and roll left, **double-press R1** to drop prone and roll right. Since 28 October 2026 it runs the move the way the instant drop roll really works: one short window (the **Active Window**, a quarter of a second by default) in which Circle and L2 are held, the roll's shoulder button is tapped fast (**Shoulder On** / **Shoulder Off**, 30 ms each by default) and the left stick is pushed hard to the roll's side, then hard the other way (the **LX Reversal**, at 195 ms by default), all at once. When the window ends everything is released and your controls are back; there is a short cooldown (0.3 seconds) before the next one. With **Stand Up** on, it holds Circle again after the roll to get you back on your feet.
 
-- **Switch it on**: it is off by default. Open the menu and go to the **DROP ROLL** group (LEFT twice from MASTER): press X for ON. L1/R1 move between its six items: **Drop Roll** (on/off), **Stand Up** (on/off, default off), **Active Window ms** (100 to 500, default 250), **Shoulder On ms** (10 to 100, default 30), **Shoulder Off ms** (10 to 100, default 30) and **LX Reversal ms** (50 to 400, default 195). Up/Down change the values (hold X for steps of 10); they are saved when you close the menu, and a factory reset puts the defaults back.
+- **Switch it on**: it is off by default. Open the menu and go to the **DROP ROLL** group (LEFT three times from MASTER: WORKSHOP, MOVEMENT, DROP ROLL): press X for ON. L1/R1 move between its six items: **Drop Roll** (on/off), **Stand Up** (on/off, default off), **Active Window ms** (100 to 500, default 250), **Shoulder On ms** (10 to 100, default 30), **Shoulder Off ms** (10 to 100, default 30) and **LX Reversal ms** (50 to 400, default 195). Up/Down change the values (hold X for steps of 10); they are saved when you close the menu, and a factory reset puts the defaults back.
 - **Dial it in**: the timings depend on your frame rate and setup. If the roll does not come every time, try one timing at a time: the Active Window 230 to 270 first, then the LX Reversal 170 to 220, then the shoulder taps 25 to 40. Change one, close the menu, test 10 rolls, then the next.
 - **Single taps are untouched**: one press of L1 or R1 reaches the game straight away as a normal lean. Only a second press of the same button within about a quarter of a second starts Drop Roll, and that second press never reaches the game. Pressing L1 and R1 together never counts, and a shoulder button held while you switch Master on never counts as a first press.
 - **One at a time**: extra presses during a Drop Roll are ignored, a triple tap rolls once, and there is a short cooldown (0.3 seconds) after each one.
@@ -504,6 +519,13 @@ Deadzone (0 to 30, default 0 = off) ignores small right-stick movements near the
 ### Anti Deadzone
 
 Anti Deadzone (0 to 40, default 0 = off) skips over DayZ's own deadzone, so small stick movements register instead of doing nothing and then jumping. Raise it until the aim starts creeping on its own, then go back one step. It also strengthens the recoil pull, so retune Vertical and Horizontal after changing it (for a recorded Weapon Workshop slot, Scale Y and Scale X, or a REDO).
+
+### Hip Fire Speed (Premium)
+
+Hip Fire Speed (T.C.P Premium, since 29 October 2026; 25 to 200%, default 100 = as before) scales your right stick, both axes, whenever you are **not** aiming (L2 up). At 150 the camera turns half as fast again from the hip; at 50 half as fast. The moment you hold L2 your ADS aim is exactly what it was: ADS Sens, ADS Vertical, ADS Horizontal and F.A.S.T. 2.0 are untouched, and so is Hip Fire Recoil (the recoil pull is added after it, so it is never scaled). Deadzone acts before it and Anti Deadzone after it, as for every stick value.
+
+- **Where**: the **HIP FIRE** group (RIGHT three times from MASTER), one value; UP/DOWN step 5, 50 with X held. Saved when you close the menu; a factory reset puts it back to 100.
+- It is not Hip Fire Recoil: that one adds a recoil pull to hip-fire shots; Hip Fire Speed changes how fast your own stick turns the camera from the hip.
 
 ### Motion Intel
 
@@ -662,4 +684,5 @@ New members: press **Get started** in the welcome channel. Pick your controller 
 - There are no recoil patterns or phases. The free version uses one Vertical/Horizontal pair for every gun, and different guns may need different values. T.C.P Premium can store a recorded pull for up to four guns in the Weapon Workshop.
 - The script cannot see your stance or which gun you hold. In the Workshop you pick the slot yourself.
 - With Hip Fire Recoil above 0, R2 alone also pulls the stick, including melee and driving.
+- Rapid Fire (Premium) pulses the trigger the game receives while you aim; it cannot tell a semi-automatic gun from a full-auto one, so a full-auto gun may spray a little slower with it on.
 - Results depend on DayZ's own controller sensitivity settings.
