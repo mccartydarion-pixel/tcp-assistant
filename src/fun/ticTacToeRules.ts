@@ -145,6 +145,32 @@ export function playTurn(
   return { board: next, outcome: outcomeOf(next) };
 }
 
+// ---- player against player -------------------------------------------------------------------------------
+// X always moves first, so the side to move follows from the board. The time of the last move travels in the
+// buttons too, so the waiting player can claim the win once the other has taken too long.
+
+/** How long a player has for a move before the other can claim the win. */
+export const PVP_TURN_MS = 2 * 60 * 1000;
+/** How long a challenge stays open. */
+export const CHALLENGE_MS = 10 * 60 * 1000;
+
+export const toMove = (board: string): Mark => (count(board, 'X') === count(board, 'O') ? 'X' : 'O');
+
+export function isPvpBoard(board: string): boolean {
+  if (!/^[XO.]{9}$/.test(board)) return false;
+  const x = count(board, 'X');
+  const o = count(board, 'O');
+  return x === o || x === o + 1;
+}
+
+/** The player on turn plays `cell`. The outcome is the winning mark, 'draw', or null while the game goes on. */
+export function pvpPlay(board: string, cell: number): { board: string; outcome: Mark | 'draw' | null } | null {
+  if (!isPvpBoard(board) || !Number.isInteger(cell) || cell < 0 || cell > 8 || board[cell] !== '.' || isOver(board)) return null;
+  const next = place(board, cell, toMove(board));
+  const won = winner(next);
+  return { board: next, outcome: won ? won.mark : emptyCells(next).length === 0 ? 'draw' : null };
+}
+
 // ---- button IDs ----------------------------------------------------------------------------------------
 
 export const TTT_PREFIX = 'tcp-ttt:';
@@ -163,22 +189,85 @@ export const moveId = (ref: GameRef, cell: number) => `${TTT_PREFIX}m:${ref.user
 export const quitId = (ref: GameRef) => `${TTT_PREFIX}q:${ref.userId}:${codeOf(ref.difficulty)}${ref.starter}:${ref.board}`;
 export const againId = (userId: string, difficulty: Difficulty, starter: Starter) => `${TTT_PREFIX}n:${userId}:${codeOf(difficulty)}${starter}`;
 
+/** A game between two members: who is X (moves first), who is O, the board and the last move's time (seconds). */
+export interface PvpRef {
+  xId: string;
+  oId: string;
+  board: string;
+  at: number;
+}
+
+const stamp = (seconds: number) => Math.max(0, Math.floor(seconds)).toString(36);
+const pvpPart = (ref: PvpRef) => `${ref.xId}:${ref.oId}:${ref.board}:${stamp(ref.at)}`;
+
+export const pvpMoveId = (ref: PvpRef, cell: number) => `${TTT_PREFIX}p:${pvpPart(ref)}:${cell}`;
+export const pvpQuitId = (ref: PvpRef) => `${TTT_PREFIX}f:${pvpPart(ref)}`;
+export const pvpClaimId = (ref: PvpRef) => `${TTT_PREFIX}w:${pvpPart(ref)}`;
+/** A new game between the same two, sides swapped: the old O is the new X. */
+export const rematchId = (xId: string, oId: string) => `${TTT_PREFIX}r:${xId}:${oId}`;
+export type ChallengeOp = 'accept' | 'decline' | 'withdraw';
+const OP_CODES: Record<ChallengeOp, string> = { accept: 'a', decline: 'd', withdraw: 'x' };
+export const challengeId = (challengerId: string, opponentId: string, at: number, op: ChallengeOp) =>
+  `${TTT_PREFIX}c:${challengerId}:${opponentId}:${stamp(at)}:${OP_CODES[op]}`;
+export const LEADERBOARD_ID = `${TTT_PREFIX}l`;
+
 export type ParsedId =
   | { action: 'move'; ref: GameRef; cell: number }
   | { action: 'quit'; ref: GameRef }
-  | { action: 'again'; userId: string; difficulty: Difficulty; starter: Starter };
+  | { action: 'again'; userId: string; difficulty: Difficulty; starter: Starter }
+  | { action: 'pmove'; ref: PvpRef; cell: number }
+  | { action: 'pquit'; ref: PvpRef }
+  | { action: 'pclaim'; ref: PvpRef }
+  | { action: 'rematch'; xId: string; oId: string }
+  | { action: 'challenge'; challengerId: string; opponentId: string; at: number; op: ChallengeOp }
+  | { action: 'leaderboard' };
+
+const isUserId = (id: string | undefined): id is string => Boolean(id && /^\d{5,25}$/.test(id));
+const isCell = (cell: string | undefined): cell is string => cell !== undefined && /^[0-8]$/.test(cell);
+const parseStamp = (text: string | undefined) => (text && /^[0-9a-z]{1,10}$/.test(text) ? parseInt(text, 36) : NaN);
 
 export function parseId(id: string): ParsedId | null {
   if (!id.startsWith(TTT_PREFIX)) return null;
-  const [action, userId, settings, board, cell] = id.slice(TTT_PREFIX.length).split(':');
-  if (!userId || !/^\d{5,25}$/.test(userId) || !settings || settings.length !== 2) return null;
-  const difficulty = difficultyOf(settings[0]!);
-  const starter = settings[1] === 'p' || settings[1] === 'b' ? settings[1] : null;
-  if (!difficulty || !starter) return null;
-  if (action === 'n') return { action: 'again', userId, difficulty, starter };
-  if (!board || !isPlayableBoard(board, starter)) return null;
-  const ref: GameRef = { userId, difficulty, starter, board };
-  if (action === 'q') return { action: 'quit', ref };
-  if (action === 'm' && cell !== undefined && /^[0-8]$/.test(cell)) return { action: 'move', ref, cell: Number(cell) };
+  const parts = id.slice(TTT_PREFIX.length).split(':');
+  const action = parts[0];
+
+  if (action === 'l') return parts.length === 1 ? { action: 'leaderboard' } : null;
+
+  if (action === 'm' || action === 'q' || action === 'n') {
+    const [, userId, settings, board, cell] = parts;
+    if (!isUserId(userId) || !settings || settings.length !== 2) return null;
+    const difficulty = difficultyOf(settings[0]!);
+    const starter = settings[1] === 'p' || settings[1] === 'b' ? settings[1] : null;
+    if (!difficulty || !starter) return null;
+    if (action === 'n') return { action: 'again', userId, difficulty, starter };
+    if (!board || !isPlayableBoard(board, starter)) return null;
+    const ref: GameRef = { userId, difficulty, starter, board };
+    if (action === 'q') return { action: 'quit', ref };
+    return isCell(cell) ? { action: 'move', ref, cell: Number(cell) } : null;
+  }
+
+  if (action === 'p' || action === 'f' || action === 'w') {
+    const [, xId, oId, board, at, cell] = parts;
+    const seconds = parseStamp(at);
+    if (!isUserId(xId) || !isUserId(oId) || xId === oId || !board || !isPvpBoard(board) || !Number.isFinite(seconds)) return null;
+    const ref: PvpRef = { xId, oId, board, at: seconds };
+    if (action === 'f') return { action: 'pquit', ref };
+    if (action === 'w') return { action: 'pclaim', ref };
+    return isCell(cell) ? { action: 'pmove', ref, cell: Number(cell) } : null;
+  }
+
+  if (action === 'r') {
+    const [, xId, oId] = parts;
+    return isUserId(xId) && isUserId(oId) && xId !== oId ? { action: 'rematch', xId, oId } : null;
+  }
+
+  if (action === 'c') {
+    const [, challengerId, opponentId, at, code] = parts;
+    const seconds = parseStamp(at);
+    const op = (Object.keys(OP_CODES) as ChallengeOp[]).find((key) => OP_CODES[key] === code);
+    if (!isUserId(challengerId) || !isUserId(opponentId) || challengerId === opponentId || !Number.isFinite(seconds) || !op) return null;
+    return { action: 'challenge', challengerId, opponentId, at: seconds, op };
+  }
+
   return null;
 }

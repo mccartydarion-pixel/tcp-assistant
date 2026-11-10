@@ -16,7 +16,18 @@ import {
   winner,
   type GameRef,
   type Mark,
+  type PvpRef,
+  LEADERBOARD_ID,
+  challengeId,
+  isPvpBoard,
+  pvpClaimId,
+  pvpMoveId,
+  pvpPlay,
+  pvpQuitId,
+  rematchId,
+  toMove,
 } from '../src/fun/ticTacToeRules.js';
+import { addResult, botPoints, playerOf, pvpPoints, readPlayer, standings, type Stats } from '../src/fun/ticTacToeStats.js';
 
 const always = (value: number) => () => value;
 
@@ -118,5 +129,73 @@ describe('tic tac toe button IDs', () => {
     expect(parseId('tcp-ttt:m:123456789012345678:hp:XX.......:1')).toBeNull(); // not the member's turn
     expect(parseId('tcp-ttt:m:123456789012345678:hp:.........:9')).toBeNull();
     expect(parseId('tcp-tune:start')).toBeNull();
+  });
+});
+
+describe('player against player', () => {
+  it('takes turns, X first, and ends on a line or a full board', () => {
+    expect(toMove(EMPTY_BOARD)).toBe('X');
+    let played = pvpPlay(EMPTY_BOARD, 4);
+    expect(played).toEqual({ board: '....X....', outcome: null });
+    expect(toMove(played!.board)).toBe('O');
+    played = pvpPlay('XX.OO....', 2);
+    expect(played?.outcome).toBe('X');
+    played = pvpPlay('XX.OO...X', 5);
+    expect(played?.outcome).toBe('O');
+    expect(pvpPlay('XOXXOOOX.', 8)).toEqual({ board: 'XOXXOOOXX', outcome: 'draw' });
+    expect(pvpPlay('XX.OO....', 0)).toBeNull();
+    expect(pvpPlay('XXXOO....', 5)).toBeNull();
+    expect(isPvpBoard('XX.......')).toBe(false);
+  });
+
+  it('carries the game and the last move time in the button IDs', () => {
+    const ref: PvpRef = { xId: '123456789012345678', oId: '876543210987654321', board: 'X...O....', at: 1794297600 };
+    expect(parseId(pvpMoveId(ref, 8))).toEqual({ action: 'pmove', ref, cell: 8 });
+    expect(parseId(pvpQuitId(ref))).toEqual({ action: 'pquit', ref });
+    expect(parseId(pvpClaimId(ref))).toEqual({ action: 'pclaim', ref });
+    expect(parseId(rematchId(ref.oId, ref.xId))).toEqual({ action: 'rematch', xId: ref.oId, oId: ref.xId });
+    expect(parseId(challengeId(ref.xId, ref.oId, ref.at, 'accept'))).toEqual({ action: 'challenge', challengerId: ref.xId, opponentId: ref.oId, at: ref.at, op: 'accept' });
+    expect(parseId(challengeId(ref.xId, ref.oId, ref.at, 'withdraw'))).toMatchObject({ op: 'withdraw' });
+    expect(parseId(LEADERBOARD_ID)).toEqual({ action: 'leaderboard' });
+    for (const id of [pvpMoveId(ref, 8), pvpClaimId(ref), challengeId(ref.xId, ref.oId, ref.at, 'decline')]) expect(id.length).toBeLessThanOrEqual(100);
+    // A game against yourself, or a board where O moved first, is not a game.
+    expect(parseId(pvpMoveId({ ...ref, oId: ref.xId }, 1))).toBeNull();
+    expect(parseId(pvpMoveId({ ...ref, board: 'O........' }, 1))).toBeNull();
+  });
+});
+
+describe('tic tac toe leaderboard', () => {
+  it('repairs an entry with missing or bad fields', () => {
+    const player = readPlayer({ name: 'Vaya', pvp: { wins: 2 } } as never);
+    expect(player.pvp).toEqual({ wins: 2, losses: 0, draws: 0 });
+    expect(player.bot.hard).toEqual({ wins: 0, losses: 0, draws: 0 });
+    expect(readPlayer(undefined).name).toBe('Unknown player');
+  });
+
+  it('scores PvP 3 a win and 1 a draw, and T.C.P games by difficulty', () => {
+    expect(pvpPoints({ wins: 2, losses: 5, draws: 3 })).toBe(9);
+    const stats: Stats = {};
+    const player = playerOf(stats, '1000000000', 'Ace');
+    addResult(player.bot.easy, 'win');
+    addResult(player.bot.normal, 'win');
+    addResult(player.bot.normal, 'draw');
+    addResult(player.bot.hard, 'draw');
+    addResult(player.bot.hard, 'loss');
+    expect(botPoints(player)).toBe(1 + 3 + 1 + 2);
+  });
+
+  it('ranks by points, then wins, then fewer losses, and leaves out players with no games of that kind', () => {
+    const stats: Stats = {};
+    const add = (id: string, name: string, wins: number, losses: number, draws: number) => {
+      const player = playerOf(stats, id, name);
+      player.pvp = { wins, losses, draws };
+    };
+    add('1000000001', 'Bea', 2, 0, 0); // 6
+    add('1000000002', 'Cal', 1, 0, 3); // 6, fewer wins
+    add('1000000003', 'Dee', 2, 4, 0); // 6, more losses than Bea
+    add('1000000004', 'Eve', 3, 1, 0); // 9
+    playerOf(stats, '1000000005', 'Fay'); // no games
+    expect(standings(stats, 'pvp').map((standing) => standing.name)).toEqual(['Eve', 'Bea', 'Dee', 'Cal']);
+    expect(standings(stats, 'bot')).toEqual([]);
   });
 });

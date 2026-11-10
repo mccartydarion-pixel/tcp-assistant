@@ -676,7 +676,11 @@ Press **🎯 Fix my aim** on the help channel panel, or use /tcp tune, for a pri
 
 ### Tic Tac Toe
 
-Type /tcp tictactoe in the server to play Tic Tac Toe against T.C.P: you are ❌ and press a square, T.C.P answers with ⭕ at once. Pick Easy, Normal or Hard (Hard is unbeatable: a draw is the best result). Only you can play your game; **Give up** ends it, and at the end **Play again** starts another (whoever went second goes first) or switches the difficulty. Your record against T.C.P (won, lost, drawn) is kept.
+Type /tcp tictactoe in the server to play Tic Tac Toe against T.C.P: you are ❌ and press a square, T.C.P answers with ⭕ at once. Pick Easy, Normal or Hard (Hard is unbeatable: a draw is the best result). Only you can play your game; **Give up** ends it, and at the end **Play again** starts another (whoever went second goes first) or switches the difficulty.
+
+To play another member, use /tcp tictactoe opponent:@name. They are pinged with **Accept** and **Decline** buttons (the challenge expires after 10 minutes, and you can **Withdraw** it). You play ❌ and go first; only the player whose turn it is can press a square. **Give up** hands the other player the win, and if a player has not moved for 2 minutes the other can press **Claim win**. At the end, **Rematch** starts a new game with the sides swapped.
+
+/tcp leaderboard (or the 🏆 Leaderboard button after a game) shows the top players. Player vs player: 3 points a win, 1 a draw. Against T.C.P: a win on Easy 1 point, on Normal 3 (a draw 1), a draw on Hard 2. Giving up counts as a loss.
 
 ### Opening a support ticket
 

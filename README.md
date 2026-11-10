@@ -293,7 +293,11 @@ Tickets are stored in Postgres when `DATABASE_URL` is a Postgres address (the `s
 
 ## Tic Tac Toe
 
-`/tcp tictactoe` (optional `difficulty`: Easy, Normal, Hard) posts a board of nine buttons in the channel; the member is ❌ and plays first, T.C.P answers with ⭕ in the same update. Only the member who started can press the buttons (anyone else is told to start their own). Hard plays perfectly (minimax over the whole game, a random choice between equally good moves), Normal takes a win, blocks yours and otherwise plays its best 60% of the time (a fork beats it), Easy takes a win when it sees one and otherwise plays anywhere (`src/fun/ticTacToeRules.ts`). The game lives entirely in the buttons' IDs (`tcp-ttt:`), so it survives a redeploy and nothing is held in memory; a second press sent before the board redrew is ignored. At the end: **Play again** (who went second goes first) and the other two difficulties. Each member's won / lost / drawn record is in the `bot_state` table (`ttt.record.<id>`); giving up counts as a loss.
+`/tcp tictactoe` (optional `difficulty`: Easy, Normal, Hard) posts a board of nine buttons in the channel; the member is ❌ and plays first, T.C.P answers with ⭕ in the same update. Only the member who started can press the buttons (anyone else is told to start their own). Hard plays perfectly (minimax over the whole game, a random choice between equally good moves), Normal takes a win, blocks yours and otherwise plays its best 60% of the time (a fork beats it), Easy takes a win when it sees one and otherwise plays anywhere (`src/fun/ticTacToeRules.ts`). The game lives entirely in the buttons' IDs (`tcp-ttt:`), so it survives a redeploy and nothing is held in memory; a second press sent before the board redrew is ignored. At the end: **Play again** (who went second goes first), the other two difficulties and **🏆 Leaderboard**.
+
+**Player vs player**: `/tcp tictactoe opponent:@member` posts a challenge that pings the member, with Accept / Decline (theirs) and Withdraw (the challenger's); it expires after 10 minutes. The challenger is ❌ and moves first; only the player on turn can press a square (X always moves first, so the turn follows from the board). Either player can **Give up** (the other wins); the waiting player can **Claim win** once the other has not moved for 2 minutes (the last move's time travels in the button IDs, so this too survives a redeploy). **Rematch** swaps the sides. Self-challenges and bots are refused; challenging T.C.P itself starts a game against the bot.
+
+**Leaderboard** (`/tcp leaderboard`, public; the 🏆 button, private): the top 10 player vs player (3 points a win, 1 a draw) and the top 5 against T.C.P (a win on Easy 1, on Normal 3, a draw on Normal 1, a draw on Hard 2), each with W-L-D, and the viewer's own place. Ties: more wins, then fewer losses. All records are one JSON value in the `bot_state` table (`ttt.stats`: name, PvP W-L-D, and W-L-D against T.C.P per difficulty), changed one game at a time so two games ending together both count (`src/fun/ticTacToeStats.ts`). Giving up and running out of time count as losses. Nothing stops a member from farming wins off a second account; the leaderboard is for fun.
 
 ## Unanswered questions and teaching the assistant
 
@@ -351,7 +355,8 @@ These commands require owner/admin permissions and should be restricted in Disco
 - `/tcp stats`, `/tcp audit`, `/tcp hours` (owner only; see above)
 - `/tcp teach`, `/tcp taught`, `/tcp forget` (the team)
 - `/tcp tune` (everyone: Fix my aim)
-- `/tcp tictactoe` (everyone: Tic Tac Toe against T.C.P)
+- `/tcp tictactoe` (everyone: Tic Tac Toe against T.C.P, or `opponent:@member` to challenge a member)
+- `/tcp leaderboard` (everyone: the Tic Tac Toe leaderboard)
 - `/tcp summarize`
 - `/tcp escalate`
 - `/tcp resolve`
