@@ -6,7 +6,8 @@ import { logger } from '../utils/logger.js';
 import { fetchSendableChannel } from '../bot/panels.js';
 import { notice, tcpEmbed } from '../bot/embeds.js';
 import { createAnnouncementStore, type AnnouncementStore } from './announcementStore.js';
-import { describeQueue, runAnnouncementQueue, type QueueRunReport, type QueueStatus } from './announcementQueue.js';
+import { buildAnnouncementMessage, checkEmbed, describeQueue, runAnnouncementQueue, type QueueRunReport, type QueueStatus } from './announcementQueue.js';
+import { getState, setState } from '../database/stateStore.js';
 import { ANNOUNCEMENT_QUEUE } from './queue.js';
 import { eliteRole } from '../premium/premium.js';
 
@@ -60,6 +61,37 @@ export async function initAnnouncements(client: Client): Promise<void> {
     await runQueue(client);
   } catch (error) {
     logger.error({ err: error }, '[TCP Announcements ERROR] The announcement queue failed.');
+  }
+  await sendOwnerPreviews(client);
+}
+
+/**
+ * Drafts marked previewToOwner are DMed to the owner once, exactly as they will be posted but without the
+ * ping, so the owner sees them before anyone else. Never throws.
+ */
+async function sendOwnerPreviews(client: Client): Promise<void> {
+  if (!env.OWNER_USER_ID) return;
+  for (const entry of ANNOUNCEMENT_QUEUE) {
+    if (entry.ready || !entry.previewToOwner) continue;
+    const key = `announcement.preview.${entry.id}`;
+    try {
+      if (await getState<boolean>(key, false)) continue;
+      const problems = checkEmbed(entry);
+      if (problems.length > 0) {
+        logger.warn(`[TCP Announcements] Preview of "${entry.id}" not sent: ${problems.join(' ')}`);
+        continue;
+      }
+      const owner = await client.users.fetch(env.OWNER_USER_ID);
+      const message = buildAnnouncementMessage({ ...entry, ping: 'none' }, ANNOUNCEMENT_ASSET_DIR);
+      await owner.send({
+        ...message,
+        content: `👀 **Preview, only you can see this.** It goes to the announcement channel${entry.ping && entry.ping !== 'none' ? ` (pinging ${entry.ping === 'elite' ? 'the Elite Supporters' : entry.ping})` : ''} once you say so.`,
+      });
+      await setState(key, true);
+      logger.info(`[TCP Announcements] Preview of "${entry.id}" sent to the owner`);
+    } catch (error) {
+      logger.warn({ err: error }, `[TCP Announcements] Could not send the preview of "${entry.id}"`);
+    }
   }
 }
 

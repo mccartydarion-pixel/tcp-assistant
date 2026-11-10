@@ -9,6 +9,30 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // The bot's November upgrade: Fix my aim, replies in the member's language, the team teaching the assistant,
+    // admins answering tickets, ratings and reminders, Premium builds by DM, Veteran roles, leak protection
+    // (2026-11-10). A preview for the owner first.
+    id: '2026-11-assistant-upgrade',
+    date: '2026-11-10',
+    ready: false,
+    previewToOwner: true,
+    title: '🤖 T.C.P ASSISTANT UPGRADE: FIX MY AIM, YOUR LANGUAGE, FASTER SUPPORT',
+    description:
+      'The T.C.P Assistant just got its biggest upgrade yet. 🔥\n\n' +
+      '🎯 **FIX MY AIM.** Press **🎯 Fix my aim** in <#1560492140923191356> or type `/tcp tune`. Tell it what feels wrong (the gun climbs, sinks or drifts, the aim feels floaty or too fast...) and it walks you through the fix **one change at a time**, straight from our Tuning Guide. It knows Premium from Free, and tunes a recorded Workshop gun with Scale Y and Scale X. Still not right? It opens a ticket with everything you already tried filled in.\n\n' +
+      '🌍 **ASK IN YOUR LANGUAGE.** Español, Português, Deutsch, Français and more: the assistant answers in the language you write in, with the menu names exactly as they appear on your Zen.\n\n' +
+      "🧠 **SMARTER EVERY DAY.** When the assistant doesn't know something, the T.C.P team now teaches it the answer, and from then on everyone gets it instantly.\n\n" +
+      '🎫 **FASTER SUPPORT.** Our admins and moderators now answer tickets with the owner. When your ticket closes you get the transcript and can rate your support from 1 to 5 ⭐, and a ticket waiting on you gets a friendly reminder before it closes.\n\n' +
+      '💎 **ELITE PERKS.** Every new Premium build now lands **straight in your DMs**: your own copy, with the patch notes, the moment it is released. And loyalty pays: **Veteran** roles at 3 months, 6 months and 1 year of Elite, with a shout-out in #elite-welcome.\n\n' +
+      '🔒 **PREMIUM STAYS PREMIUM.** Every copy is personal to its owner, and shared copies are spotted and removed automatically.',
+    fields: [
+      { name: '🎯 Try it now', value: 'Press **🎯 Fix my aim** in <#1560492140923191356>, or type `/tcp tune` anywhere.', inline: false },
+      { name: '💎 Not Elite yet?', value: 'Press **Subscribe** on the license panel: monthly or yearly, Premium script in your DMs and every new build after it.', inline: false },
+      { name: '❓ Questions?', value: 'Ask in <#1560492140923191356>, in any language.', inline: false },
+    ],
+    ping: '@everyone',
+  },
+  {
     // Rapid Fire and Hip Fire Speed (two new groups), the smoother F.A.S.T. micro blend, the sharper Workshop estimator (Premium, 2026-10-29).
     id: '2026-10-rapid-hip',
     date: '2026-10-29',

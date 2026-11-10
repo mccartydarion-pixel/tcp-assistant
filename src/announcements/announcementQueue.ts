@@ -14,6 +14,11 @@ export interface QueuedAnnouncement {
   date: string;
   /** Only ready entries are posted, so a draft can sit in the queue. */
   ready: boolean;
+  /**
+   * A draft (ready: false) with this set is sent once to the owner alone, by DM, as a preview of how it will
+   * look. Nothing goes to the announcement channel until ready is true.
+   */
+  previewToOwner?: boolean;
   title: string;
   description: string;
   fields?: { name: string; value: string; inline?: boolean }[];
