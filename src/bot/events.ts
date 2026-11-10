@@ -40,6 +40,10 @@ import { isTicketTopic } from '../tickets/ticketRules.js';
 import { serverMapFor } from '../server/serverMap.js';
 import { askChannelRedirect } from './askChannel.js';
 import { isStaffMember } from './staff.js';
+import { watchForLeaks } from '../premium/leakWatch.js';
+import { handleAuditInteraction } from '../premium/eliteAudit.js';
+import { handleTeachInteraction } from '../knowledge/taughtAnswers.js';
+import { handleTuneInteraction } from '../tuning/tuningWizard.js';
 
 export function registerEvents(
   client: Client,
@@ -59,6 +63,9 @@ export function registerEvents(
           (await handleLicenseInteraction(interaction)) ||
           (await handleEliteInteraction(interaction)) ||
           (await handleAnnounceInteraction(interaction)) ||
+          (await handleTuneInteraction(interaction)) ||
+          (await handleTeachInteraction(interaction)) ||
+          (await handleAuditInteraction(interaction)) ||
           (await handleSettingsInteraction(interaction)) ||
           (await handleBugInteraction(interaction)) ||
           (await handleReviewInteraction(interaction)) ||
@@ -110,6 +117,9 @@ export function registerEvents(
     logger.info(`[TCP Message] Raw mention syntax: ${/<@!?\d+>/.test(message.content)}`);
 
     if (message.author.bot) return;
+
+    // A Premium script posted anywhere is removed before anything else looks at the message.
+    if (await watchForLeaks(message).catch(() => false)) return;
 
     // Discord's own "joined the server" message: greet the new member (its author) unless the Server
     // Members Intent already did, and stop there.

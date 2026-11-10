@@ -7,6 +7,7 @@ import { recordedPullReply } from './pullFollowUp.js';
 import { extractQuestionDetails, normalizeUserQuestion } from './question.js';
 import { buildRetrievalQuery } from './retrievalQuery.js';
 import { extractUnansweredMarker } from './unansweredMarker.js';
+import { looksNonEnglish } from './language.js';
 
 export interface AssistantAnswer {
   text: string;
@@ -39,10 +40,12 @@ export class AssistantService {
     serverMap?: string,
   ): Promise<AssistantAnswer> {
     const normalizedQuestion = normalizeUserQuestion(question, botId);
-    const details = extractQuestionDetails(normalizedQuestion);
+    // The documentation is searched in English; the member's own words still go to the model.
+    const searchQuestion = await this.englishForSearch(normalizedQuestion);
+    const details = extractQuestionDetails(searchQuestion);
     logger.info(`[TCP AI] Question received: ${normalizedQuestion}`);
     logger.info(`[TCP AI] Conversation turns: ${conversationHistory.length}`);
-    const retrievalQuery = buildRetrievalQuery(normalizedQuestion, details, tuningState);
+    const retrievalQuery = buildRetrievalQuery(searchQuestion, details, tuningState);
     logger.info(`[TCP Retrieval] Query: ${retrievalQuery}`);
     const matches = await this.knowledge.search(retrievalQuery, 5);
     logger.info(`[TCP Retrieval] Found ${matches.length} knowledge chunks`);
@@ -97,6 +100,32 @@ export class AssistantService {
     } catch (error) {
       logger.error({ err: error }, '[TCP AI ERROR] Request failed');
       return fixed("I couldn't reach the T.C.P. AI service right now. Please try again shortly.");
+    }
+  }
+
+  /** The question in English for the documentation search, when it looks like another language. Never throws. */
+  private async englishForSearch(question: string): Promise<string> {
+    if (!looksNonEnglish(question) || !isOpenAiConfigured() || !openai) return question;
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0,
+        max_tokens: 200,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Translate the user message into English for a documentation search. It is about a Cronus Zen script for DayZ. Keep setting, button and menu names as they are. Reply with the translation only.',
+          },
+          { role: 'user', content: question },
+        ],
+      });
+      const english = response.choices[0]?.message.content?.trim();
+      if (english) logger.info(`[TCP AI] Searching in English: ${english}`);
+      return english || question;
+    } catch (error) {
+      logger.warn({ err: error }, '[TCP AI] Could not translate the question for the search');
+      return question;
     }
   }
 }

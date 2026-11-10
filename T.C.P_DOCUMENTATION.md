@@ -668,11 +668,19 @@ If your subscription does not renew by itself, the bot sends you a direct messag
 
 ### Asking the assistant
 
-Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. To keep the channel tidy, a solved thread is cleared away 5 minutes later, and a thread with no messages for a day is cleared away too; ask again any time. The assistant only answers in the help channel (#ask-tcp) and in your support ticket: if you @mention it or use /tcp ask anywhere else, it points you to #ask-tcp instead.
+Post your question in the help channel; no @mention is needed. The assistant starts a thread for each question and answers there, and you keep the conversation going by replying in that thread. Include your controller, your DayZ in-game aiming sensitivity and your T.C.P values for a faster answer. Press **Solved** when it is sorted, or **Still stuck? Open a ticket** if it is not. To keep the channel tidy, a solved thread is cleared away 5 minutes later, and a thread with no messages for a day is cleared away too; ask again any time. The assistant only answers in the help channel (#ask-tcp) and in your support ticket: if you @mention it or use /tcp ask anywhere else, it points you to #ask-tcp instead. You can ask in your own language (Spanish, Portuguese, German, French and others): the assistant answers in the language you write in, and keeps the menu and setting names in English as they appear on the Zen.
+
+### Fix my aim
+
+Press **🎯 Fix my aim** on the help channel panel, or use /tcp tune, for a private step-by-step walk-through. It asks whether you use T.C.P Premium or the free version (and, on Premium, whether a recorded Weapon Workshop slot is selected), checks your DayZ aiming sensitivity first, then asks what feels wrong: the gun climbs, sinks, drifts left or right, it is hard to stay on target while shooting, the aim is too fast, laggy or floaty, small movements do nothing then jump, or the aim moves at rest. It gives one change at a time; after each, test a few bursts and press **Fixed**, **Better, not yet**, **No change** or **Worse**. If nothing works it offers a support ticket with what you already tried filled in.
 
 ### Opening a support ticket
 
-Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **License & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the T.C.P team (the owner and the admins) can see. For setup and bug tickets the assistant takes a first look; press **Call the team** if you need a person. License and payment tickets go straight to the team. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message.
+Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **License & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the T.C.P team (the owner and the admins) can see. For setup and bug tickets the assistant takes a first look; press **Call the team** if you need a person. License and payment tickets go straight to the team. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message, with buttons to rate your support from 1 to 5 stars.
+
+If the team answers and you do not reply for 2 days, the bot reminds you in the ticket; press **I still need help** (or just reply) to keep it open, otherwise it closes a day later with the transcript sent to you as usual. A ticket where you are waiting for the team is never closed this way.
+
+When the team has set support hours, the ticket panel shows whether support is online or offline and, when offline, when they are back (in your own time zone). You can open a ticket any time; one opened while support is offline says when the team will answer.
 
 ### The Get started button
 

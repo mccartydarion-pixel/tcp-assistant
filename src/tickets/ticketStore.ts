@@ -17,6 +17,14 @@ export interface TicketStore {
   byChannel(channelId: string): Promise<TicketRecord | null>;
   claim(number: number, by: string): Promise<void>;
   close(number: number, by: string, now: number): Promise<void>;
+  /** The member's 1-5 rating after the ticket closed. */
+  rate(number: number, rating: number): Promise<void>;
+  /** When someone on the team first wrote in the ticket; kept only the first time. */
+  markFirstResponse(number: number, at: number): Promise<void>;
+  /** Tickets opened or closed since the given time, for the weekly support summary. */
+  listSince(since: number): Promise<TicketRecord[]>;
+  /** Every open ticket, for the auto-close sweep. */
+  listOpen(): Promise<TicketRecord[]>;
 }
 
 export interface TicketRecord {
@@ -29,6 +37,10 @@ export interface TicketRecord {
   createdAt: number;
   closedAt: number | null;
   closedBy: string | null;
+  /** 1-5 from the member after closing; null until they rate it. */
+  rating?: number | null;
+  /** When someone on the team first wrote in it; null until then. */
+  firstResponseAt?: number | null;
 }
 
 interface Row {
@@ -41,9 +53,11 @@ interface Row {
   created_at: number | string;
   closed_at: number | string | null;
   closed_by: string | null;
+  rating: number | string | null;
+  first_response_at: number | string | null;
 }
 
-const COLUMNS = 'number, discord_user_id, channel_id, kind, status, claimed_by, created_at, closed_at, closed_by';
+const COLUMNS = 'number, discord_user_id, channel_id, kind, status, claimed_by, created_at, closed_at, closed_by, rating, first_response_at';
 
 function toRecord(row: Row | undefined): TicketRecord | null {
   if (!row) return null;
@@ -57,6 +71,8 @@ function toRecord(row: Row | undefined): TicketRecord | null {
     createdAt: Number(row.created_at),
     closedAt: row.closed_at === null ? null : Number(row.closed_at),
     closedBy: row.closed_by,
+    rating: row.rating === null || row.rating === undefined ? null : Number(row.rating),
+    firstResponseAt: row.first_response_at === null || row.first_response_at === undefined ? null : Number(row.first_response_at),
   };
 }
 
@@ -83,6 +99,8 @@ class PostgresTicketStore implements TicketStore {
       );
       CREATE INDEX IF NOT EXISTS support_tickets_user ON support_tickets (discord_user_id, status);
       CREATE INDEX IF NOT EXISTS support_tickets_channel ON support_tickets (channel_id);
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS rating INTEGER;
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS first_response_at BIGINT;
     `);
   }
 
@@ -118,6 +136,24 @@ class PostgresTicketStore implements TicketStore {
   async close(number: number, by: string, now: number): Promise<void> {
     await this.pool.query("UPDATE support_tickets SET status = 'closed', closed_at = $1, closed_by = $2 WHERE number = $3", [now, by, number]);
   }
+
+  async rate(number: number, rating: number): Promise<void> {
+    await this.pool.query('UPDATE support_tickets SET rating = $1 WHERE number = $2', [rating, number]);
+  }
+
+  async markFirstResponse(number: number, at: number): Promise<void> {
+    await this.pool.query('UPDATE support_tickets SET first_response_at = $1 WHERE number = $2 AND first_response_at IS NULL', [at, number]);
+  }
+
+  async listSince(since: number): Promise<TicketRecord[]> {
+    const result = await this.pool.query(`SELECT ${COLUMNS} FROM support_tickets WHERE created_at >= $1 OR closed_at >= $1 ORDER BY number`, [since]);
+    return result.rows.map((row) => toRecord(row)!);
+  }
+
+  async listOpen(): Promise<TicketRecord[]> {
+    const result = await this.pool.query(`SELECT ${COLUMNS} FROM support_tickets WHERE status = 'open' ORDER BY number`);
+    return result.rows.map((row) => toRecord(row)!);
+  }
 }
 
 class SqliteTicketStore implements TicketStore {
@@ -140,6 +176,14 @@ class SqliteTicketStore implements TicketStore {
         closed_by TEXT
       );
     `);
+    // Columns added later; ADD COLUMN fails once they exist.
+    for (const column of ['rating INTEGER', 'first_response_at INTEGER']) {
+      try {
+        this.db.exec(`ALTER TABLE support_tickets ADD COLUMN ${column}`);
+      } catch {
+        // already there
+      }
+    }
   }
 
   async create(discordUserId: string, kind: string, now: number): Promise<number> {
@@ -173,6 +217,24 @@ class SqliteTicketStore implements TicketStore {
 
   async close(number: number, by: string, now: number): Promise<void> {
     this.db.prepare("UPDATE support_tickets SET status = 'closed', closed_at = ?, closed_by = ? WHERE number = ?").run(now, by, number);
+  }
+
+  async rate(number: number, rating: number): Promise<void> {
+    this.db.prepare('UPDATE support_tickets SET rating = ? WHERE number = ?').run(rating, number);
+  }
+
+  async markFirstResponse(number: number, at: number): Promise<void> {
+    this.db.prepare('UPDATE support_tickets SET first_response_at = ? WHERE number = ? AND first_response_at IS NULL').run(at, number);
+  }
+
+  async listSince(since: number): Promise<TicketRecord[]> {
+    const rows = this.db.prepare(`SELECT ${COLUMNS} FROM support_tickets WHERE created_at >= ? OR closed_at >= ? ORDER BY number`).all(since, since) as Row[];
+    return rows.map((row) => toRecord(row)!);
+  }
+
+  async listOpen(): Promise<TicketRecord[]> {
+    const rows = this.db.prepare(`SELECT ${COLUMNS} FROM support_tickets WHERE status = 'open' ORDER BY number`).all() as Row[];
+    return rows.map((row) => toRecord(row)!);
   }
 }
 

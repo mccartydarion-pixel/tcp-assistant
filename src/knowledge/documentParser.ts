@@ -56,7 +56,7 @@ export class DocumentParser {
   }
 }
 
-function extractKeywords(heading: string, content: string): string[] {
+export function extractKeywords(heading: string, content: string): string[] {
   const text = `${heading} ${content}`.toLowerCase();
   const tokens = text.match(/[a-z0-9]+/g) ?? [];
   const seen = new Set<string>();

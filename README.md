@@ -281,9 +281,31 @@ With `SUPPORT_CATEGORY_ID` set, T.C.P runs its own tickets. A member picks a typ
 
 Tickets are stored in Postgres when `DATABASE_URL` is a Postgres address (the `support_tickets` table), otherwise in the local SQLite file. Ticket numbers keep counting across redeploys only with Postgres. The bot needs **Manage Channels** in the support category, plus View Channel, Send Messages, Embed Links, Attach Files and Read Message History. If another ticket bot also creates channels in that category, remove its panel so members only see one; the bot still greets channels it did not create.
 
-## Unanswered questions
+**Ratings, response times and the weekly summary** (`src/tickets/ticketFeedback.ts`). The transcript DM on closing has 1-5 star buttons; a rating of 1 or 2 is flagged in the ticket log channel. The first time someone on the team writes in a ticket (or claims it) is recorded. Every 7 days the ticket log channel gets a **Weekly support summary**: tickets opened and closed (and how many closed for no reply), the median time to the team's first reply, the average rating, and per team member the tickets they took and their rating. `support_tickets` gained `rating` and `first_response_at` (added automatically).
 
-When the documentation does not cover a question, the AI ends its reply with a marker the bot removes before replying (`src/ai/unansweredMarker.ts`). The bot then posts the question, who asked, where, and the closest documentation sections to `LOG_CHANNEL_ID`, at most once a day per question. Questions with no documentation match at all are logged too. Use these to decide what to add to the knowledge file.
+**Auto-close** (`autoCloseAction` in `src/tickets/ticketRules.ts`). Every half hour: a ticket where the team spoke last (a person other than the member, or the assistant's first look) and the member has not answered for 48 hours gets a **Closing soon** warning with an **I still need help** button; 24 hours later without a reply it closes as usual, transcript and rating included. A member waiting for the team is never closed, and the bot's own notices (the intro, the license card, Team called) do not count as the team answering.
+
+**Support hours** (`src/tickets/supportHours.ts`, owner): `/tcp hours from:10:00 to:22:00 timezone:America/New_York days:mon-fri` (days: every day, weekdays, weekends, mon-fri, mon,wed,fri; a window past midnight works), `/tcp hours` alone shows them, `/tcp hours off:True` turns them off. The ticket panel (or the help panel that carries the ticket buttons) shows **Support is online now** with the usual reply time (median of the last 30 days, once there are 3 replies), or **Support is offline** and when it is back, as a Discord timestamp in each member's own time; a ticket opened while offline says when the team will answer. The panels redraw when support opens or closes. Kept in the `bot_state` table.
+
+## Fix my aim (tuning wizard)
+
+`src/tuning/tuningWizard.ts`: a **🎯 Fix my aim** button on the help channel panel and `/tcp tune`. A private walk-through: Premium or free (and, on Premium, a recorded Workshop slot or not), the DayZ sensitivity check, then the problem (climbs, sinks, drifts left or right, hard to stay on target, too fast, laggy or floaty, small movements then a jump, moves at rest), then one change at a time from the Tuning Guide in the documentation (`src/tuning/tuningWizardRules.ts`), with **Fixed**, **Better, not yet**, **No change** and **Worse**. A step that helps is repeated up to its limit; **Worse** says to put the setting back. Premium names the Menu 2.0 groups and uses Scale Y / Scale X on a recorded pull (Vertical and Horizontal are locked there); the free version names its pages. At the end it offers a Setup & tuning ticket with everything tried filled in.
+
+## Unanswered questions and teaching the assistant
+
+When the documentation does not cover a question, the AI ends its reply with a marker the bot removes before replying (`src/ai/unansweredMarker.ts`). The bot then posts the question, who asked, where, and the closest documentation sections to `LOG_CHANNEL_ID`, at most once a day per question. Questions with no documentation match at all are logged too.
+
+Each report has an **Answer this** button (the team only): it opens a form with the question and your answer, and the answer is used by the assistant at once (`src/knowledge/taughtAnswers.ts`; searched with the documentation as "Answers from the T.C.P team", which the system prompt treats as authoritative). `/tcp teach question answer` adds one by hand, `/tcp taught` lists them with their numbers, `/tcp forget number` removes one. They are kept in the `bot_state` table, not in the repository.
+
+**Other languages** (`src/ai/language.ts`): a question that looks like another language (another alphabet, accented letters, or common Spanish, Portuguese, French, German or Italian words and no English ones) is translated to English with gpt-4o-mini for the documentation search only; the model reads the member's own words and answers in their language (system prompt), keeping setting names in English.
+
+## Premium release alerts, leak watch and the daily Elite check
+
+- **Release alerts** (`src/premium/releaseAlerts.ts`): `/tcp release` takes optional `notes` (what changed) and `notify` (default yes). A new file (not a re-upload of the same one) posts a **T.C.P Premium updated** card with the notes and a Download Premium button in the Elite Hub, and DMs every Elite Supporter their own fingerprinted copy with the notes, one every 1.2 s; the log channel gets the tally and who has DMs closed. Download Premium shows the latest notes too. The notes are kept in the `bot_state` table.
+- **Leak watch** (`src/premium/leakWatch.ts`): every `.gpc` or `.txt` attachment (up to 2 MB) posted in the server is checked. If it carries a member's fingerprint, is built like the scrambled release, is any readable premium build, or is the owner's own upload, and the poster is not on the team, the message is deleted, the poster gets a DM saying why, and the log channel gets **Premium script posted** with whose copy it was. The team can post it, and members can post their own file in their private ticket. The bot needs Manage Messages in the channels to delete.
+- **Daily Elite check and Veteran roles** (`src/premium/eliteAudit.ts`): once a day the Elite role is removed from members with no live Stripe subscription and no license days (the owner, staff and Administrators keep it). If that would remove more than max(5, 30%) of the role at once, nothing is removed and the owner is told. The very first run only reports. `/tcp audit` (owner) lists who would lose it, with a button to remove it. The same check gives **Veteran · 3 Months**, **Veteran · 6 Months** and **Veteran · 1 Year** (created on first need, no permissions; only the highest) to members whose subscription has run that long without a break, with a shout-out in the elite welcome channel, and takes them away when the subscription ends. Needs Manage Roles, the bot's role above these roles, and the Server Members Intent to see every member.
+- **Owner stats** (`src/owner/stats.ts`): `/tcp stats` (owner only, private): paying subscribers (monthly, yearly; renewing, cancelled, failed payment), monthly revenue, what came in over 30 days, this week's new and ended subscriptions, license holders, the Elite role's size, and the week's support figures.
+- Daily and weekly jobs remember when they last ran in the `bot_state` table (`src/bot/jobs.ts`), so a redeploy neither repeats nor skips them.
 
 ## Knowledge file setup
 
@@ -322,6 +344,9 @@ These commands require owner/admin permissions and should be restricted in Disco
 - `/tcp reload-docs`
 - `/tcp status`
 - `/tcp announcements` (owner only: the queued announcements and their status; see Queued announcements)
+- `/tcp stats`, `/tcp audit`, `/tcp hours` (owner only; see above)
+- `/tcp teach`, `/tcp taught`, `/tcp forget` (the team)
+- `/tcp tune` (everyone: Fix my aim)
 - `/tcp summarize`
 - `/tcp escalate`
 - `/tcp resolve`

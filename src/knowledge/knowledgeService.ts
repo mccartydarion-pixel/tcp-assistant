@@ -8,18 +8,26 @@ export class KnowledgeService {
   private loader = new DocumentLoader();
   private parser = new DocumentParser();
   private chunks: KnowledgeChunk[] = [];
+  /** Answers the team taught the assistant (taughtAnswers.ts), searched with the documentation. */
+  private extraChunks: KnowledgeChunk[] = [];
   private retriever: KeywordRetriever | null = null;
 
   async initialize(): Promise<void> {
     logger.info('[TCP Knowledge] Loading T.C.P_DOCUMENTATION.md');
     const text = await this.loader.load();
     this.chunks = this.parser.parse(text);
-    this.retriever = new KeywordRetriever(this.chunks);
+    this.retriever = new KeywordRetriever([...this.chunks, ...this.extraChunks]);
     logger.info(`[TCP Knowledge] Parsed ${this.chunks.length} sections and indexed ${this.chunks.length} chunks`);
   }
 
   get chunkCount(): number {
-    return this.chunks.length;
+    return this.chunks.length + this.extraChunks.length;
+  }
+
+  /** Replaces the taught answers and re-indexes, so a new answer is used at once. */
+  setExtraChunks(chunks: KnowledgeChunk[]): void {
+    this.extraChunks = chunks;
+    if (this.chunks.length > 0) this.retriever = new KeywordRetriever([...this.chunks, ...this.extraChunks]);
   }
 
   async search(query: string, limit = 5): Promise<RetrievalResult[]> {

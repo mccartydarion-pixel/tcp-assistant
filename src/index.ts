@@ -20,8 +20,14 @@ import { ensureGamePanels } from './games/gameScripts.js';
 import { ensureInfoChannels } from './info/infoChannels.js';
 import { ensureWelcomePanel, setMemberEventsActive, wantsMemberEvents } from './welcome/welcome.js';
 import { setBrandIcon } from './bot/embeds.js';
-import { initTickets } from './tickets/ticketSystem.js';
+import { initTickets, refreshTicketPanel, startTicketAutoClose } from './tickets/ticketSystem.js';
 import { ensureHelpPanel, initHelpChannel } from './help/helpChannel.js';
+import { initState } from './database/stateStore.js';
+import { initTaughtAnswers } from './knowledge/taughtAnswers.js';
+import { announceRelease } from './premium/releaseAlerts.js';
+import { startEliteAudit } from './premium/eliteAudit.js';
+import { startSupportSummary } from './tickets/ticketFeedback.js';
+import { loadSupportHours, onSupportStatusChange, startSupportHoursWatch } from './tickets/supportHours.js';
 import { startHelpCleanup } from './help/helpCleanup.js';
 import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
 import { initPremium, onPremiumEnded, onPremiumPaid } from './premium/premium.js';
@@ -166,8 +172,10 @@ async function start(): Promise<void> {
     logger.error({ err: error }, '[TCP Database ERROR] Initialization failed');
   }
 
+  await initState();
   try {
     await knowledge.initialize();
+    await initTaughtAnswers(knowledge);
     status.knowledgeReady = true;
     logger.info(`[TCP Knowledge] READY (${knowledge.chunkCount} chunks)`);
   } catch (error) {
@@ -185,7 +193,11 @@ async function start(): Promise<void> {
   status.commandsRegistered = await registerCommands(commands);
   logger.info('[TCP Ticket] Ticket Assistant: READY');
   // Before the licence panel, so it shows Subscribe with the live price and Download Premium.
-  await initPremium(client, { isSubscriber: hasLiveSubscription, onUploaded: () => Promise.all([refreshLicensePanel(client), ensureEliteHub(client)]).then(() => undefined) });
+  await initPremium(client, {
+    isSubscriber: hasLiveSubscription,
+    onUploaded: () => Promise.all([refreshLicensePanel(client), ensureEliteHub(client)]).then(() => undefined),
+    onRelease: (release) => announceRelease(client, release),
+  });
   await initPayments(client, {
     grantDays: (discordUserId, days) => grantPaidDays(client, discordUserId, days),
     grantUntil: (discordUserId, until) => grantPaidUntil(client, discordUserId, until),
@@ -196,9 +208,16 @@ async function start(): Promise<void> {
   await ensureLicensePanel(client);
   startBoostRewards(client);
   await ensureEliteHub(client);
+  await loadSupportHours();
   await initTickets(client, { assistant, memory: conversationMemory });
   await ensureHelpPanel(client);
   startHelpCleanup(client);
+  // Support opening or closing redraws the panels that show it.
+  onSupportStatusChange(() => Promise.all([ensureHelpPanel(client), refreshTicketPanel(client)]));
+  startSupportHoursWatch();
+  startTicketAutoClose(client);
+  startSupportSummary(client);
+  startEliteAudit(client);
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);

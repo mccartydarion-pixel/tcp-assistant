@@ -15,6 +15,11 @@ import { serverMapFor } from '../../server/serverMap.js';
 import { ticketAudience } from '../../tickets/ticketSystem.js';
 import { handleReleaseCommand, handleSyncCommand, handleTraceCommand } from '../../premium/premium.js';
 import { handleAnnouncementsCommand } from '../../announcements/announcements.js';
+import { handleAuditCommand } from '../../premium/eliteAudit.js';
+import { handleStatsCommand } from '../../owner/stats.js';
+import { handleHoursCommand } from '../../tickets/supportHours.js';
+import { handleTeachCommand } from '../../knowledge/taughtAnswers.js';
+import { handleTuneCommand } from '../../tuning/tuningWizard.js';
 import { askChannelRedirect, assistantAllowedIn } from '../askChannel.js';
 
 export interface Command {
@@ -55,6 +60,12 @@ export function createCommands(
         .setDescription('Owner: upload the Premium script, or see which one is live')
         .addAttachmentOption((option) =>
           option.setName('file').setDescription('T.C.P Premium.gpc from the Premium folder (the scrambled build)').setRequired(false),
+        )
+        .addStringOption((option) =>
+          option.setName('notes').setDescription("What changed (sent to Elite Supporters with the file)").setMaxLength(1500).setRequired(false),
+        )
+        .addBooleanOption((option) =>
+          option.setName('notify').setDescription('DM every Elite Supporter their copy (default: yes)').setRequired(false),
         ),
     )
     .addSubcommand((command) =>
@@ -80,6 +91,37 @@ export function createCommands(
             .setRequired(false)
             .setMaxLength(80),
         ),
+    )
+    .addSubcommand((command) => command.setName('tune').setDescription('Fix my aim: a step-by-step walk-through for recoil and aim problems'))
+    .addSubcommand((command) => command.setName('stats').setDescription('Owner: subscribers, revenue, license holders and support this week'))
+    .addSubcommand((command) => command.setName('audit').setDescription('Owner: who holds the Elite role without a subscription or days'))
+    .addSubcommand((command) =>
+      command
+        .setName('hours')
+        .setDescription('Owner: set the support hours shown on the ticket panel (no options: show them)')
+        .addStringOption((option) => option.setName('from').setDescription('Opening time, for example 10:00 or 10am').setRequired(false).setMaxLength(10))
+        .addStringOption((option) => option.setName('to').setDescription('Closing time, for example 22:00 or 10pm').setRequired(false).setMaxLength(10))
+        .addStringOption((option) =>
+          option.setName('timezone').setDescription('Your time zone, for example America/New_York or Europe/London').setRequired(false).setMaxLength(60),
+        )
+        .addStringOption((option) =>
+          option.setName('days').setDescription('every day, weekdays, weekends, mon-fri or mon,wed,fri (default every day)').setRequired(false).setMaxLength(60),
+        )
+        .addBooleanOption((option) => option.setName('off').setDescription('True: turn the support hours off').setRequired(false)),
+    )
+    .addSubcommand((command) =>
+      command
+        .setName('teach')
+        .setDescription('Team: teach the assistant an answer it uses from now on')
+        .addStringOption((option) => option.setName('question').setDescription('The question members ask').setRequired(true).setMaxLength(400))
+        .addStringOption((option) => option.setName('answer').setDescription('The answer they should get').setRequired(true).setMaxLength(1500)),
+    )
+    .addSubcommand((command) => command.setName('taught').setDescription('Team: list the answers taught to the assistant'))
+    .addSubcommand((command) =>
+      command
+        .setName('forget')
+        .setDescription('Team: remove a taught answer')
+        .addIntegerOption((option) => option.setName('number').setDescription('Its number in /tcp taught').setRequired(true).setMinValue(1)),
     );
 
   return [
@@ -101,6 +143,26 @@ export function createCommands(
         }
         if (subcommand === 'announcements') {
           await handleAnnouncementsCommand(interaction);
+          return;
+        }
+        if (subcommand === 'tune') {
+          await handleTuneCommand(interaction);
+          return;
+        }
+        if (subcommand === 'stats') {
+          await handleStatsCommand(interaction);
+          return;
+        }
+        if (subcommand === 'audit') {
+          await handleAuditCommand(interaction);
+          return;
+        }
+        if (subcommand === 'hours') {
+          await handleHoursCommand(interaction);
+          return;
+        }
+        if (subcommand === 'teach' || subcommand === 'taught' || subcommand === 'forget') {
+          await handleTeachCommand(interaction, subcommand);
           return;
         }
         if (subcommand === 'help') {

@@ -197,6 +197,24 @@ export function buildAdminPanel() {
 }
 
 /** Opens the licence records and posts the member and owner panels unless ours are already there. */
+/** Whether the license records are open (so a missing record really means no days). */
+export function licenceRecordsOpen(): boolean {
+  return store !== null;
+}
+
+/** When this member's license access ends (ms), or null when they have none or the records are not open. */
+export async function licenceExpiry(discordUserId: string): Promise<number | null> {
+  if (!store) return null;
+  return store.getExpiry(discordUserId);
+}
+
+/** Members with license days left, and how many of them run out within a week. Null when the records are not open. */
+export async function licenceCounts(now = Date.now()): Promise<{ active: number; expiringSoon: number } | null> {
+  if (!store) return null;
+  const summary = summarizeSubscriptions(await store.listSubscriptions(), now, env.LICENSE_TRIAL_DAYS);
+  return { active: summary.active.length, expiringSoon: summary.expiringSoon.length };
+}
+
 /** Redraws the member panel, for example after a Premium upload adds Download Premium. Never posts a new one. */
 export async function refreshLicensePanel(client: Client): Promise<void> {
   if (!env.LICENSE_CHANNEL_ID || !store) return;

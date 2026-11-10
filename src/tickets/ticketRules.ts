@@ -197,3 +197,57 @@ export function transcriptText(header: string[], messages: TranscriptMessage[], 
   }
   return `${lines.join('\n')}\n`;
 }
+
+// ---- ratings and auto-close ----------------------------------------------------------------------
+
+/** The prefix of the rating buttons sent with a closed ticket's transcript: `${RATE_PREFIX}<number>:<stars>`. */
+export const RATE_PREFIX = 'tcp-ticket:rate:';
+
+/** "tcp-ticket:rate:42:5" to { number: 42, stars: 5 }; null for anything else. */
+export function parseRating(customId: string): { number: number; stars: number } | null {
+  const match = /^tcp-ticket:rate:(\d+):([1-5])$/.exec(customId);
+  return match ? { number: Number(match[1]), stars: Number(match[2]) } : null;
+}
+
+export function ratingLabel(stars: number): string {
+  return '⭐'.repeat(stars);
+}
+
+/** Title of the bot's warning before an idle ticket is closed, and of the reply when the member keeps it open. */
+export const CLOSING_SOON_TITLE = 'Closing soon';
+export const KEPT_OPEN_TITLE = 'Ticket kept open';
+/** The member has not replied to the team for this long: they are warned. */
+export const AUTO_CLOSE_WAIT_MS = 48 * 60 * 60 * 1000;
+/** After the warning, this long without a reply: the ticket closes. */
+export const AUTO_CLOSE_GRACE_MS = 24 * 60 * 60 * 1000;
+
+export interface TicketMessageSummary {
+  authorId: string;
+  bot: boolean;
+  at: number;
+  /** The first embed's title, if any. */
+  title: string | null;
+}
+
+/**
+ * What to do with an open ticket: warn the member, close it, or nothing. Only a ticket where the team spoke
+ * last counts as waiting on the member: a member waiting for the team is never closed. The team is a person
+ * other than the member, or the assistant's first look; the bot's own notices (the intro, license card,
+ * "team called") do not count, so a ticket nobody on the team has answered stays open.
+ */
+export function autoCloseAction(input: { memberId: string; createdAt: number; messages: TicketMessageSummary[]; now: number }): 'none' | 'warn' | 'close' {
+  let memberAt = input.createdAt;
+  let teamAt = 0;
+  for (const message of input.messages) {
+    if (!message.bot && message.authorId === input.memberId) memberAt = Math.max(memberAt, message.at);
+    else if (message.bot && message.title === KEPT_OPEN_TITLE) memberAt = Math.max(memberAt, message.at);
+    else if (!message.bot || message.title === 'First look') teamAt = Math.max(teamAt, message.at);
+  }
+  if (teamAt <= memberAt) return 'none';
+  const warnings = input.messages.filter((message) => message.bot && message.title === CLOSING_SOON_TITLE && message.at > memberAt);
+  if (warnings.length > 0) {
+    const warnedAt = Math.max(...warnings.map((message) => message.at));
+    return input.now - warnedAt >= AUTO_CLOSE_GRACE_MS ? 'close' : 'none';
+  }
+  return input.now - teamAt >= AUTO_CLOSE_WAIT_MS ? 'warn' : 'none';
+}

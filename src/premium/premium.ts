@@ -18,6 +18,7 @@ import { notice, tcpEmbed, type Tone } from '../bot/embeds.js';
 import { isSafeSelfRole, plainName } from '../bot/roles.js';
 import { createPremiumStore, type MarkRecord, type PremiumFile, type PremiumStore } from './premiumStore.js';
 import { definesIn, markFits, newMark, stampCopy } from './fingerprint.js';
+import { getState, setState } from '../database/stateStore.js';
 
 // T.C.P Premium for paying members. On a member's first payment the bot DMs them the premium script
 // (Premium/T.C.P Premium.gpc), gives them the Elite Supporter role and welcomes them in the
@@ -34,6 +35,21 @@ const MAX_FILE_BYTES = 2_000_000;
 let store: PremiumStore | null = null;
 let current: PremiumFile | null = null;
 let isSubscriber: (discordUserId: string) => Promise<boolean> = async () => false;
+let onRelease: (release: ReleaseInfo) => Promise<void> = async () => {};
+/** What changed in the current upload, as the owner wrote it with /tcp release. */
+let latestNotes = '';
+
+/** One upload of the Premium script, kept in the state store so Download Premium can say what changed. */
+export interface ReleaseInfo {
+  sha256: string;
+  fileName: string;
+  notes: string;
+  uploadedAt: number;
+  /** Whether the owner asked for every Elite Supporter to get it by DM. */
+  notify: boolean;
+}
+const RELEASES_KEY = 'premium.releases';
+const RELEASES_KEPT = 50;
 let onUploaded: () => Promise<void> = async () => {};
 
 // ---- the release file ------------------------------------------------------------------------------
@@ -65,15 +81,23 @@ export function premiumAvailable(): boolean {
 
 export async function initPremium(
   client: Client,
-  deps: { isSubscriber: (discordUserId: string) => Promise<boolean>; onUploaded?: () => Promise<void> },
+  deps: {
+    isSubscriber: (discordUserId: string) => Promise<boolean>;
+    onUploaded?: () => Promise<void>;
+    /** A new script was uploaded: tell the Elite Supporters (releaseAlerts.ts). */
+    onRelease?: (release: ReleaseInfo) => Promise<void>;
+  },
 ): Promise<void> {
   isSubscriber = deps.isSubscriber;
   if (deps.onUploaded) onUploaded = deps.onUploaded;
+  if (deps.onRelease) onRelease = deps.onRelease;
   try {
     const opened = createPremiumStore();
     await opened.init();
     store = opened;
     current = await opened.get();
+    const releases = await getState<ReleaseInfo[]>(RELEASES_KEY, []);
+    latestNotes = releases.find((release) => release.sha256 === current?.sha256)?.notes ?? '';
     logger.info(
       current
         ? `[TCP Premium] Script ready: ${current.fileName} (${current.content.length} bytes, uploaded ${new Date(current.uploadedAt).toISOString()})`
@@ -194,7 +218,7 @@ export function premiumFileMessage(file: Pick<PremiumFile, 'fileName' | 'content
 // ---- fingerprinted copies --------------------------------------------------------------------------
 
 /** This member's own copy of the current upload, with their fingerprint in it. */
-async function personalCopy(discordUserId: string): Promise<{ fileName: string; content: Buffer }> {
+export async function personalCopy(discordUserId: string): Promise<{ fileName: string; content: Buffer }> {
   if (!current || !store) throw new Error('No premium script uploaded');
   const file = current;
   const text = file.content.toString('utf8');
@@ -206,6 +230,27 @@ async function personalCopy(discordUserId: string): Promise<{ fileName: string; 
   }
   if (!mark || !markFits(text, mark)) throw new Error(`Could not give ${discordUserId} a fingerprint`);
   return { fileName: file.fileName, content: Buffer.from(stampCopy(text, mark), 'utf8') };
+}
+
+/**
+ * What a file posted somewhere is, for the leak watch: whose fingerprints are in it, whether it is built
+ * like the scrambled Premium release, and whether it is the owner's own unmarked upload.
+ */
+export async function inspectPremiumText(fileName: string, content: Buffer): Promise<{ owners: MarkRecord[]; looksLikeRelease: boolean; ownUpload: boolean }> {
+  const text = content.toString('utf8');
+  const owners = store ? findOwners(text, await store.listMarks()) : [];
+  // The scrambled release, or any readable premium build (Workshop, Gen 8, F.A.S.T. or licence code in it; the
+  // free build has none of these, the build tool makes sure of it).
+  const readablePremium = /\bpat_[a-z]|\bgen8_[a-z]|\bfast_shape\b|\bLICENSE_KEY_/.test(text);
+  const looksLikeRelease = readablePremium || checkRelease(fileName.replace(/\.txt$/i, '.gpc'), text).ok;
+  const ownUpload = current !== null && createHash('sha256').update(content).digest('hex') === current.sha256;
+  return { owners, looksLikeRelease, ownUpload };
+}
+
+/** The "what's new" card for a release, or null when the owner wrote no notes. */
+export function whatsNewEmbed(notes: string, fileName?: string) {
+  if (!notes.trim()) return null;
+  return tcpEmbed({ title: "What's new in T.C.P Premium", tone: 'success', description: notes.slice(0, 3500), ...(fileName ? { footer: fileName } : {}) });
 }
 
 /** Whose copies a file came from: every member whose fingerprint is in it. */
@@ -372,7 +417,9 @@ export async function handlePremiumInteraction(interaction: Interaction): Promis
     await interaction.editReply(notice('Your copy could not be prepared just now. Please try again in a minute.', { tone: 'danger' }));
     return true;
   }
-  await interaction.editReply(premiumFileMessage(copy, env.LICENSE_CHANNEL_ID));
+  const message = premiumFileMessage(copy, env.LICENSE_CHANNEL_ID);
+  const news = whatsNewEmbed(latestNotes);
+  await interaction.editReply(news ? { ...message, embeds: [news, ...message.embeds] } : message);
   logger.info(`[TCP Premium] ${interaction.user.id} downloaded ${current.fileName}`);
   return true;
 }
@@ -470,14 +517,34 @@ export async function handleReleaseCommand(interaction: ChatInputCommandInteract
     uploadedBy: interaction.user.id,
   };
   const first = current === null;
+  const changed = current?.sha256 !== file.sha256;
+  const notes = (interaction.options.getString('notes') ?? '').trim();
+  const notify = interaction.options.getBoolean('notify') ?? true;
   await store.save(file);
   current = file;
+  if (changed) {
+    latestNotes = notes;
+    const release: ReleaseInfo = { sha256: file.sha256, fileName: file.fileName, notes, uploadedAt: file.uploadedAt, notify };
+    const releases = await getState<ReleaseInfo[]>(RELEASES_KEY, []);
+    await setState(RELEASES_KEY, [release, ...releases].slice(0, RELEASES_KEPT)).catch((error: unknown) =>
+      logger.warn({ err: error }, '[TCP Premium] Could not record the release notes'),
+    );
+    // In the background: sending every Elite Supporter their copy takes a while.
+    void onRelease(release).catch((error: unknown) => logger.error({ err: error }, '[TCP Premium ERROR] The release alert failed'));
+  }
   // The first upload adds Download Premium to the licence panel.
   if (first) await onUploaded().catch((error: unknown) => logger.warn({ err: error }, '[TCP Premium] Could not refresh the license panel'));
   logger.info(`[TCP Premium] Owner uploaded ${file.fileName} (${content.length} bytes, ${file.sha256.slice(0, 12)})`);
   await interaction.editReply(
     notice(
-      `**${file.fileName}** is now the Premium script (${content.length.toLocaleString('en-US')} bytes, fingerprint \`${file.sha256.slice(0, 12)}\`).\nNew subscribers get it in their DMs, and everyone subscribed can get it with **Download Premium**.`,
+      [
+        `**${file.fileName}** is now the Premium script (${content.length.toLocaleString('en-US')} bytes, fingerprint \`${file.sha256.slice(0, 12)}\`).`,
+        !changed
+          ? 'It is the same file as before, so nobody was sent anything.'
+          : notify
+            ? 'Every Elite Supporter is being sent their own copy by DM now, with your notes, and the Elite Hub gets the update. The log channel says when it is done.'
+            : 'Nobody was messaged (notify: False). The Elite Hub gets the update, and everyone subscribed can get it with **Download Premium**.',
+      ].join('\n'),
       { title: 'Premium script saved', tone: 'success' },
     ),
   );

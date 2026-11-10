@@ -146,6 +146,70 @@ export function paymentButtons(): ActionRowBuilder<ButtonBuilder> | null {
   );
 }
 
+/** One Stripe subscription as the owner's stats and the daily Elite check need it. Times in ms. */
+export interface StripeSubscriptionInfo {
+  id: string;
+  discordUserId: string | null;
+  status: string;
+  priceId: string | null;
+  interval: string | null;
+  intervalCount: number;
+  unitAmount: number | null;
+  currency: string;
+  startedAt: number;
+  createdAt: number;
+  endedAt: number | null;
+  cancelAtPeriodEnd: boolean;
+}
+
+/**
+ * Every subscription in Stripe, newest first (up to limit), with the member each belongs to (from the
+ * subscription's metadata, or the payment records for older ones). Null when Stripe is not set up.
+ */
+export async function listStripeSubscriptions(limit = 1000): Promise<StripeSubscriptionInfo[] | null> {
+  if (!stripe || !store) return null;
+  const found: StripeSubscriptionInfo[] = [];
+  for await (const subscription of stripe.subscriptions.list({ status: 'all', limit: 100 })) {
+    const item = subscription.items.data[0];
+    const price = item?.price;
+    let discordUserId = subscription.metadata?.discord_user_id || null;
+    if (!discordUserId) {
+      const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
+      discordUserId = (await store.getByCustomer(customerId).catch(() => null))?.discordUserId ?? null;
+    }
+    found.push({
+      id: subscription.id,
+      discordUserId,
+      status: subscription.status,
+      priceId: price?.id ?? null,
+      interval: price?.recurring?.interval ?? null,
+      intervalCount: price?.recurring?.interval_count ?? 1,
+      unitAmount: price?.unit_amount ?? null,
+      currency: price?.currency ?? 'usd',
+      startedAt: subscription.start_date * 1000,
+      createdAt: subscription.created * 1000,
+      endedAt: subscription.ended_at ? subscription.ended_at * 1000 : null,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    });
+    if (found.length >= limit) break;
+  }
+  return found;
+}
+
+/** What paid invoices brought in since the given time (ms), per currency. Null when Stripe is not set up. */
+export async function paidSince(since: number): Promise<{ amount: number; currency: string; invoices: number }[] | null> {
+  if (!stripe) return null;
+  const totals = new Map<string, { amount: number; invoices: number }>();
+  for await (const invoice of stripe.invoices.list({ status: 'paid', created: { gte: Math.floor(since / 1000) }, limit: 100 })) {
+    if (invoice.amount_paid <= 0) continue;
+    const total = totals.get(invoice.currency) ?? { amount: 0, invoices: 0 };
+    total.amount += invoice.amount_paid;
+    total.invoices += 1;
+    totals.set(invoice.currency, total);
+  }
+  return [...totals.entries()].map(([currency, total]) => ({ currency, ...total }));
+}
+
 /** Whether this member pays for T.C.P Premium right now (active, or a payment being retried). */
 export async function hasLiveSubscription(discordUserId: string): Promise<boolean> {
   if (!store) return false;

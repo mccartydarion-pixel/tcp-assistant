@@ -21,6 +21,7 @@ import { serverMapFor } from '../server/serverMap.js';
 import { startTicket, ticketButtons, ticketPanelLines, ticketsEnabled } from '../tickets/ticketSystem.js';
 import { cleanUpSolvedSoon } from './helpCleanup.js';
 import { isStaffUser } from '../bot/staff.js';
+import { tuneButton } from '../tuning/tuningWizard.js';
 import { HELP_PANEL_ID, SOLVED_GRACE_MS, SOLVED_NOTICE } from './helpCleanupRules.js';
 
 // The help channel (HELP_CHANNEL_ID): the assistant answers every question there, no @mention needed. Each
@@ -101,6 +102,7 @@ export function buildHelpPanel() {
   const rows = [
     new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder().setCustomId(HOW_IT_WORKS_ID).setLabel('How this channel works').setStyle(ButtonStyle.Secondary),
+      tuneButton(),
     ),
   ];
   if (withTickets) rows.push(ticketButtons());

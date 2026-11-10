@@ -35,8 +35,16 @@ import { isStaffMember, isStaffUser, staffRoles } from '../bot/staff.js';
 import { serverMapFor } from '../server/serverMap.js';
 import { paymentButtons } from '../payments/stripeBilling.js';
 import { createTicketStore, type TicketRecord, type TicketStore } from './ticketStore.js';
+import { everyInterval } from '../bot/jobs.js';
+import { supportOfflineField, supportStatusLine } from './supportHours.js';
 import {
+  CLOSING_SOON_TITLE,
+  KEPT_OPEN_TITLE,
+  RATE_PREFIX,
   TICKET_TYPES,
+  autoCloseAction,
+  parseRating,
+  ratingLabel,
   answersToFields,
   assistantQuestion,
   buildTranscript,
@@ -62,6 +70,7 @@ const CLOSE_CONFIRM_ID = `${PREFIX}close-confirm`;
 const CLOSE_CANCEL_ID = `${PREFIX}close-cancel`;
 const CLAIM_ID = `${PREFIX}claim`;
 const CALL_OWNER_ID = `${PREFIX}call-owner`;
+const KEEP_OPEN_ID = `${PREFIX}keep-open`;
 /** The ticket panel is found again by this ID prefix on its buttons. */
 export const TICKET_PANEL_MARKER = OPEN_PREFIX;
 
@@ -105,7 +114,18 @@ export function ticketButtons(): ActionRowBuilder<ButtonBuilder> {
 }
 
 export function ticketPanelLines(): string[] {
-  return TICKET_TYPES.map((type) => `**${type.label}:** ${type.blurb}`);
+  const status = supportStatusLine();
+  return [...(status ? [status, ''] : []), ...TICKET_TYPES.map((type) => `**${type.label}:** ${type.blurb}`)];
+}
+
+/** Redraws the ticket panel (when it has its own channel), for example when support opens or closes. */
+export async function refreshTicketPanel(client: Client): Promise<void> {
+  if (env.TICKET_PANEL_CHANNEL_ID && store) await ensurePanel(client, env.TICKET_PANEL_CHANNEL_ID, TICKET_PANEL_MARKER, buildTicketPanel(), 'ticket', { postIfMissing: false });
+}
+
+/** Tickets opened or closed since the given time, for the weekly summary and the owner's stats. Null when tickets are off. */
+export async function ticketRecordsSince(since: number): Promise<TicketRecord[] | null> {
+  return store ? store.listSince(since) : null;
 }
 
 export function buildTicketPanel() {
@@ -263,7 +283,13 @@ export async function ticketAudience(guild: Guild, channelId: string): Promise<G
 export async function noteStaffInTicket(channelId: string, staffId: string): Promise<void> {
   try {
     const record = await recordForChannel(channelId);
-    if (!record || record.claimedBy || !store) return;
+    if (!record || !store) return;
+    // The team's first reply, for the response times in the weekly summary.
+    if (!record.firstResponseAt && staffId !== record.discordUserId) {
+      record.firstResponseAt = Date.now();
+      await store.markFirstResponse(record.number, record.firstResponseAt);
+    }
+    if (record.claimedBy) return;
     record.claimedBy = staffId;
     await store.claim(record.number, staffId);
     logger.info(`[TCP Tickets] ${staffId} joined ${formatTicketNumber(record.number)}; the assistant steps back.`);
@@ -382,6 +408,7 @@ function introMessage(number: number, type: TicketType, user: User, answers: Rec
       ...answersToFields(type, answers),
       { name: 'Opened by', value: `<@${user.id}>`, inline: true },
       { name: 'Opened', value: `<t:${Math.floor(now / 1000)}:R>`, inline: true },
+      ...(supportOfflineField(now) ? [supportOfflineField(now)!] : []),
     ],
   });
   return {
@@ -538,6 +565,10 @@ async function claimTicket(interaction: ButtonInteraction, record: TicketRecord)
   // Answer the button first (Discord allows 3 seconds), then record it.
   await interaction.update({ embeds, components: [ticketControls(type, interaction.user.id)] });
   await store?.claim(record.number, interaction.user.id).catch((error: unknown) => logger.warn({ err: error }, '[TCP Tickets] Could not record a claim'));
+  if (!record.firstResponseAt && store) {
+    record.firstResponseAt = Date.now();
+    await store.markFirstResponse(record.number, record.firstResponseAt).catch(() => undefined);
+  }
   if (interaction.channel && 'send' in interaction.channel) {
     await interaction.channel.send(notice(`<@${interaction.user.id}> has this ticket now. The assistant will stay quiet unless you @mention it.`, { tone: 'success' }));
   }
@@ -598,41 +629,58 @@ export async function fetchTranscriptMessages(channel: GuildTextBasedChannel): P
 
 async function closeTicket(interaction: ButtonInteraction, record: TicketRecord): Promise<void> {
   const channel = interaction.channel;
-  if (!channel || channel.isDMBased() || !channel.isTextBased() || closing.has(channel.id)) return;
+  if (!channel || channel.isDMBased() || !channel.isTextBased()) return;
+  const closerName = interaction.member && 'displayName' in interaction.member ? interaction.member.displayName : interaction.user.username;
+  await closeTicketChannel(interaction.client, channel, record, { id: interaction.user.id, name: closerName });
+}
+
+/** The 1-5 star buttons sent with a closed ticket's transcript. */
+function ratingRow(number: number) {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    [1, 2, 3, 4, 5].map((stars) => new ButtonBuilder().setCustomId(`${RATE_PREFIX}${number}:${stars}`).setLabel(ratingLabel(stars)).setStyle(ButtonStyle.Secondary)),
+  );
+}
+
+/**
+ * Closes a ticket: a transcript to the log channel and the member (with the rating buttons), then the channel
+ * is deleted. `closer.id` is 'auto' when the bot closes an idle ticket.
+ */
+async function closeTicketChannel(client: Client, channel: GuildTextBasedChannel, record: TicketRecord, closer: { id: string; name: string }): Promise<void> {
+  if (closing.has(channel.id)) return;
   closing.add(channel.id);
-  const client = interaction.client;
   const now = Date.now();
   const type = ticketType(record.kind);
+  const auto = closer.id === 'auto';
+  const closedByText = auto ? 'the bot, after no reply for 3 days' : `<@${closer.id}>`;
   try {
     await channel.send({
       embeds: [
         tcpEmbed({
           title: 'Ticket closed',
-          description: `Closed by <@${interaction.user.id}>. A transcript has been saved, and this channel will be deleted in ${DELETE_DELAY_MS / 1000} seconds.`,
+          description: `Closed by ${closedByText}. A transcript has been saved, and this channel will be deleted in ${DELETE_DELAY_MS / 1000} seconds.`,
           tone: 'muted',
         }),
       ],
     });
     const { messages, names } = await fetchTranscriptMessages(channel);
     const opener = names.get(record.discordUserId) ?? (await client.users.fetch(record.discordUserId).then((u) => u.username).catch(() => record.discordUserId));
-    const closer = interaction.member && 'displayName' in interaction.member ? interaction.member.displayName : interaction.user.username;
     const transcript = buildTranscript(
-      { number: record.number, type: type?.label ?? record.kind, openedBy: opener, openedAt: record.createdAt, closedBy: closer, closedAt: now },
+      { number: record.number, type: type?.label ?? record.kind, openedBy: opener, openedAt: record.createdAt, closedBy: auto ? 'T.C.P Assistant (no reply for 3 days)' : closer.name, closedAt: now },
       messages,
       names,
     );
     const fileName = `ticket-${String(record.number).padStart(4, '0')}.txt`;
     const file = () => new AttachmentBuilder(Buffer.from(transcript, 'utf8'), { name: fileName });
 
-    await store?.close(record.number, interaction.user.id, now);
+    await store?.close(record.number, closer.id, now);
     record.status = 'closed';
     forget(record);
-    logger.info(`[TCP Tickets] ${formatTicketNumber(record.number)} closed by ${interaction.user.id}`);
+    logger.info(`[TCP Tickets] ${formatTicketNumber(record.number)} closed by ${closer.id}`);
 
     const summary = [
       { name: 'Type', value: type?.label ?? record.kind, inline: true },
       { name: 'Member', value: `<@${record.discordUserId}>`, inline: true },
-      { name: 'Closed by', value: `<@${interaction.user.id}>`, inline: true },
+      { name: 'Closed by', value: auto ? 'Auto (no reply)' : `<@${closer.id}>`, inline: true },
       { name: 'Opened', value: `<t:${Math.floor(record.createdAt / 1000)}:f>`, inline: true },
       { name: 'Messages', value: String(messages.length), inline: true },
     ];
@@ -646,10 +694,16 @@ async function closeTicket(interaction: ButtonInteraction, record: TicketRecord)
         embeds: [
           tcpEmbed({
             title: `Your T.C.P ticket ${formatTicketNumber(record.number)} is closed`,
-            description: 'Thanks for reaching out. A copy of the conversation is attached. Need anything else? Open a new ticket any time.',
+            description: [
+              auto ? 'It was closed because nobody replied for 3 days.' : 'Thanks for reaching out.',
+              'A copy of the conversation is attached. Need anything else? Open a new ticket any time.',
+              '',
+              '**How did we do?** Rate your support below (1 to 5 stars).',
+            ].join('\n'),
           }),
         ],
         files: [file()],
+        components: [ratingRow(record.number)],
       });
     } catch (error) {
       logger.info({ err: error }, `[TCP Tickets] Could not DM the transcript to ${record.discordUserId}`);
@@ -681,6 +735,10 @@ export async function handleTicketInteraction(interaction: Interaction): Promise
     return true;
   }
   if (!interaction.isButton()) return false;
+  if (id.startsWith(RATE_PREFIX)) {
+    await rateTicket(interaction);
+    return true;
+  }
 
   const record = await recordForChannel(interaction.channelId);
   if (!record || record.status === 'closed') {
@@ -695,6 +753,14 @@ export async function handleTicketInteraction(interaction: Interaction): Promise
   }
   if (id === CALL_OWNER_ID) {
     await callOwner(interaction);
+    return true;
+  }
+  if (id === KEEP_OPEN_ID) {
+    await interaction.update({ components: [] });
+    await interaction.followUp({
+      embeds: [tcpEmbed({ title: KEPT_OPEN_TITLE, tone: 'success', description: `<@${interaction.user.id}> still needs help, so this ticket stays open. The team will get back to you.` })],
+      allowedMentions: { parse: [] },
+    });
     return true;
   }
   if (id === CLOSE_ID) {
@@ -725,4 +791,76 @@ export async function handleTicketInteraction(interaction: Interaction): Promise
     return true;
   }
   return false;
+}
+
+// ---- ratings -------------------------------------------------------------------------------------
+
+/** A star button on a closed ticket's DM: the rating is saved, and a low one is flagged to the team. */
+async function rateTicket(interaction: ButtonInteraction): Promise<void> {
+  const rating = parseRating(interaction.customId);
+  if (!rating || !store) {
+    await interaction.reply({ ...notice('Ratings are not available right now.', { tone: 'muted' }), ephemeral: true });
+    return;
+  }
+  await store.rate(rating.number, rating.stars);
+  await interaction.update({ components: [] });
+  await interaction.followUp({ ...notice(`Thanks! You rated ticket ${formatTicketNumber(rating.number)} ${ratingLabel(rating.stars)}.`, { tone: 'success' }) });
+  logger.info(`[TCP Tickets] ${formatTicketNumber(rating.number)} rated ${rating.stars} by ${interaction.user.id}`);
+  if (rating.stars <= 2) {
+    await ticketLog(interaction.client, {
+      embeds: [
+        tcpEmbed({
+          title: `Low rating: ticket ${formatTicketNumber(rating.number)}`,
+          tone: 'warning',
+          description: `<@${interaction.user.id}> rated their ticket ${ratingLabel(rating.stars)} (${rating.stars} of 5). The transcript is above in this channel.`,
+          timestamp: true,
+        }),
+      ],
+    });
+  }
+}
+
+// ---- auto-close ----------------------------------------------------------------------------------
+
+/**
+ * Every half hour: a ticket whose member has not answered the team for 48 hours gets a warning (with a button
+ * to keep it open), and is closed 24 hours later if they still have not. A member waiting for the team is
+ * never closed (autoCloseAction in ticketRules.ts).
+ */
+export function startTicketAutoClose(client: Client): void {
+  everyInterval('ticket-auto-close', 30 * 60 * 1000, async () => {
+    if (!store) return;
+    const now = Date.now();
+    for (const record of await store.listOpen()) {
+      if (!record.channelId) continue;
+      const channel = client.channels.cache.get(record.channelId);
+      if (!channel || channel.isDMBased() || !channel.isTextBased()) continue;
+      const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
+      if (!fetched) continue;
+      const messages = [...fetched.values()]
+        .filter((message) => !message.system)
+        .map((message) => ({ authorId: message.author.id, bot: message.author.bot, at: message.createdTimestamp, title: message.embeds[0]?.title ?? null }));
+      const action = autoCloseAction({ memberId: record.discordUserId, createdAt: record.createdAt, messages, now });
+      if (action === 'warn') {
+        await channel
+          .send({
+            content: `<@${record.discordUserId}>`,
+            embeds: [
+              tcpEmbed({
+                title: CLOSING_SOON_TITLE,
+                tone: 'warning',
+                description: 'We have not heard back from you for 2 days. This ticket closes in **24 hours** unless you reply or press the button below.',
+              }),
+            ],
+            components: [new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId(KEEP_OPEN_ID).setLabel('I still need help').setStyle(ButtonStyle.Primary))],
+            allowedMentions: { users: [record.discordUserId] },
+          })
+          .catch((error: unknown) => logger.warn({ err: error }, '[TCP Tickets] Could not warn an idle ticket'));
+        logger.info(`[TCP Tickets] ${formatTicketNumber(record.number)} warned: no reply for 48 hours`);
+      } else if (action === 'close') {
+        logger.info(`[TCP Tickets] ${formatTicketNumber(record.number)} auto-closed: no reply`);
+        await closeTicketChannel(client, channel, record, { id: 'auto', name: 'T.C.P Assistant' });
+      }
+    }
+  });
 }
