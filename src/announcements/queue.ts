@@ -9,6 +9,28 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // Squad Finder: LFG matchmaking in the DayZ category (2026-11-10). Posted on the owner's word, pinging everyone.
+    id: '2026-11-squad-finder',
+    date: '2026-11-10',
+    ready: true,
+    title: '🎯 NEW: SQUAD FINDER. STOP SPAMMING LFG, GET MATCHED',
+    description:
+      'No more "LF2M" posts buried in chat. **Squad Finder** is live in the DayZ category. 🔥\n\n' +
+      '🪪 **YOUR SURVIVOR ID.** Fill it in once: PlayStation or Xbox, region, language, how you play (PvP hunter, base building, raiding, military loot runs, fresh spawn grind and more), mic, experience and the servers you play. Your gamertag is only shown to the squads you are matched with.\n\n' +
+      '🎯 **PRESS DEPLOY.** Pick what you want to play right now and how big a squad: duo, trio, 4 or 5. Nothing gets posted in chat; you wait in the queue. You are matched with survivors on your platform, in your region and language, who play like you, and the search widens the longer you wait.\n\n' +
+      '✅ **READY CHECK.** Squad found? Everyone is pinged in #lfg with the match score and 2 minutes to accept. Someone bails? Everyone who accepted goes straight back to the front of the queue.\n\n' +
+      "🪖 **YOUR SQUAD'S PRIVATE BASE.** Your squad gets its own private text and voice channel with everyone's card and gamertag. Need one more? Press **➕ Looking for +1** and the queue fills the slot. The channels clean themselves up when you are done.\n\n" +
+      "🛡️ **A SQUAD THAT WON'T KILL YOU FOR YOUR BEANS.** After every squad, rate your squadmates: 🎙️ Great comms, 🛡️ Trustworthy, 🎯 Clutch, 😎 Chill, 🧭 Good leader. Commendations show on your Survivor ID and on the 🏆 Most trusted board. Pick **🤝 Play again** and you get pinged when they deploy. Got betrayed? Report it privately: you will never be matched with them again, and players reported by several survivors only get matched with each other.\n\n" +
+      '⭐ **ELITE SUPPORTERS** get priority in the queue and a star on their card.',
+    fields: [
+      { name: '🚀 Get in', value: 'Go to **#lfg** in the DayZ category, press **🪪 My Survivor ID**, then **🎯 Deploy**.', inline: false },
+      { name: '🎮 Platforms', value: 'PlayStation and Xbox. DayZ has no crossplay, so you are only matched on your own platform.', inline: false },
+      { name: '❓ Questions?', value: 'Ask in <#1560492140923191356>.', inline: false },
+    ],
+    gif: 'tcp-squad-finder.gif',
+    ping: '@everyone',
+  },
+  {
     // The bot's November upgrade: Fix my aim, replies in the member's language, the team teaching the assistant,
     // admins answering tickets, ratings and reminders, Premium builds by DM, Veteran roles, leak protection
     // (2026-11-10). Previewed to the owner first, then posted on the owner's word.
