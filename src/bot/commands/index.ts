@@ -18,6 +18,7 @@ import { handleAnnouncementsCommand } from '../../announcements/announcements.js
 import { handleAuditCommand } from '../../premium/eliteAudit.js';
 import { handleStatsCommand } from '../../owner/stats.js';
 import { handleHoursCommand } from '../../tickets/supportHours.js';
+import { handleTicTacToeCommand } from '../../fun/ticTacToe.js';
 import { handleTeachCommand } from '../../knowledge/taughtAnswers.js';
 import { handleTuneCommand } from '../../tuning/tuningWizard.js';
 import { askChannelRedirect, assistantAllowedIn } from '../askChannel.js';
@@ -93,6 +94,18 @@ export function createCommands(
         ),
     )
     .addSubcommand((command) => command.setName('tune').setDescription('Fix my aim: a step-by-step walk-through for recoil and aim problems'))
+    .addSubcommand((command) =>
+      command
+        .setName('tictactoe')
+        .setDescription('Play Tic Tac Toe against T.C.P')
+        .addStringOption((option) =>
+          option
+            .setName('difficulty')
+            .setDescription('How well T.C.P plays (default Normal)')
+            .setRequired(false)
+            .addChoices({ name: 'Easy', value: 'easy' }, { name: 'Normal', value: 'normal' }, { name: 'Hard (unbeatable)', value: 'hard' }),
+        ),
+    )
     .addSubcommand((command) => command.setName('stats').setDescription('Owner: subscribers, revenue, license holders and support this week'))
     .addSubcommand((command) => command.setName('audit').setDescription('Owner: who holds the Elite role without a subscription or days'))
     .addSubcommand((command) =>
@@ -147,6 +160,10 @@ export function createCommands(
         }
         if (subcommand === 'tune') {
           await handleTuneCommand(interaction);
+          return;
+        }
+        if (subcommand === 'tictactoe') {
+          await handleTicTacToeCommand(interaction);
           return;
         }
         if (subcommand === 'stats') {
@@ -255,6 +272,7 @@ export function helpEmbed() {
       : '**Ask a question:** @mention **T.C.P. Assistant**, or use `/tcp ask`.',
     '**Open a ticket:** for anything the assistant cannot solve, press **Open a ticket** on the support panel.',
     '**Start over:** `/tcp reset-session` clears your conversation with the assistant.',
+    '**Take a break:** `/tcp tictactoe` for a game of Tic Tac Toe against T.C.P (Easy, Normal or Hard).',
   ];
   return tcpEmbed({ title: 'T.C.P. Assistant', description: lines.join('\n') });
 }

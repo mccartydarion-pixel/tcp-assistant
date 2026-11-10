@@ -291,6 +291,10 @@ Tickets are stored in Postgres when `DATABASE_URL` is a Postgres address (the `s
 
 `src/tuning/tuningWizard.ts`: a **🎯 Fix my aim** button on the help channel panel and `/tcp tune`. A private walk-through: Premium or free (and, on Premium, a recorded Workshop slot or not), the DayZ sensitivity check, then the problem (climbs, sinks, drifts left or right, hard to stay on target, too fast, laggy or floaty, small movements then a jump, moves at rest), then one change at a time from the Tuning Guide in the documentation (`src/tuning/tuningWizardRules.ts`), with **Fixed**, **Better, not yet**, **No change** and **Worse**. A step that helps is repeated up to its limit; **Worse** says to put the setting back. Premium names the Menu 2.0 groups and uses Scale Y / Scale X on a recorded pull (Vertical and Horizontal are locked there); the free version names its pages. At the end it offers a Setup & tuning ticket with everything tried filled in.
 
+## Tic Tac Toe
+
+`/tcp tictactoe` (optional `difficulty`: Easy, Normal, Hard) posts a board of nine buttons in the channel; the member is ❌ and plays first, T.C.P answers with ⭕ in the same update. Only the member who started can press the buttons (anyone else is told to start their own). Hard plays perfectly (minimax over the whole game, a random choice between equally good moves), Normal takes a win, blocks yours and otherwise plays its best 60% of the time (a fork beats it), Easy takes a win when it sees one and otherwise plays anywhere (`src/fun/ticTacToeRules.ts`). The game lives entirely in the buttons' IDs (`tcp-ttt:`), so it survives a redeploy and nothing is held in memory; a second press sent before the board redrew is ignored. At the end: **Play again** (who went second goes first) and the other two difficulties. Each member's won / lost / drawn record is in the `bot_state` table (`ttt.record.<id>`); giving up counts as a loss.
+
 ## Unanswered questions and teaching the assistant
 
 When the documentation does not cover a question, the AI ends its reply with a marker the bot removes before replying (`src/ai/unansweredMarker.ts`). The bot then posts the question, who asked, where, and the closest documentation sections to `LOG_CHANNEL_ID`, at most once a day per question. Questions with no documentation match at all are logged too.
@@ -347,6 +351,7 @@ These commands require owner/admin permissions and should be restricted in Disco
 - `/tcp stats`, `/tcp audit`, `/tcp hours` (owner only; see above)
 - `/tcp teach`, `/tcp taught`, `/tcp forget` (the team)
 - `/tcp tune` (everyone: Fix my aim)
+- `/tcp tictactoe` (everyone: Tic Tac Toe against T.C.P)
 - `/tcp summarize`
 - `/tcp escalate`
 - `/tcp resolve`
