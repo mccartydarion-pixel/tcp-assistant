@@ -11,11 +11,10 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
     // The bot's November upgrade: Fix my aim, replies in the member's language, the team teaching the assistant,
     // admins answering tickets, ratings and reminders, Premium builds by DM, Veteran roles, leak protection
-    // (2026-11-10). A preview for the owner first.
+    // (2026-11-10). Previewed to the owner first, then posted on the owner's word.
     id: '2026-11-assistant-upgrade',
     date: '2026-11-10',
-    ready: false,
-    previewToOwner: true,
+    ready: true,
     title: '🤖 T.C.P ASSISTANT UPGRADE: FIX MY AIM, YOUR LANGUAGE, FASTER SUPPORT',
     description:
       'The T.C.P Assistant just got its biggest upgrade yet. 🔥\n\n' +
@@ -30,6 +29,7 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
       { name: '💎 Not Elite yet?', value: 'Press **Subscribe** on the license panel: monthly or yearly, Premium script in your DMs and every new build after it.', inline: false },
       { name: '❓ Questions?', value: 'Ask in <#1560492140923191356>, in any language.', inline: false },
     ],
+    gif: 'tcp-assistant-upgrade.gif',
     ping: '@everyone',
   },
   {
