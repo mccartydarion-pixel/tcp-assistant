@@ -282,6 +282,7 @@ export function helpEmbed() {
     '**Start over:** `/tcp reset-session` clears your conversation with the assistant.',
     '**Take a break:** `/tcp tictactoe` for Tic Tac Toe against T.C.P (Easy, Normal or Hard), `/tcp tictactoe opponent:@name` to challenge a member, `/tcp leaderboard` for the top players.',
     '**Casino:** `/casino` for Blackjack, Slots, Mines and Coinflip with free play-money chips; `/casino daily` for more chips.',
+    '**Find a squad:** press **🎯 Deploy** in a game\'s lfg channel (Squad Finder).',
   ];
   return tcpEmbed({ title: 'T.C.P. Assistant', description: lines.join('\n') });
 }

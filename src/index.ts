@@ -28,6 +28,7 @@ import { announceRelease } from './premium/releaseAlerts.js';
 import { startEliteAudit } from './premium/eliteAudit.js';
 import { startSupportSummary } from './tickets/ticketFeedback.js';
 import { initCasino } from './casino/casino.js';
+import { initLfg } from './lfg/lfg.js';
 import { loadSupportHours, onSupportStatusChange, startSupportHoursWatch } from './tickets/supportHours.js';
 import { startHelpCleanup } from './help/helpCleanup.js';
 import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
@@ -51,7 +52,8 @@ const status: BotStatus = {
 const READY_TIMEOUT_MS = 60_000;
 
 function createClient(commands: Command[], withMembers: boolean): Client {
-  const intents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent];
+  // Voice states: Squad Finder sees whether a squad's voice channel is in use (not a privileged intent).
+  const intents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates];
   // Server Members Intent: lets the bot see members joining, for the welcome greeting. It is privileged,
   // so Discord refuses the connection unless it is switched on in the Developer Portal.
   if (withMembers) intents.push(GatewayIntentBits.GuildMembers);
@@ -220,6 +222,7 @@ async function start(): Promise<void> {
   startSupportSummary(client);
   startEliteAudit(client);
   await initCasino();
+  await initLfg(client);
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);

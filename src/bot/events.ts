@@ -46,6 +46,7 @@ import { handleTeachInteraction } from '../knowledge/taughtAnswers.js';
 import { handleTuneInteraction } from '../tuning/tuningWizard.js';
 import { handleTicTacToeInteraction } from '../fun/ticTacToe.js';
 import { handleCasinoInteraction } from '../casino/casino.js';
+import { handleLfgInteraction } from '../lfg/lfg.js';
 
 export function registerEvents(
   client: Client,
@@ -68,6 +69,7 @@ export function registerEvents(
           (await handleTuneInteraction(interaction)) ||
           (await handleTicTacToeInteraction(interaction)) ||
           (await handleCasinoInteraction(interaction)) ||
+          (await handleLfgInteraction(interaction)) ||
           (await handleTeachInteraction(interaction)) ||
           (await handleAuditInteraction(interaction)) ||
           (await handleSettingsInteraction(interaction)) ||
