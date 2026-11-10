@@ -32,6 +32,9 @@ const envSchema = z.object({
   // TICKET_PANEL_CHANNEL_ID, or the help channel when unset. Tickets are created in SUPPORT_CATEGORY_ID.
   TICKET_LOG_CHANNEL_ID: z.string().optional(),
   TICKET_PANEL_CHANNEL_ID: z.string().optional(),
+  // Roles that answer tickets with the owner (comma-separated IDs). When unset: roles named like Admin,
+  // Moderator, Mod, Staff or Support. Members with the Administrator permission always count.
+  TICKET_STAFF_ROLE_IDS: z.string().optional(),
   // Roles given by the Get started setup; found or created by name when unset.
   PLAYSTATION_ROLE_ID: z.string().optional(),
   XBOX_ROLE_ID: z.string().optional(),

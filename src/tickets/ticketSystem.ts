@@ -31,6 +31,7 @@ import type { ConversationMemory } from '../ai/conversationMemory.js';
 import { extractQuestionDetails } from '../ai/question.js';
 import { reportUnanswered } from '../ai/unanswered.js';
 import { memberLicenceEmbed } from '../license/licensePanel.js';
+import { isStaffMember, isStaffUser, staffRoles } from '../bot/staff.js';
 import { serverMapFor } from '../server/serverMap.js';
 import { paymentButtons } from '../payments/stripeBilling.js';
 import { createTicketStore, type TicketRecord, type TicketStore } from './ticketStore.js';
@@ -49,9 +50,10 @@ import {
 
 // T.C.P's own support tickets. A member picks a type on the ticket panel (or presses Still stuck on a help
 // answer), fills in a short form, and gets a private channel in SUPPORT_CATEGORY_ID that only they, the
-// owner and the bot can see. For setup and bug tickets the assistant takes a first look, and goes quiet
-// once the owner claims the ticket or writes in it. Closing posts a transcript to the ticket log channel,
-// DMs it to the member, and deletes the channel.
+// T.C.P team (the owner and the staff roles, see bot/staff.ts) and the bot can see. For setup and bug
+// tickets the assistant takes a first look, and goes quiet once someone on the team claims the ticket or
+// writes in it. Closing posts a transcript to the ticket log channel, DMs it to the member, and deletes the
+// channel.
 const PREFIX = 'tcp-ticket:';
 const OPEN_PREFIX = `${PREFIX}open:`;
 const FORM_PREFIX = `${PREFIX}form:`;
@@ -110,7 +112,7 @@ export function buildTicketPanel() {
   const embed = tcpEmbed({
     title: 'Need a hand? Open a ticket',
     description: [
-      'Pick what it is about below. You get a private channel that only you and the owner can see.',
+      'Pick what it is about below. You get a private channel that only you and the T.C.P team can see.',
       '',
       ...ticketPanelLines(),
       '',
@@ -141,6 +143,41 @@ export async function initTickets(client: Client, deps: { assistant: AssistantSe
   }
   if (env.TICKET_PANEL_CHANNEL_ID) await ensurePanel(client, env.TICKET_PANEL_CHANNEL_ID, TICKET_PANEL_MARKER, buildTicketPanel(), 'ticket');
   else logger.info('[TCP Tickets] TICKET_PANEL_CHANNEL_ID not set; the ticket buttons are on the help channel panel.');
+  await syncStaffAccess(client);
+}
+
+/**
+ * Says which roles answer tickets, and lets them into tickets that were opened before they were staff (or
+ * before staff could answer tickets at all). Never throws.
+ */
+async function syncStaffAccess(client: Client): Promise<void> {
+  try {
+    const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID) ?? (await client.guilds.fetch(env.DISCORD_GUILD_ID));
+    const roles = staffRoles(guild);
+    logger.info(
+      roles.length > 0
+        ? `[TCP Tickets] Staff who answer tickets: ${roles.map((role) => role.name).join(', ')}, plus anyone with Administrator.`
+        : '[TCP Tickets] No staff role found: only the owner and members with Administrator answer tickets. Name a role Admin, Moderator or Staff, or set TICKET_STAFF_ROLE_IDS.',
+    );
+    if (roles.length === 0) return;
+    let opened = 0;
+    for (const channel of guild.channels.cache.values()) {
+      if (channel.type !== ChannelType.GuildText || channel.parentId !== env.SUPPORT_CATEGORY_ID) continue;
+      if (!(await recordForChannel(channel.id))) continue;
+      for (const role of roles) {
+        if (channel.permissionOverwrites.cache.has(role.id)) continue;
+        await channel.permissionOverwrites.edit(
+          role.id,
+          { ViewChannel: true, SendMessages: true, ReadMessageHistory: true, AttachFiles: true, EmbedLinks: true },
+          { reason: 'T.C.P staff answer tickets' },
+        );
+        opened += 1;
+      }
+    }
+    if (opened > 0) logger.info(`[TCP Tickets] Let staff into ${opened} open ticket permission(s).`);
+  } catch (error) {
+    logger.warn({ err: error }, '[TCP Tickets] Could not check staff access to tickets');
+  }
 }
 
 // ---- records -------------------------------------------------------------------------------------
@@ -222,16 +259,16 @@ export async function ticketAudience(guild: Guild, channelId: string): Promise<G
   }
 }
 
-/** The owner wrote in a ticket: from now on it is theirs, and the assistant steps back. */
-export async function noteOwnerInTicket(channelId: string): Promise<void> {
+/** Someone on the team (the owner or staff) wrote in a ticket: from now on it is theirs, and the assistant steps back. */
+export async function noteStaffInTicket(channelId: string, staffId: string): Promise<void> {
   try {
     const record = await recordForChannel(channelId);
-    if (!record || record.claimedBy || !store || !env.OWNER_USER_ID) return;
-    record.claimedBy = env.OWNER_USER_ID;
-    await store.claim(record.number, env.OWNER_USER_ID);
-    logger.info(`[TCP Tickets] Owner joined ${formatTicketNumber(record.number)}; the assistant steps back.`);
+    if (!record || record.claimedBy || !store) return;
+    record.claimedBy = staffId;
+    await store.claim(record.number, staffId);
+    logger.info(`[TCP Tickets] ${staffId} joined ${formatTicketNumber(record.number)}; the assistant steps back.`);
   } catch (error) {
-    logger.warn({ err: error }, '[TCP Tickets] Could not mark a ticket as taken by the owner');
+    logger.warn({ err: error }, '[TCP Tickets] Could not mark a ticket as taken by the team');
   }
 }
 
@@ -306,6 +343,8 @@ function ticketPermissions(guild: Guild, memberId: string, botId: string): Overw
     { id: botId, type: OverwriteType.Member, allow: [...talk, PermissionFlagsBits.ManageChannels] },
   ];
   if (env.OWNER_USER_ID && env.OWNER_USER_ID !== memberId) overwrites.push({ id: env.OWNER_USER_ID, type: OverwriteType.Member, allow: talk });
+  // Staff roles answer tickets too (members with Administrator see every channel anyway).
+  for (const role of staffRoles(guild)) overwrites.push({ id: role.id, type: OverwriteType.Role, allow: talk });
   return overwrites;
 }
 
@@ -314,20 +353,27 @@ function ticketControls(type: TicketType, claimedBy: string | null) {
     new ButtonBuilder().setCustomId(CLOSE_ID).setLabel('Close ticket').setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
       .setCustomId(CLAIM_ID)
-      .setLabel(claimedBy ? 'Claimed' : 'Claim (owner)')
+      .setLabel(claimedBy ? 'Claimed' : 'Claim (staff)')
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(Boolean(claimedBy)),
   );
-  if (type.assistantFirst) row.addComponents(new ButtonBuilder().setCustomId(CALL_OWNER_ID).setLabel('Call the owner').setStyle(ButtonStyle.Primary));
+  if (type.assistantFirst) row.addComponents(new ButtonBuilder().setCustomId(CALL_OWNER_ID).setLabel('Call the team').setStyle(ButtonStyle.Primary));
   return row;
 }
 
-function introMessage(number: number, type: TicketType, user: User, answers: Record<string, string>, now: number) {
-  // No second ping when the owner opens a ticket themselves.
-  const ownerId = type.callOwner && env.OWNER_USER_ID !== user.id ? env.OWNER_USER_ID : undefined;
+/** Who to ping for the team: the owner and the staff roles (never the member themselves). */
+function teamPing(guild: Guild | null, memberId: string): { content: string; users: string[]; roles: string[] } {
+  const users = env.OWNER_USER_ID && env.OWNER_USER_ID !== memberId ? [env.OWNER_USER_ID] : [];
+  const roles = guild ? staffRoles(guild).map((role) => role.id) : [];
+  return { content: [...users.map((id) => `<@${id}>`), ...roles.map((id) => `<@&${id}>`)].join(' '), users, roles };
+}
+
+function introMessage(number: number, type: TicketType, user: User, answers: Record<string, string>, now: number, guild: Guild | null) {
+  // The team is pinged for licence and payment tickets; no ping for the owner opening a ticket themselves.
+  const team = type.callOwner ? teamPing(guild, user.id) : { content: '', users: [], roles: [] };
   const description = type.assistantFirst
-    ? `Thanks <@${user.id}>! I'll take a first look below. If that doesn't sort it, press **Call the owner** and they'll jump in.`
-    : `Thanks <@${user.id}>! The owner has been notified and will be with you soon. Add anything that helps, like screenshots.`;
+    ? `Thanks <@${user.id}>! I'll take a first look below. If that doesn't sort it, press **Call the team** and someone will jump in.`
+    : `Thanks <@${user.id}>! The T.C.P team has been notified and will be with you soon. Add anything that helps, like screenshots.`;
   const embed = tcpEmbed({
     title: `Ticket ${formatTicketNumber(number)} · ${type.label}`,
     description,
@@ -339,10 +385,10 @@ function introMessage(number: number, type: TicketType, user: User, answers: Rec
     ],
   });
   return {
-    content: ownerId ? `<@${user.id}> <@${ownerId}>` : `<@${user.id}>`,
+    content: team.content ? `<@${user.id}> ${team.content}` : `<@${user.id}>`,
     embeds: [embed],
     components: [ticketControls(type, null)],
-    allowedMentions: { users: ownerId ? [user.id, ownerId] : [user.id] },
+    allowedMentions: { users: [user.id, ...team.users], roles: team.roles },
   };
 }
 
@@ -437,7 +483,7 @@ async function createTicket(interaction: ModalSubmitInteraction, type: TicketTyp
     try {
       await store.setChannel(number, channel.id);
       // Without its opening message the ticket would have no Close button, so a failure here undoes it.
-      await channel.send(introMessage(number, type, user, answers, now));
+      await channel.send(introMessage(number, type, user, answers, now, guild));
     } catch (error) {
       logger.error({ err: error }, '[TCP Tickets ERROR] Could not set up a new ticket channel; removing it.');
       await store.close(number, 'failed', Date.now()).catch(() => undefined);
@@ -479,8 +525,8 @@ async function createTicket(interaction: ModalSubmitInteraction, type: TicketTyp
 // ---- in-ticket buttons ---------------------------------------------------------------------------
 
 async function claimTicket(interaction: ButtonInteraction, record: TicketRecord): Promise<void> {
-  if (!isOwner(interaction.user.id)) {
-    await interaction.reply({ ...notice('Only the owner can claim a ticket.', { tone: 'danger' }), ephemeral: true });
+  if (!(await isStaffInteraction(interaction))) {
+    await interaction.reply({ ...notice('Only the T.C.P team can claim a ticket.', { tone: 'danger' }), ephemeral: true });
     return;
   }
   record.claimedBy = interaction.user.id;
@@ -497,20 +543,28 @@ async function claimTicket(interaction: ButtonInteraction, record: TicketRecord)
   }
 }
 
+/** Whether the person who pressed a button is on the T.C.P team (the owner, a staff role or an Administrator). */
+async function isStaffInteraction(interaction: ButtonInteraction): Promise<boolean> {
+  if (isOwner(interaction.user.id)) return true;
+  if (interaction.inCachedGuild()) return isStaffMember(interaction.member);
+  return isStaffUser(interaction.guild, interaction.user.id);
+}
+
 async function callOwner(interaction: ButtonInteraction): Promise<void> {
-  if (!env.OWNER_USER_ID) {
-    await interaction.reply({ ...notice('The owner account is not set up yet. Leave your details here for now.', { tone: 'muted' }), ephemeral: true });
+  const team = teamPing(interaction.guild, interaction.user.id);
+  if (!team.content) {
+    await interaction.reply({ ...notice('Nobody on the team is set up to be called yet. Leave your details here for now.', { tone: 'muted' }), ephemeral: true });
     return;
   }
   if (ownerCalled.has(interaction.channelId)) {
-    await interaction.reply({ ...notice('The owner has already been called for this ticket.', { tone: 'muted' }), ephemeral: true });
+    await interaction.reply({ ...notice('The team has already been called for this ticket.', { tone: 'muted' }), ephemeral: true });
     return;
   }
   ownerCalled.add(interaction.channelId);
   await interaction.reply({
-    content: `<@${env.OWNER_USER_ID}>`,
-    embeds: [tcpEmbed({ title: 'Owner called', description: `<@${interaction.user.id}> asked for the owner. They'll be with you soon.`, tone: 'warning' })],
-    allowedMentions: { users: [env.OWNER_USER_ID] },
+    content: team.content,
+    embeds: [tcpEmbed({ title: 'Team called', description: `<@${interaction.user.id}> asked for the T.C.P team. Someone will be with you soon.`, tone: 'warning' })],
+    allowedMentions: { users: team.users, roles: team.roles },
   });
 }
 
@@ -633,7 +687,7 @@ export async function handleTicketInteraction(interaction: Interaction): Promise
     await interaction.reply({ ...notice('This ticket is already closed.', { tone: 'muted' }), ephemeral: true });
     return true;
   }
-  const allowed = interaction.user.id === record.discordUserId || isOwner(interaction.user.id);
+  const allowed = interaction.user.id === record.discordUserId || (await isStaffInteraction(interaction));
 
   if (id === CLAIM_ID) {
     await claimTicket(interaction, record);
@@ -645,7 +699,7 @@ export async function handleTicketInteraction(interaction: Interaction): Promise
   }
   if (id === CLOSE_ID) {
     if (!allowed) {
-      await interaction.reply({ ...notice('Only the member who opened this ticket, or the owner, can close it.', { tone: 'danger' }), ephemeral: true });
+      await interaction.reply({ ...notice('Only the member who opened this ticket, or the T.C.P team, can close it.', { tone: 'danger' }), ephemeral: true });
       return true;
     }
     await interaction.reply({

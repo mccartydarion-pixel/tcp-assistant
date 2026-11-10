@@ -33,12 +33,13 @@ import {
   handleTicketChannelDeleted,
   handleTicketInteraction,
   isAssistantQuietInTicket,
-  noteOwnerInTicket,
+  noteStaffInTicket,
   ticketAudience,
 } from '../tickets/ticketSystem.js';
 import { isTicketTopic } from '../tickets/ticketRules.js';
 import { serverMapFor } from '../server/serverMap.js';
 import { askChannelRedirect } from './askChannel.js';
+import { isStaffMember } from './staff.js';
 
 export function registerEvents(
   client: Client,
@@ -126,8 +127,9 @@ export function registerEvents(
 
     // The help channel and its threads: every question is answered there, no @mention needed.
     if (isHelpMessage(message)) {
-      const fromOwner = Boolean(env.OWNER_USER_ID) && message.author.id === env.OWNER_USER_ID;
-      await handleHelpMessage(message, fromOwner, isMentioned);
+      // The owner and staff are treated alike: their messages are not answered unless they @mention the bot,
+      // and once they write in a member's thread the assistant leaves it to them.
+      await handleHelpMessage(message, isStaffMember(message.member), isMentioned);
       return;
     }
 
@@ -156,10 +158,10 @@ export function registerEvents(
       return;
     }
 
-    const isOwner = Boolean(env.OWNER_USER_ID) && message.author.id === env.OWNER_USER_ID;
+    // The owner or staff writing in a T.C.P ticket takes it over; the assistant steps back.
+    const isOwner = isStaffMember(message.member);
     if (isOwner) {
-      // The owner writing in a T.C.P ticket takes it over; the assistant steps back.
-      if (isTicket) await noteOwnerInTicket(message.channelId);
+      if (isTicket) await noteStaffInTicket(message.channelId, message.author.id);
       if (specialIntentRouter.isEscalated(guildId, message.channelId)) {
         specialIntentRouter.markOwnerJoined(guildId, message.channelId);
         logger.info(`[TCP Escalation] Owner joined conversation: ${message.channelId}`);

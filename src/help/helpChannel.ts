@@ -20,6 +20,7 @@ import { reportUnanswered } from '../ai/unanswered.js';
 import { serverMapFor } from '../server/serverMap.js';
 import { startTicket, ticketButtons, ticketPanelLines, ticketsEnabled } from '../tickets/ticketSystem.js';
 import { cleanUpSolvedSoon } from './helpCleanup.js';
+import { isStaffUser } from '../bot/staff.js';
 import { HELP_PANEL_ID, SOLVED_GRACE_MS, SOLVED_NOTICE } from './helpCleanupRules.js';
 
 // The help channel (HELP_CHANNEL_ID): the assistant answers every question there, no @mention needed. Each
@@ -253,8 +254,8 @@ export async function handleHelpInteraction(interaction: Interaction): Promise<b
 
   if (id.startsWith(SOLVED_PREFIX)) {
     const askerId = id.slice(SOLVED_PREFIX.length);
-    const owner = Boolean(env.OWNER_USER_ID) && interaction.user.id === env.OWNER_USER_ID;
-    if (interaction.user.id !== askerId && !owner) {
+    const owner = interaction.user.id === askerId || (await isStaffUser(interaction.guild, interaction.user.id));
+    if (!owner) {
       await interaction.reply({ ...notice('Only the person who asked can mark this solved.', { tone: 'muted' }), ephemeral: true });
       return true;
     }

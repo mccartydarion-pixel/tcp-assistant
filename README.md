@@ -270,12 +270,14 @@ Answers everywhere (help channel, @mentions, `/tcp ask`, tickets) know the serve
 
 ## Tickets
 
-With `SUPPORT_CATEGORY_ID` set, T.C.P runs its own tickets. A member picks a type (**Licence & codes**, **Setup & tuning**, **Bug report**, **Payment & other**) on the ticket panel or with **Still stuck** under a help answer, fills in a short form, and gets a private channel such as `#ticket-0042-name` in that category that only they, the owner and the bot can see. One open ticket per member.
+With `SUPPORT_CATEGORY_ID` set, T.C.P runs its own tickets. A member picks a type (**Licence & codes**, **Setup & tuning**, **Bug report**, **Payment & other**) on the ticket panel or with **Still stuck** under a help answer, fills in a short form, and gets a private channel such as `#ticket-0042-name` in that category that only they, the T.C.P team and the bot can see. One open ticket per member.
 
-- **Licence & codes**: the owner is pinged and the member's licence status (days left, latest code) is posted straight away.
-- **Setup & tuning** and **Bug report**: the assistant takes a first look and answers follow-ups; **Call the owner** pings the owner once. The assistant stops answering once the owner presses **Claim** or writes in the ticket (it still answers if the member @mentions it).
-- **Payment & other**: the owner is pinged.
-- **Close ticket** (member or owner, with a confirmation) posts a plain-text transcript to `TICKET_LOG_CHANNEL_ID` (or `LOG_CHANNEL_ID`), DMs it to the member, and deletes the channel 10 seconds later. Opening a ticket is logged there too.
+**The team** (`src/bot/staff.ts`) is the owner, every member of a staff role, and anyone with the Administrator permission. Staff roles are `TICKET_STAFF_ROLE_IDS` (comma-separated role IDs) or, when that is unset, the roles named Admin, Administrator, Moderator, Mod, Staff, Support or Helper (exact names, ignoring case, emoji and dashes, so "Elite Supporter" is not one). New tickets give the staff roles access; at startup the bot lets them into tickets already open and logs which roles it found. Anyone on the team can reply, **Claim**, **Close** and is pinged where the owner is; when they write in a ticket the assistant steps back, as for the owner. The same goes for help threads: a staff member's messages there are not answered unless they @mention the bot, and they can press **Solved**.
+
+- **Licence & codes**: the team is pinged and the member's licence status (days left, latest code) is posted straight away.
+- **Setup & tuning** and **Bug report**: the assistant takes a first look and answers follow-ups; **Call the team** pings the owner and the staff roles once. The assistant stops answering once someone on the team presses **Claim** or writes in the ticket (it still answers if the member @mentions it).
+- **Payment & other**: the team is pinged.
+- **Close ticket** (the member or the team, with a confirmation) posts a plain-text transcript to `TICKET_LOG_CHANNEL_ID` (or `LOG_CHANNEL_ID`), DMs it to the member, and deletes the channel 10 seconds later. Opening a ticket is logged there too.
 
 Tickets are stored in Postgres when `DATABASE_URL` is a Postgres address (the `support_tickets` table), otherwise in the local SQLite file. Ticket numbers keep counting across redeploys only with Postgres. The bot needs **Manage Channels** in the support category, plus View Channel, Send Messages, Embed Links, Attach Files and Read Message History. If another ticket bot also creates channels in that category, remove its panel so members only see one; the bot still greets channels it did not create.
 

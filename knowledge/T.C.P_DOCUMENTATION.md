@@ -672,7 +672,7 @@ Post your question in the help channel; no @mention is needed. The assistant sta
 
 ### Opening a support ticket
 
-Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **License & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the owner can see. For setup and bug tickets the assistant takes a first look; press **Call the owner** if you need them. License and payment tickets go straight to the owner. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message.
+Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **License & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the T.C.P team (the owner and the admins) can see. For setup and bug tickets the assistant takes a first look; press **Call the team** if you need a person. License and payment tickets go straight to the team. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message.
 
 ### The Get started button
 
