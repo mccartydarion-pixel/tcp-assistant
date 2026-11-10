@@ -8,7 +8,7 @@ import {
   type Interaction,
 } from 'discord.js';
 import { notice, tcpEmbed, type Tone } from '../bot/embeds.js';
-import { getState, setState } from '../database/stateStore.js';
+import { getState, getStateStrict, setState } from '../database/stateStore.js';
 import { logger } from '../utils/logger.js';
 import {
   CHALLENGE_MS,
@@ -57,7 +57,8 @@ let statsQueue: Promise<unknown> = Promise.resolve();
 /** Changes the records, one change at a time so two games ending together both count. Never throws. */
 function updateStats<T>(change: (stats: Stats) => T): Promise<T | null> {
   const run = statsQueue.then(async () => {
-    const stats = await getState<Stats>(STATS_KEY, {});
+    // A strict read: if the records cannot be read, nothing is written over them.
+    const stats = (await getStateStrict<Stats>(STATS_KEY)) ?? {};
     const result = change(stats);
     await setState(STATS_KEY, stats);
     return result;

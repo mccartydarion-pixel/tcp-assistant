@@ -682,6 +682,19 @@ To play another member, use /tcp tictactoe opponent:@name. They are pinged with 
 
 /tcp leaderboard (or the 🏆 Leaderboard button after a game) shows the top players. Player vs player: 3 points a win, 1 a draw. Against T.C.P: a win on Easy 1 point, on Normal 3 (a draw 1), a draw on Hard 2. Giving up counts as a loss.
 
+### Casino
+
+The /casino command is a play-money casino: Blackjack, Slots, Mines and Coinflip for free chips. Chips are play money only: they can never be bought, sold, traded between members or swapped for Premium days, the license or anything real. Games run in the server's casino channel.
+
+- Everyone starts with 1,000 chips. /casino daily gives free chips once every 20 hours: 500, plus 50 for every day in a row (claim again within 48 hours to keep the streak), up to 1,000 a day. A member who is broke (under 10 chips, nothing riding on a game) and whose daily is not ready can take a 100-chip bailout every 2 hours with the same command.
+- Bets are 10 to 10,000 chips. A member can have up to 3 games going at once.
+- /casino blackjack: against the dealer, with Hit, Stand and Double (on the first two cards). Blackjack pays 3:2, the dealer stands on every 17, a tie is a push (the bet comes back).
+- /casino slots: three reels of 🥫 🩹 🧟 🔫 🎯. Three of a kind pays up to 100 times the bet (three 🎯, the jackpot), any two of the same pay a smaller amount; the Paytable button shows every line. About 95% of the chips bet come back on average.
+- /casino mines: 20 tiles with 1 to 10 hidden mines (3 by default). Every safe tile raises the payout; Cash out takes it, a mine loses the bet. More mines pay more per tile. Payouts are the fair odds less 3%, at most 1,000 times the bet.
+- /casino coinflip: pick heads or tails. Against the house a win pays 1.95 times the bet. With opponent:@member it is a duel: the member is pinged and can accept within 10 minutes to match the bet, and the winner takes both bets.
+- A Blackjack hand or Mines game left alone for 5 minutes is finished for the player (Blackjack stands, Mines cashes out, or gives the bet back if no tile was picked). If the bot restarts mid-game, the bet goes back.
+- /casino balance shows your chips, your daily and your place; /casino leaderboard shows the richest players and the biggest single wins.
+
 ### Opening a support ticket
 
 Press a button on the ticket panel (or **Still stuck** under a help answer) and pick a type: **License & codes**, **Setup & tuning**, **Bug report** or **Payment & other**. Fill in the short form and you get a private ticket channel that only you and the T.C.P team (the owner and the admins) can see. For setup and bug tickets the assistant takes a first look; press **Call the team** if you need a person. License and payment tickets go straight to the team. Each member can have one open ticket at a time. Press **Close ticket** when you are done: you get a copy of the conversation by direct message, with buttons to rate your support from 1 to 5 stars.

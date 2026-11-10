@@ -19,6 +19,7 @@ import { handleAuditCommand } from '../../premium/eliteAudit.js';
 import { handleStatsCommand } from '../../owner/stats.js';
 import { handleHoursCommand } from '../../tickets/supportHours.js';
 import { handleLeaderboardCommand, handleTicTacToeCommand } from '../../fun/ticTacToe.js';
+import { casinoCommandData, handleCasinoCommand } from '../../casino/casino.js';
 import { handleTeachCommand } from '../../knowledge/taughtAnswers.js';
 import { handleTuneCommand } from '../../tuning/tuningWizard.js';
 import { askChannelRedirect, assistantAllowedIn } from '../askChannel.js';
@@ -267,6 +268,7 @@ export function createCommands(
         }
       },
     },
+    { data: casinoCommandData(), execute: handleCasinoCommand },
   ];
 }
 
@@ -279,6 +281,7 @@ export function helpEmbed() {
     '**Open a ticket:** for anything the assistant cannot solve, press **Open a ticket** on the support panel.',
     '**Start over:** `/tcp reset-session` clears your conversation with the assistant.',
     '**Take a break:** `/tcp tictactoe` for Tic Tac Toe against T.C.P (Easy, Normal or Hard), `/tcp tictactoe opponent:@name` to challenge a member, `/tcp leaderboard` for the top players.',
+    '**Casino:** `/casino` for Blackjack, Slots, Mines and Coinflip with free play-money chips; `/casino daily` for more chips.',
   ];
   return tcpEmbed({ title: 'T.C.P. Assistant', description: lines.join('\n') });
 }

@@ -299,6 +299,15 @@ Tickets are stored in Postgres when `DATABASE_URL` is a Postgres address (the `s
 
 **Leaderboard** (`/tcp leaderboard`, public; the 🏆 button, private): the top 10 player vs player (3 points a win, 1 a draw) and the top 5 against T.C.P (a win on Easy 1, on Normal 3, a draw on Normal 1, a draw on Hard 2), each with W-L-D, and the viewer's own place. Ties: more wins, then fewer losses. All records are one JSON value in the `bot_state` table (`ttt.stats`: name, PvP W-L-D, and W-L-D against T.C.P per difficulty), changed one game at a time so two games ending together both count (`src/fun/ticTacToeStats.ts`). Giving up and running out of time count as losses. Nothing stops a member from farming wins off a second account; the leaderboard is for fun.
 
+## Casino (play money)
+
+`/casino` (`src/casino/`): Blackjack, Slots, Mines and Coinflip for free chips. **Play money only**: chips are never sold, never tradeable between members (no `give` or `pay`, so no farming with second accounts or selling chips outside Discord) and never exchangeable for Premium days, the license, roles that unlock anything or payouts; never connect them to Stripe or the boost reward. That keeps it within Discord's rules on gambling.
+
+- **Where**: games only in a text channel whose name contains `casino` (the owner can test anywhere); `balance` and `daily` reply privately anywhere, `leaderboard` publicly in the casino channel and privately elsewhere. Until such a channel exists, members are told the casino is not open yet.
+- **Chips** (`casinoStore.ts`, one JSON value in `bot_state`, `casino.players`): 1,000 to start; `/casino daily` every 20 h, 500 + 50 a day of streak (kept within 48 h) up to +500; a 100-chip bailout every 2 h for a broke member (under 10, nothing in play) whose daily is not ready. Bets 10-10,000, at most 3 games at once. Every change runs one at a time, and the value is read strictly (`getStateStrict`): if it cannot be read, nothing is written over it.
+- **Bets are held, not lost**: a game's bet moves into `inPlay` under the game's ID when it starts and is paid out (or not) when it ends; settling twice pays nothing. Games live in memory (the cards and the mines never go into the buttons), so on startup every bet still held is refunded (`initCasino`). A hand or Mines game untouched for 5 minutes is finished for the player by a sweep (Blackjack stands; Mines cashes out, or refunds with no tile picked); a duel nobody accepts expires after 10 minutes and is refunded.
+- **The games** (`casinoRules.ts`, tested): Blackjack from a fresh 4-deck shoe each hand, dealer peeks for blackjack and stands on all 17s, blackjack 3:2, Double on two cards, no split or insurance. Slots: 5 weighted symbols, three of a kind or any pair, about 95% back on average (`slotsReturn`). Mines: 20 tiles, 1-10 mines, cash out pays 97% of the fair odds, capped at 1,000x. Coinflip: 1.95x against the house; a duel (`opponent:`) pings the member, holds both bets and pays the winner both. The random numbers come from `crypto.randomInt`.
+
 ## Unanswered questions and teaching the assistant
 
 When the documentation does not cover a question, the AI ends its reply with a marker the bot removes before replying (`src/ai/unansweredMarker.ts`). The bot then posts the question, who asked, where, and the closest documentation sections to `LOG_CHANNEL_ID`, at most once a day per question. Questions with no documentation match at all are logged too.
@@ -357,6 +366,7 @@ These commands require owner/admin permissions and should be restricted in Disco
 - `/tcp tune` (everyone: Fix my aim)
 - `/tcp tictactoe` (everyone: Tic Tac Toe against T.C.P, or `opponent:@member` to challenge a member)
 - `/tcp leaderboard` (everyone: the Tic Tac Toe leaderboard)
+- `/casino balance | daily | leaderboard | blackjack | slots | mines | coinflip` (everyone; the games in the casino channel)
 - `/tcp summarize`
 - `/tcp escalate`
 - `/tcp resolve`

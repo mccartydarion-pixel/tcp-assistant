@@ -102,6 +102,17 @@ export async function getState<T>(key: string, fallback: T): Promise<T> {
   }
 }
 
+/**
+ * The stored value, or null when there is none. Unlike getState it throws when the store cannot be read, so a
+ * caller that changes the value and writes it back never overwrites what it could not read.
+ */
+export async function getStateStrict<T>(key: string): Promise<T | null> {
+  const opened = await initState();
+  if (!opened) throw new Error('The bot_state table is not open');
+  const raw = await opened.get(key);
+  return raw === null ? null : (JSON.parse(raw) as T);
+}
+
 export async function setState(key: string, value: unknown): Promise<void> {
   const opened = await initState();
   if (!opened) throw new Error('The bot_state table is not open');

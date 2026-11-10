@@ -27,6 +27,7 @@ import { initTaughtAnswers } from './knowledge/taughtAnswers.js';
 import { announceRelease } from './premium/releaseAlerts.js';
 import { startEliteAudit } from './premium/eliteAudit.js';
 import { startSupportSummary } from './tickets/ticketFeedback.js';
+import { initCasino } from './casino/casino.js';
 import { loadSupportHours, onSupportStatusChange, startSupportHoursWatch } from './tickets/supportHours.js';
 import { startHelpCleanup } from './help/helpCleanup.js';
 import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
@@ -218,6 +219,7 @@ async function start(): Promise<void> {
   startTicketAutoClose(client);
   startSupportSummary(client);
   startEliteAudit(client);
+  await initCasino();
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);
