@@ -3,6 +3,7 @@ import type { UserQuestionDetails } from './question.js';
 import { systemPrompt } from './systemPrompt.js';
 import { UNANSWERED_INSTRUCTION } from './unansweredMarker.js';
 import type { TuningState } from './conversationMemory.js';
+import { languageInstruction, type ReplyLanguage } from './language.js';
 
 export interface ConversationTurn {
   role: 'user' | 'assistant';
@@ -36,12 +37,14 @@ export function buildTCPPrompt(params: {
   tuningState?: TuningState;
   /** The server's channels the member can see, from describeServerForAssistant. */
   serverMap?: string;
+  /** The language to answer in (replyLanguage); left to the model when not given. */
+  language?: ReplyLanguage;
 }): { question: string; system: string; context: string; history: ConversationTurn[] } {
   const serverRules = params.serverMap ? `\n\n${SERVER_MAP_INSTRUCTION}` : '';
   const serverContext = params.serverMap ? `\n\n${params.serverMap}` : '';
   return {
     question: params.question,
-    system: `${systemPrompt}\n\nUse the supplied T.C.P. documentation as authoritative context. Do not simply repeat it; solve the user's actual problem. Identify symptoms and settings, give practical troubleshooting steps, and recommend one small controlled test at a time. Preserve the user's terminology and values. If the documentation is insufficient, say what information is missing and ask a useful follow-up question. Keep responses concise and conversational.${serverRules}\n\n${UNANSWERED_INSTRUCTION}`,
+    system: `${systemPrompt}\n\nUse the supplied T.C.P. documentation as authoritative context. Do not simply repeat it; solve the user's actual problem. Identify symptoms and settings, give practical troubleshooting steps, and recommend one small controlled test at a time. Preserve the user's terminology and values. If the documentation is insufficient, say what information is missing and ask a useful follow-up question. Keep responses concise and conversational.${serverRules}\n\n${UNANSWERED_INSTRUCTION}\n\n${languageInstruction(params.language ?? 'unclear')}`,
     context: `${buildTCPContext(params.retrievedChunks, params.details)}\n\n${buildTuningContext(params.tuningState ?? {})}${serverContext}`,
     history: params.conversationHistory?.slice(-8) ?? [],
   };

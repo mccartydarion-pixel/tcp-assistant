@@ -431,7 +431,7 @@ async function ticketLog(client: Client, payload: { embeds: EmbedBuilder[]; file
 }
 
 /** The assistant's first look in a new setup or bug ticket; it becomes the start of the ticket's conversation. */
-async function firstLook(channel: TextChannel, user: User, question: string): Promise<void> {
+async function firstLook(channel: TextChannel, user: User, question: string, ownWords?: string): Promise<void> {
   if (!helpers || !question.trim()) return;
   const { assistant, memory } = helpers;
   try {
@@ -441,7 +441,7 @@ async function firstLook(channel: TextChannel, user: User, question: string): Pr
     // The member is both asker and audience: only channels they can see.
     const member = await channel.guild.members.fetch(user.id).catch(() => null);
     const serverMap = member ? serverMapFor(channel.guild, member, member) : serverMapFor(channel.guild);
-    const result = await assistant.answerDetailed(question, session.turns, channel.client.user?.id, session.tuning, followUp, serverMap);
+    const result = await assistant.answerDetailed(question, session.turns, channel.client.user?.id, session.tuning, followUp, serverMap, ownWords);
     memory.record(session, question, result.text);
     for (const part of answerMessages(result.text, { title: 'First look' })) await channel.send(part);
     if (result.unanswered) {
@@ -543,7 +543,8 @@ async function createTicket(interaction: ModalSubmitInteraction, type: TicketTyp
       const payments = paymentButtons();
       if (licence) await channel.send({ embeds: [licence], components: payments ? [payments] : [] });
     }
-    if (type.assistantFirst) await firstLook(channel, user, assistantQuestion(type, answers));
+    // The reply language is judged on what the member wrote, not on the form's English labels.
+    if (type.assistantFirst) await firstLook(channel, user, assistantQuestion(type, answers), answers.issue);
   } finally {
     creating.delete(user.id);
   }

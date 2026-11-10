@@ -7,7 +7,7 @@ import { recordedPullReply } from './pullFollowUp.js';
 import { extractQuestionDetails, normalizeUserQuestion } from './question.js';
 import { buildRetrievalQuery } from './retrievalQuery.js';
 import { extractUnansweredMarker } from './unansweredMarker.js';
-import { looksNonEnglish } from './language.js';
+import { looksNonEnglish, replyLanguage } from './language.js';
 
 export interface AssistantAnswer {
   text: string;
@@ -38,13 +38,18 @@ export class AssistantService {
     followUpIntent: FollowUpIntent = null,
     /** The channels the member can see (describeServerForAssistant), so the answer can link them. */
     serverMap?: string,
+    /** The member's own words, when the question also carries other text (a ticket form's English labels): the reply language is judged on these. */
+    ownWords?: string,
   ): Promise<AssistantAnswer> {
     const normalizedQuestion = normalizeUserQuestion(question, botId);
+    const earlierQuestions = conversationHistory.filter((turn) => turn.role === 'user').map((turn) => turn.content);
+    const language = replyLanguage(ownWords?.trim() ? ownWords : normalizedQuestion, earlierQuestions);
     // The documentation is searched in English; the member's own words still go to the model.
     const searchQuestion = await this.englishForSearch(normalizedQuestion);
     const details = extractQuestionDetails(searchQuestion);
     logger.info(`[TCP AI] Question received: ${normalizedQuestion}`);
     logger.info(`[TCP AI] Conversation turns: ${conversationHistory.length}`);
+    logger.info(`[TCP AI] Reply language: ${language}`);
     const retrievalQuery = buildRetrievalQuery(searchQuestion, details, tuningState);
     logger.info(`[TCP Retrieval] Query: ${retrievalQuery}`);
     const matches = await this.knowledge.search(retrievalQuery, 5);
@@ -79,7 +84,7 @@ export class AssistantService {
       return fixed("T.C.P. Assistant's AI service is not configured right now. Please provide your weapon, distance, current settings, and symptom so the support team can help.");
     }
 
-    const prompt = buildTCPPrompt({ question: normalizedQuestion, retrievedChunks: matches, conversationHistory, details, tuningState, serverMap });
+    const prompt = buildTCPPrompt({ question: normalizedQuestion, retrievedChunks: matches, conversationHistory, details, tuningState, serverMap, language });
 
     try {
       logger.info('[TCP AI] Sending question + documentation to OpenAI');

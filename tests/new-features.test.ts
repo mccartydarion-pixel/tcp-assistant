@@ -8,7 +8,8 @@ process.env.DISCORD_GUILD_ID ??= 'test-guild';
 const { describeHours, isOpenAt, nextChange, parseClock, parseDays, roughDuration, validTimeZone } = await import('../src/tickets/supportHoursRules.js');
 const { AUTO_CLOSE_GRACE_MS, AUTO_CLOSE_WAIT_MS, CLOSING_SOON_TITLE, KEPT_OPEN_TITLE, autoCloseAction, parseRating } = await import('../src/tickets/ticketRules.js');
 const { PROBLEMS, advance, planFor } = await import('../src/tuning/tuningWizardRules.js');
-const { looksNonEnglish } = await import('../src/ai/language.js');
+const { looksNonEnglish, replyLanguage, languageInstruction } = await import('../src/ai/language.js');
+const { buildTCPPrompt } = await import('../src/ai/promptBuilder.js');
 const { supportStats } = await import('../src/tickets/ticketFeedback.js');
 const { subscriptionStats } = await import('../src/owner/stats.js');
 const { liveSubscriptionsByMember, tooManyToRemove, veteranTier } = await import('../src/premium/eliteAudit.js');
@@ -256,6 +257,30 @@ describe('member language', () => {
     expect(looksNonEnglish('my gun climbs when I spray, what should vertical be')).toBe(false);
     expect(looksNonEnglish('drop roll not working')).toBe(false);
     expect(looksNonEnglish('m4 v28')).toBe(false);
+  });
+
+  it('decides the reply language in code: English unless the message clearly is not', () => {
+    // The ticket that started this (2026-11-10): "im new" got a Spanish reply.
+    expect(replyLanguage('im new')).toBe('english');
+    expect(replyLanguage('English please', ['im new'])).toBe('english');
+    expect(replyLanguage('my gun climbs when I spray')).toBe('english');
+    expect(replyLanguage('el script no funciona cuando apunto')).toBe('member');
+    expect(replyLanguage('¿cómo?')).toBe('member');
+    // A short message follows the conversation.
+    expect(replyLanguage('ok gracias', ['el script no funciona cuando apunto'])).toBe('member');
+    expect(replyLanguage('ok', ['my gun climbs when I spray'])).toBe('english');
+    expect(replyLanguage('thanks', ['el script no funciona cuando apunto', 'English please'])).toBe('english');
+    // Asked for English in another language: English.
+    expect(replyLanguage('en inglés por favor', ['el script no funciona cuando apunto'])).toBe('english');
+    // Not clear either way: the model decides from the message, English if it cannot tell.
+    expect(replyLanguage('necesito ayuda con el script')).toBe('unclear');
+    expect(languageInstruction('english')).toMatch(/English only/);
+  });
+
+  it('puts the decision in the instructions, after the rules', () => {
+    const prompt = buildTCPPrompt({ question: 'im new', retrievedChunks: [], details: {}, language: 'english' });
+    expect(prompt.system.trimEnd().endsWith(languageInstruction('english'))).toBe(true);
+    expect(prompt.system).toContain('Never guess a language from a name');
   });
 });
 
