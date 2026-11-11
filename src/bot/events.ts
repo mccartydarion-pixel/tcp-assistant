@@ -48,6 +48,7 @@ import { handleTicTacToeInteraction } from '../fun/ticTacToe.js';
 import { handleCasinoInteraction } from '../casino/casino.js';
 import { handleLfgInteraction } from '../lfg/lfg.js';
 import { handleCommunityInteraction, scheduleCommunitiesRefresh } from '../communities/communities.js';
+import { handleScriptStatusInteraction } from '../scripts/scriptStatus.js';
 
 export function registerEvents(
   client: Client,
@@ -72,6 +73,7 @@ export function registerEvents(
           (await handleCasinoInteraction(interaction)) ||
           (await handleLfgInteraction(interaction)) ||
           (await handleCommunityInteraction(interaction)) ||
+          (await handleScriptStatusInteraction(interaction)) ||
           (await handleTeachInteraction(interaction)) ||
           (await handleAuditInteraction(interaction)) ||
           (await handleSettingsInteraction(interaction)) ||

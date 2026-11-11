@@ -20,6 +20,8 @@ import { handleStatsCommand } from '../../owner/stats.js';
 import { handleHoursCommand } from '../../tickets/supportHours.js';
 import { handleLeaderboardCommand, handleTicTacToeCommand } from '../../fun/ticTacToe.js';
 import { casinoCommandData, handleCasinoCommand } from '../../casino/casino.js';
+import { handleScriptCommand } from '../../scripts/scriptStatus.js';
+import { SCRIPTS } from '../../scripts/scriptStatusRules.js';
 import { handleTeachCommand } from '../../knowledge/taughtAnswers.js';
 import { handleTuneCommand } from '../../tuning/tuningWizard.js';
 import { askChannelRedirect, assistantAllowedIn } from '../askChannel.js';
@@ -109,6 +111,33 @@ export function createCommands(
         ),
     )
     .addSubcommand((command) => command.setName('leaderboard').setDescription('The Tic Tac Toe leaderboard: player vs player and against T.C.P'))
+    .addSubcommand((command) =>
+      command
+        .setName('script')
+        .setDescription('Team: set a script status card (Online, Updating, Paused) and its details; "-" clears a field')
+        .addStringOption((option) =>
+          option
+            .setName('script')
+            .setDescription('Which script')
+            .setRequired(true)
+            .addChoices(...SCRIPTS.map((script) => ({ name: script.name, value: script.key }))),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('state')
+            .setDescription('Online, Updating or Paused')
+            .setRequired(false)
+            .addChoices({ name: '🟢 Online', value: 'online' }, { name: '🟡 Updating', value: 'updating' }, { name: '🔴 Paused', value: 'down' }),
+        )
+        .addStringOption((option) => option.setName('note').setDescription('A line under the title, e.g. "New patch, fix coming"').setRequired(false).setMaxLength(300))
+        .addStringOption((option) => option.setName('build').setDescription('The build, e.g. 2026.11.12 (stamps Updated)').setRequired(false).setMaxLength(40))
+        .addStringOption((option) => option.setName('changes').setDescription('Latest changes').setRequired(false).setMaxLength(900))
+        .addStringOption((option) => option.setName('features').setDescription("What's in it, e.g. Anti-recoil · Rapid fire").setRequired(false).setMaxLength(900))
+        .addStringOption((option) => option.setName('edition').setDescription('Edition name, e.g. T.C.P Premium').setRequired(false).setMaxLength(40))
+        .addStringOption((option) => option.setName('platforms').setDescription('e.g. PS5 · Xbox').setRequired(false).setMaxLength(100))
+        .addStringOption((option) => option.setName('editions').setDescription('e.g. Premium · Free').setRequired(false).setMaxLength(100))
+        .addStringOption((option) => option.setName('download').setDescription('A download link (not DayZ: it uses Download Premium)').setRequired(false).setMaxLength(500)),
+    )
     .addSubcommand((command) => command.setName('stats').setDescription('Owner: subscribers, revenue, license holders and support this week'))
     .addSubcommand((command) => command.setName('audit').setDescription('Owner: who holds the Elite role without a subscription or days'))
     .addSubcommand((command) =>
@@ -171,6 +200,10 @@ export function createCommands(
         }
         if (subcommand === 'leaderboard') {
           await handleLeaderboardCommand(interaction);
+          return;
+        }
+        if (subcommand === 'script') {
+          await handleScriptCommand(interaction);
           return;
         }
         if (subcommand === 'stats') {

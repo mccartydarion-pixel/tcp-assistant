@@ -695,6 +695,10 @@ The /casino command is a play-money casino: Blackjack, Slots, Mines and Coinflip
 - A Blackjack hand or Mines game left alone for 5 minutes is finished for the player (Blackjack stands, Mines cashes out, or gives the bet back if no tile was picked). If the bot restarts mid-game, the bet goes back.
 - /casino balance shows your chips, your daily and your place; /casino leaderboard shows the richest players and the biggest single wins.
 
+### Script status cards
+
+Each script channel (DayZ, Battlefield 6, GTA V) has a live **status card** at the top: an animated banner and the script's status. 🟢 **Online**: it works on the current game update. 🟡 **Updating**: a game update landed and a new build is on the way. 🔴 **Paused**: something is broken, hold off until it is green again. The card shows the build, when it was updated, the device and platforms, what is in the script and the latest changes, with buttons: **Download** (DayZ: **Download Premium**), **Changelog**, **Setup guide** and **Report a problem** (opens a bug report ticket). If a script is Updating or Paused, wait for the card to turn green before reporting it as broken.
+
 ### Game communities
 
 Every T.C.P script has its own community in the server: a category with its own **LFG** (Squad Finder), **Chat**, **Script** and **Clips** channels (DayZ, Battlefield 6, and more as they come). Communities are opt-in: in the **communities** channel, press a game to join it and its channels appear in your channel list; press it again to leave. **📋 My communities** shows which you are in. The welcome panel has a **🎮 Pick your communities** button that takes you there. If you cannot see a game's channels, you have not joined that community yet.

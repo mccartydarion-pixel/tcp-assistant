@@ -30,6 +30,7 @@ import { startSupportSummary } from './tickets/ticketFeedback.js';
 import { initCasino } from './casino/casino.js';
 import { initLfg } from './lfg/lfg.js';
 import { initCommunities } from './communities/communities.js';
+import { initScriptStatus, onPremiumRelease } from './scripts/scriptStatus.js';
 import { loadSupportHours, onSupportStatusChange, startSupportHoursWatch } from './tickets/supportHours.js';
 import { startHelpCleanup } from './help/helpCleanup.js';
 import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
@@ -200,7 +201,7 @@ async function start(): Promise<void> {
   await initPremium(client, {
     isSubscriber: hasLiveSubscription,
     onUploaded: () => Promise.all([refreshLicensePanel(client), ensureEliteHub(client)]).then(() => undefined),
-    onRelease: (release) => announceRelease(client, release),
+    onRelease: (release) => Promise.all([announceRelease(client, release), onPremiumRelease(release)]).then(() => undefined),
   });
   await initPayments(client, {
     grantDays: (discordUserId, days) => grantPaidDays(client, discordUserId, days),
@@ -225,6 +226,7 @@ async function start(): Promise<void> {
   await initCasino();
   await initLfg(client);
   await initCommunities(client);
+  await initScriptStatus(client);
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);

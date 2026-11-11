@@ -38,6 +38,10 @@ let isSubscriber: (discordUserId: string) => Promise<boolean> = async () => fals
 let onRelease: (release: ReleaseInfo) => Promise<void> = async () => {};
 /** What changed in the current upload, as the owner wrote it with /tcp release. */
 let latestNotes = '';
+/** The current upload's notes (the DayZ status card's Changelog). */
+export function premiumReleaseNotes(): string {
+  return latestNotes;
+}
 
 /** One upload of the Premium script, kept in the state store so Download Premium can say what changed. */
 export interface ReleaseInfo {

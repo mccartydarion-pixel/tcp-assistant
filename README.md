@@ -308,6 +308,14 @@ Tickets are stored in Postgres when `DATABASE_URL` is a Postgres address (the `s
 - **Bets are held, not lost**: a game's bet moves into `inPlay` under the game's ID when it starts and is paid out (or not) when it ends; settling twice pays nothing. Games live in memory (the cards and the mines never go into the buttons), so on startup every bet still held is refunded (`initCasino`). A hand or Mines game untouched for 5 minutes is finished for the player by a sweep (Blackjack stands; Mines cashes out, or refunds with no tile picked); a duel nobody accepts expires after 10 minutes and is refunded.
 - **The games** (`casinoRules.ts`, tested): Blackjack from a fresh 4-deck shoe each hand, dealer peeks for blackjack and stands on all 17s, blackjack 3:2, Double on two cards, no split or insurance. Slots: 5 weighted symbols, three of a kind or any pair, about 95% back on average (`slotsReturn`). Mines: 20 tiles, 1-10 mines, cash out pays 97% of the fair odds, capped at 1,000x. Coinflip: 1.95x against the house; a duel (`opponent:`) pings the member, holds both bets and pays the winner both. The random numbers come from `crypto.randomInt`.
 
+## Script status cards
+
+`src/scripts/`: a live card in each script channel (`SCRIPTS` in `scriptStatusRules.ts`: DayZ 1569631205987590254, Battlefield 6 1569930663346446386, GTA V 1570136255306404084). An embed in the state's colour with the animated banner `assets/status/tcp-status-<slug>-<state>.gif` (rendered by `branding/make_status_gif.ps1` in the script project: the reticle in a radar sweep, the game, a breathing status light, a heartbeat monitor that goes flat when paused, a feature ticker; 960x320, a 6 s loop), the title ("🟢 DayZ · T.C.P Premium is ONLINE"), a line and the last status change, and the fields that are known (status, build, updated, device, platforms, editions, what's in it, latest changes). Buttons: Download Premium (DayZ, the existing premium download) or a Download link, Changelog (the current Premium release notes for DayZ, otherwise the latest changes), Setup guide, Report a problem (a bug report ticket).
+
+- **`/tcp script`** (the team): `script` (required), and any of `state` (Online / Updating / Paused), `note`, `build`, `changes`, `features`, `edition`, `platforms`, `editions`, `download`; `-` clears a field. A new state stamps the last status change, a new build stamps Updated. Kept in `bot_state` (`scripts.status`) over each script's defaults.
+- A **Premium release** (`/tcp release`) sets DayZ to Online with the upload's date as the build and its notes as the latest changes.
+- The card is found by its Setup guide button (or its stored message ID) and only edited when something on it changed (a stored signature), so a redeploy does not re-upload the banners.
+
 ## Game communities (opt-in categories)
 
 `src/communities/communities.ts`. A **community** is any category with a channel whose name contains `lfg` and one whose name contains `script` (DayZ, Battlefield 6, ...), so a new game appears by itself. For each the bot makes (or finds by name) a role named after the game without its decoration (`· Battlefield™ 6` → `Battlefield™ 6`), remembered by category in `bot_state` (`communities.roles`).
@@ -385,6 +393,7 @@ These commands require owner/admin permissions and should be restricted in Disco
 - `/tcp tune` (everyone: Fix my aim)
 - `/tcp tictactoe` (everyone: Tic Tac Toe against T.C.P, or `opponent:@member` to challenge a member)
 - `/tcp leaderboard` (everyone: the Tic Tac Toe leaderboard)
+- `/tcp script` (the team: a script's status card)
 - `/casino balance | daily | leaderboard | blackjack | slots | mines | coinflip` (everyone; the games in the casino channel)
 - `/tcp summarize`
 - `/tcp escalate`
