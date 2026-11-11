@@ -9,6 +9,24 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // The opt-in game communities (2026-11-11): send everyone to the picker. {communities} becomes a link to the
+    // picker channel when posted (withChannelLinks).
+    id: '2026-11-communities',
+    date: '2026-11-11',
+    ready: true,
+    title: '🎮 PICK YOUR COMMUNITIES: DAYZ, BATTLEFIELD 6 AND MORE',
+    description:
+      'T.C.P is growing: every script now has its **own community** in the server. 🔥\n\n' +
+      "👀 **CAN'T SEE THE DAYZ CHANNELS ANY MORE?** That is on purpose. Communities are now **opt-in**: go to {communities} and press the games you play. Their channels pop straight back into your list.\n\n" +
+      '🎮 **EVERY COMMUNITY HAS** its own **LFG** with Squad Finder (press Deploy, get matched, get a private squad channel), its own **Chat**, the **Script** channel and **Clips** to show off your plays.\n\n' +
+      '🪖 **DAYZ:** Survivor ID, PlayStation and Xbox, squads up to 5.\n' +
+      '⚔️ **BATTLEFIELD 6:** Soldier ID, **crossplay** (PlayStation, Xbox and PC together), squads up to 4.\n\n' +
+      '🔁 Join as many as you like. Press a game again to leave, and **📋 My communities** shows where you are.',
+    fields: [{ name: '🚀 Do it now', value: 'Go to {communities} and press **DayZ**, **Battlefield 6**, or both.', inline: false }],
+    gif: 'tcp-communities.gif',
+    ping: '@everyone',
+  },
+  {
     // Squad Finder: LFG matchmaking in the DayZ category (2026-11-10). Posted on the owner's word, pinging everyone.
     id: '2026-11-squad-finder',
     date: '2026-11-10',

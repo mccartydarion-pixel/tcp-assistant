@@ -9,6 +9,8 @@ import { createAnnouncementStore, type AnnouncementStore } from './announcementS
 import { buildAnnouncementMessage, checkEmbed, describeQueue, runAnnouncementQueue, type QueueRunReport, type QueueStatus } from './announcementQueue.js';
 import { getState, setState } from '../database/stateStore.js';
 import { ANNOUNCEMENT_QUEUE } from './queue.js';
+import { pickerChannelOf } from '../communities/communities.js';
+import type { QueuedAnnouncement } from './announcementQueue.js';
 import { eliteRole } from '../premium/premium.js';
 
 // Posts the code-written announcements (queue.ts) on start, and the owner's /tcp announcements command.
@@ -20,11 +22,28 @@ let botClient: Client | null = null;
 // One run at a time (start and a retry from the command can overlap); the store's claim also guards it.
 let running: Promise<unknown> = Promise.resolve();
 
+/**
+ * The queue with its channel placeholders filled in at posting time: {communities} becomes a link to the
+ * community picker channel (found by name, so a rename never breaks it), or plain words when there is none.
+ */
+export function withChannelLinks(queue: readonly QueuedAnnouncement[], links: { communities: string | null }): QueuedAnnouncement[] {
+  const fill = (text: string) => text.replace(/\{communities\}/g, links.communities ? `<#${links.communities}>` : 'the communities channel');
+  return queue.map((entry) => ({
+    ...entry,
+    description: fill(entry.description),
+    ...(entry.fields ? { fields: entry.fields.map((field) => ({ ...field, value: fill(field.value) })) } : {}),
+  }));
+}
+
+function linkedQueue(client: Client): QueuedAnnouncement[] {
+  return withChannelLinks(ANNOUNCEMENT_QUEUE, { communities: pickerChannelOf(client.guilds.cache.get(env.DISCORD_GUILD_ID))?.id ?? null });
+}
+
 function runQueue(client: Client): Promise<QueueRunReport> {
   const opened = store;
   if (!opened) return Promise.reject(new Error('The announcement records are not open.'));
   const next = running.then(() =>
-    runAnnouncementQueue(ANNOUNCEMENT_QUEUE, {
+    runAnnouncementQueue(linkedQueue(client), {
       store: opened,
       channelId: env.ANNOUNCEMENT_CHANNEL_ID,
       getChannel: (channelId) => fetchSendableChannel(client, channelId),
@@ -71,7 +90,7 @@ export async function initAnnouncements(client: Client): Promise<void> {
  */
 async function sendOwnerPreviews(client: Client): Promise<void> {
   if (!env.OWNER_USER_ID) return;
-  for (const entry of ANNOUNCEMENT_QUEUE) {
+  for (const entry of linkedQueue(client)) {
     if (entry.ready || !entry.previewToOwner) continue;
     const key = `announcement.preview.${entry.id}`;
     try {
