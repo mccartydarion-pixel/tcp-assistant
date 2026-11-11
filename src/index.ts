@@ -29,6 +29,7 @@ import { startEliteAudit } from './premium/eliteAudit.js';
 import { startSupportSummary } from './tickets/ticketFeedback.js';
 import { initCasino } from './casino/casino.js';
 import { initLfg } from './lfg/lfg.js';
+import { initCommunities } from './communities/communities.js';
 import { loadSupportHours, onSupportStatusChange, startSupportHoursWatch } from './tickets/supportHours.js';
 import { startHelpCleanup } from './help/helpCleanup.js';
 import { hasLiveSubscription, initPayments, paymentsConfigured } from './payments/stripeBilling.js';
@@ -223,6 +224,7 @@ async function start(): Promise<void> {
   startEliteAudit(client);
   await initCasino();
   await initLfg(client);
+  await initCommunities(client);
   await ensureSettingsPanel(client);
   await ensureBugPanel(client);
   await ensureReviewPanel(client);

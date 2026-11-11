@@ -18,6 +18,7 @@ import {
   REGIONS,
   SIZES,
   badges,
+  communityOf,
   type Commend,
   type Community,
   type LfgCard,
@@ -84,7 +85,7 @@ export function panelView(community: Community, stats: PanelStats): View {
       tcpEmbed({
         title: `🎯 ${community.name} Squad Finder`,
         description: [
-          'Stop spamming LFG. Make your **Survivor ID** once, press **Deploy**, and get matched with survivors who play like you.',
+          `Stop spamming LFG. Make your **${community.cardName}** once, press **Deploy**, and get matched with ${community.people} who play like you.${community.crossplay ? ' Crossplay: PlayStation, Xbox and PC together.' : ''}`,
           'Your squad gets its own **private text and voice channel**, and every squadmate is rated afterwards, so you know who has your back.',
         ].join('\n\n'),
         fields: [
@@ -97,7 +98,7 @@ export function panelView(community: Community, stats: PanelStats): View {
     components: [
       buttonRow(
         button(panelMarker(community), '🎯 Deploy', ButtonStyle.Success),
-        button(id('card', community.key), '🪪 My Survivor ID', ButtonStyle.Primary),
+        button(id('card', community.key), `🪪 My ${community.cardName}`, ButtonStyle.Primary),
         button(id('open', community.key), '🔓 Open squads'),
         button(id('top', community.key), '🏆 Most trusted'),
       ),
@@ -119,7 +120,7 @@ export function cardEmbed(community: Community, card: LfgCard, rep: Reputation, 
       { name: 'Plays', value: playstyleText(community, card.playstyles) },
       { name: 'Mic', value: MICS[card.mic], inline: true },
       { name: 'Experience', value: EXPERIENCE[card.experience], inline: true },
-      { name: 'Server', value: community.servers[card.server] ?? card.server, inline: true },
+      { name: community.serverLabel, value: community.servers[card.server] ?? card.server, inline: true },
       { name: 'Reputation', value: repLine },
     ],
   });
@@ -131,12 +132,14 @@ export function cardEditorView(community: Community, draft: CardDraft, step: 1 |
   const summary = [
     `**Platform:** ${draft.platform ? PLATFORMS[draft.platform] : '—'} · **Region:** ${draft.region ? REGIONS[draft.region] : '—'} · **Mic:** ${draft.mic ? MICS[draft.mic] : '—'}`,
     `**Plays:** ${draft.playstyles?.length ? playstyleText(community, draft.playstyles) : '—'}`,
-    `**Experience:** ${draft.experience ? EXPERIENCE[draft.experience] : '—'} · **Server:** ${draft.server ? or(community.servers[draft.server]) : '—'} · **Language:** ${draft.language ? LANGUAGES[draft.language] : '—'}`,
+    `**Experience:** ${draft.experience ? EXPERIENCE[draft.experience] : '—'} · **${community.serverLabel}:** ${draft.server ? or(community.servers[draft.server]) : '—'} · **Language:** ${draft.language ? LANGUAGES[draft.language] : '—'}`,
   ];
   const embed = tcpEmbed({
-    title: `🪪 Your ${community.name} Survivor ID · step ${step} of 2`,
+    title: `🪪 Your ${community.name} ${community.cardName} · step ${step} of 2`,
     description: [
-      step === 1 ? 'Pick your platform, region, how you like to play (up to 3) and your mic.' : 'Your experience, the servers you play and your language. Then add your gamertag and save.',
+      step === 1
+        ? 'Pick your platform, region, how you like to play (up to 3) and your mic.'
+        : `Your experience, the ${community.serverPrompt.toLowerCase()} and your language. Then add your gamertag and save.`,
       '',
       ...summary,
       ...(note ? ['', note] : []),
@@ -146,7 +149,14 @@ export function cardEditorView(community: Community, draft: CardDraft, step: 1 |
   const components =
     step === 1
       ? [
-          selectRow(select(id('cf', community.key, 'platform'), 'Platform', PLATFORMS, draft.platform ? [draft.platform] : [])),
+          selectRow(
+            select(
+              id('cf', community.key, 'platform'),
+              'Platform',
+              Object.fromEntries(community.platforms.map((platform) => [platform, PLATFORMS[platform]])),
+              draft.platform ? [draft.platform] : [],
+            ),
+          ),
           selectRow(select(id('cf', community.key, 'region'), 'Region', REGIONS, draft.region ? [draft.region] : [])),
           selectRow(select(id('cf', community.key, 'playstyles'), 'How you play (up to 3)', community.playstyles, draft.playstyles ?? [], 3)),
           selectRow(select(id('cf', community.key, 'mic'), 'Mic', MICS, draft.mic ? [draft.mic] : [])),
@@ -154,7 +164,7 @@ export function cardEditorView(community: Community, draft: CardDraft, step: 1 |
         ]
       : [
           selectRow(select(id('cf', community.key, 'experience'), 'Experience', EXPERIENCE, draft.experience ? [draft.experience] : [])),
-          selectRow(select(id('cf', community.key, 'server'), 'Servers you play', community.servers, draft.server ? [draft.server] : [])),
+          selectRow(select(id('cf', community.key, 'server'), community.serverPrompt, community.servers, draft.server ? [draft.server] : [])),
           selectRow(select(id('cf', community.key, 'language'), 'Language', LANGUAGES, draft.language ? [draft.language] : [])),
           buttonRow(button(id('ce', community.key, 1), '← Back'), button(id('cg', community.key), '✍️ Gamertag & bio, then save', ButtonStyle.Success)),
         ];
@@ -164,7 +174,7 @@ export function cardEditorView(community: Community, draft: CardDraft, step: 1 |
 export function gamertagModal(community: Community, draft: CardDraft): ModalBuilder {
   const gamertag = new TextInputBuilder()
     .setCustomId('gamertag')
-    .setLabel(draft.platform === 'xbox' ? 'Your Xbox gamertag' : draft.platform === 'ps' ? 'Your PSN ID' : 'Your PSN ID or Xbox gamertag')
+    .setLabel(draft.platform === 'xbox' ? 'Your Xbox gamertag' : draft.platform === 'ps' ? 'Your PSN ID' : draft.platform === 'pc' ? 'Your EA ID or PC name' : 'Your gamertag')
     .setStyle(TextInputStyle.Short)
     .setRequired(true)
     .setMaxLength(32);
@@ -179,7 +189,7 @@ export function gamertagModal(community: Community, draft: CardDraft): ModalBuil
   if (draft.bio) bio.setValue(draft.bio);
   return new ModalBuilder()
     .setCustomId(id('cmod', community.key))
-    .setTitle(`${community.name} Survivor ID`)
+    .setTitle(`${community.name} ${community.cardName}`.slice(0, 45))
     .addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(gamertag), new ActionRowBuilder<TextInputBuilder>().addComponents(bio));
 }
 
@@ -207,7 +217,14 @@ export function deployView(community: Community, draft: DeployDraft): View {
     ],
     components: [
       selectRow(select(id('df', community.key, 'mode'), 'Mode for this session', { any: '🎲 Any mode', ...community.playstyles }, [draft.mode])),
-      selectRow(select(id('df', community.key, 'size'), 'Squad size', Object.fromEntries(Object.entries(SIZES)), [String(draft.size)])),
+      selectRow(
+        select(
+          id('df', community.key, 'size'),
+          'Squad size',
+          Object.fromEntries(Object.entries(SIZES).filter(([size]) => Number(size) <= community.maxSquad)),
+          [String(draft.size)],
+        ),
+      ),
       buttonRow(button(id('go', community.key), '🎯 Deploy', ButtonStyle.Success), button(id('ce', community.key, 1), '🪪 Edit my card')),
     ],
   };
@@ -222,7 +239,9 @@ export function searchingView(community: Community, seeker: Seeker, lfgChannelId
           `Searching since <t:${Math.floor(seeker.since / 1000)}:R>${seeker.elite ? ' · ⭐ Elite priority' : ''}.`,
           `${PLATFORMS[seeker.card.platform]} · ${REGIONS[seeker.card.region]} · ${LANGUAGES[seeker.card.language]} · ${modeText(community, seeker.mode)} · ${SIZES[seeker.size]}`,
           '',
-          compatibleNow > 0 ? `**${compatibleNow}** compatible survivor${compatibleNow === 1 ? '' : 's'} searching right now.` : 'Nobody compatible is searching right now; the search widens the longer you wait.',
+          compatibleNow > 0
+            ? `**${compatibleNow}** compatible ${compatibleNow === 1 ? community.person : community.people} searching right now.`
+            : 'Nobody compatible is searching right now; the search widens the longer you wait.',
           `You will be pinged${lfgChannelId ? ` in <#${lfgChannelId}>` : ''} for a ready check when a squad is found. The search stops after 45 minutes.`,
         ].join('\n'),
       }),
@@ -259,7 +278,7 @@ export function readyCheckView(check: ReadyCheckState, outcome: 'open' | 'formed
   return {
     embeds: [
       tcpEmbed({
-        title: check.join ? `➕ Squad ${check.join.callSign} needs +1` : `🎯 Squad found! ${check.members.length} survivors`,
+        title: check.join ? `➕ Squad ${check.join.callSign} needs +1` : `🎯 Squad found! ${check.members.length} ${check.community.people}`,
         description: lines.join('\n'),
         tone: outcome === 'formed' ? 'success' : outcome === 'failed' ? 'muted' : 'brand',
       }),
@@ -276,7 +295,9 @@ export function readyCheckView(check: ReadyCheckState, outcome: 'open' | 'formed
 export function squadControls(squad: SquadRecord): ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder> {
   return buttonRow(
     button(id('sq', squad.id, 'tags'), '📋 Gamertags'),
-    squad.open ? button(id('sq', squad.id, 'close'), '🔒 Close the slot') : button(id('sq', squad.id, 'open'), '➕ Looking for +1', ButtonStyle.Primary, squad.members.length >= 5),
+    squad.open
+      ? button(id('sq', squad.id, 'close'), '🔒 Close the slot')
+      : button(id('sq', squad.id, 'open'), '➕ Looking for +1', ButtonStyle.Primary, squad.members.length >= (communityOf(squad.community)?.maxSquad ?? 5)),
     button(id('sq', squad.id, 'leave'), '🚪 Leave'),
     button(id('sq', squad.id, 'end'), '🏁 End squad', ButtonStyle.Danger),
   );
@@ -314,7 +335,7 @@ export function ratingView(squad: SquadRecord, teammates: { id: string; name: st
       tcpEmbed({
         title: `⭐ Rate Squad ${squad.callSign}`,
         description:
-          'Pick what fits each squadmate (as many as you like), then **Submit**. Commendations show on their Survivor ID. **🤝 Play again** pings you when they deploy, if they picked you too.\n\n**🗡️ Betrayed us** is private: nobody sees who reported, and a member reported by several squads is only matched with each other.',
+          `Pick what fits each squadmate (as many as you like), then **Submit**. Commendations show on their ${communityOf(squad.community)?.cardName ?? 'card'}. **🤝 Play again** pings you when they deploy, if they picked you too.\n\n**🗡️ Betrayed us** is private: nobody sees who reported, and a member reported by several different members is only matched with others like them.`,
       }),
     ],
     components: [

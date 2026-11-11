@@ -12,6 +12,7 @@ import {
 } from 'discord.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { pickerChannelOf } from '../communities/communities.js';
 import { ensurePanel, fetchSendableChannel } from '../bot/panels.js';
 import { GAME_SCRIPTS } from '../games/gameScripts.js';
 import { notice, tcpEmbed } from '../bot/embeds.js';
@@ -331,9 +332,14 @@ export function buildWelcomePanel(guild?: Guild) {
     const fields = serverGuideFieldsWithin(visibleChannels(guild));
     if (fields.length > 0) embeds.push(tcpEmbed({ title: 'Server guide', description: 'Everything in the server, at a glance.', fields }));
   }
+  // The community picker, when the server has one: every game community is opt-in.
+  const picker = pickerChannelOf(guild);
+  const pickerRow = picker
+    ? [new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setLabel('🎮 Pick your communities').setStyle(ButtonStyle.Link).setURL(picker.url))]
+    : [];
   return {
     embeds,
-    components: [new ActionRowBuilder<ButtonBuilder>().addComponents(startButton()), guideButtons(welcomeChannels())],
+    components: [new ActionRowBuilder<ButtonBuilder>().addComponents(startButton()), guideButtons(welcomeChannels()), ...pickerRow],
   };
 }
 

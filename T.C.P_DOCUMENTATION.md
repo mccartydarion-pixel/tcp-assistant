@@ -695,6 +695,10 @@ The /casino command is a play-money casino: Blackjack, Slots, Mines and Coinflip
 - A Blackjack hand or Mines game left alone for 5 minutes is finished for the player (Blackjack stands, Mines cashes out, or gives the bet back if no tile was picked). If the bot restarts mid-game, the bet goes back.
 - /casino balance shows your chips, your daily and your place; /casino leaderboard shows the richest players and the biggest single wins.
 
+### Game communities
+
+Every T.C.P script has its own community in the server: a category with its own **LFG** (Squad Finder), **Chat**, **Script** and **Clips** channels (DayZ, Battlefield 6, and more as they come). Communities are opt-in: in the **communities** channel, press a game to join it and its channels appear in your channel list; press it again to leave. **📋 My communities** shows which you are in. The welcome panel has a **🎮 Pick your communities** button that takes you there. If you cannot see a game's channels, you have not joined that community yet.
+
 ### Squad Finder (LFG)
 
 Instead of posting "LFG" in chat, use the **Squad Finder** panel in a game's lfg channel (DayZ: the lfg channel in the DayZ category).
@@ -704,6 +708,8 @@ Instead of posting "LFG" in chat, use the **Squad Finder** panel in a game's lfg
 - **Matching**: you are only matched with survivors on the same platform and language, in your region (NA East and NA West mix after 3 minutes). The match is scored on the mode, playstyles, mic, experience and server, and the search widens the longer you wait: after 5 minutes a smaller squad than you asked for is fine. Elite Supporters get priority in the queue and a ⭐ on their card.
 - **Ready check**: when a squad is found, everyone is pinged in the lfg channel and has 2 minutes to Accept. If someone declines or does not answer, everyone who accepted goes back to the front of the queue.
 - **Your squad**: a private text channel and voice channel only your squad (and the T.C.P team) can see, with everyone's card and gamertag. Buttons: 📋 Gamertags, ➕ Looking for +1 (the queue fills one more slot; it also shows under 🔓 Open squads, where anyone can join a squad that fits them), 🚪 Leave, 🏁 End squad. The channels close by themselves after an hour with nobody talking or in voice (and after 12 hours at most).
+Squad Finder also runs in the **Battlefield 6** community: there your card is a **Soldier ID**, with Battlefield playstyles (objective player, slayer, vehicles / pilot, support / revives, recon / sniper, engineer, chill) and the modes you play (large-scale Conquest / Breakthrough / Rush, close quarters, REDSEC battle royale, Portal / custom). Battlefield 6 has crossplay, so PlayStation, Xbox and PC players are matched together, and squads are at most 4.
+
 - **Ratings**: when a squad ends (or you leave), rate your squadmates: commendations (🎙️ Great comms, 🛡️ Trustworthy, 🎯 Clutch, 😎 Chill, 🧭 Good leader) show on their Survivor ID; 🤝 Play again: when both of you picked it, you get a DM when the other deploys and you are matched first; 🗡️ Betrayed us is a private report: you are never matched with that member again, and a member reported by 3 different members in 60 days is only matched with other reported members. 🏆 Most trusted on the panel shows the most commended survivors.
 
 ### Opening a support ticket

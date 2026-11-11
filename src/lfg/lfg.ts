@@ -123,7 +123,7 @@ async function nameOf(userId: string): Promise<string> {
   const member = await guildOf()?.members.fetch(userId).catch(() => null);
   if (member) return member.displayName;
   const user = await client?.users.fetch(userId).catch(() => null);
-  return user?.displayName ?? 'Unknown survivor';
+  return user?.displayName ?? 'Unknown player';
 }
 
 async function stored<T>(work: Promise<T>): Promise<T | null> {
@@ -256,7 +256,7 @@ async function onCardButton(interaction: ButtonInteraction, community: Community
   const player = peekPlayer(players, interaction.user.id);
   const card = player.cards[community.key];
   if (!card) {
-    await show(interaction, cardEditorView(community, await draftFor(interaction.user.id, community), 1, 'Fill in your Survivor ID once; you can change it any time.'));
+    await show(interaction, cardEditorView(community, await draftFor(interaction.user.id, community), 1, `Fill in your ${community.cardName} once; you can change it any time.`));
     return;
   }
   const elite = client ? await isEliteMember(client, interaction.user.id) : false;
@@ -293,7 +293,7 @@ async function onCardSaved(interaction: ModalSubmitInteraction, community: Commu
   draft.gamertag = interaction.fields.getTextInputValue('gamertag');
   draft.bio = interaction.fields.getTextInputValue('bio');
   const card = readCard({ ...draft, updatedAt: Date.now() }, community);
-  if (!card) return say(interaction, 'Something is missing from your Survivor ID. Open **My Survivor ID** and fill in every choice.');
+  if (!card) return say(interaction, `Something is missing from your ${community.cardName}. Open **My ${community.cardName}** and fill in every choice.`);
   const saved = await stored(
     playersStore.update((players) => {
       const player = lfgPlayerOf(players, userId);
@@ -307,7 +307,7 @@ async function onCardSaved(interaction: ModalSubmitInteraction, community: Commu
   if (searching) searching.card = card;
   const elite = client ? await isEliteMember(client, userId) : false;
   const view = myCardView(community, card, saved.rep, await nameOf(userId), elite);
-  view.embeds.unshift(tcpEmbed({ description: '✅ **Survivor ID saved.** Press **Deploy** to find a squad.', tone: 'success' }));
+  view.embeds.unshift(tcpEmbed({ description: `✅ **${community.cardName} saved.** Press **Deploy** to find a squad.`, tone: 'success' }));
   if (interaction.isFromMessage()) await interaction.update(view);
   else await interaction.reply({ ...view, ephemeral: true });
 }
@@ -320,7 +320,7 @@ async function onDeploy(interaction: ButtonInteraction, community: Community): P
   if (!players) return say(interaction, STORE_DOWN);
   const card = peekPlayer(players, userId).cards[community.key];
   if (!card) {
-    await show(interaction, cardEditorView(community, await draftFor(userId, community), 1, 'Make your Survivor ID first, then Deploy. It takes a minute and you only do it once.'));
+    await show(interaction, cardEditorView(community, await draftFor(userId, community), 1, `Make your ${community.cardName} first, then Deploy. It takes a minute and you only do it once.`));
     return;
   }
   const searching = queue.get(queueKey(community.key, userId));
@@ -341,7 +341,7 @@ async function onDeployPick(interaction: StringSelectMenuInteraction, community:
   const draft = deployDrafts.get(key) ?? { mode: 'any', size: 0 };
   const value = interaction.values[0] ?? '';
   if (field === 'mode') draft.mode = value === 'any' || community.playstyles[value] ? value : 'any';
-  else if (field === 'size') draft.size = [0, 2, 3, 4, 5].includes(Number(value)) ? Number(value) : 0;
+  else if (field === 'size') draft.size = [0, 2, 3, 4, 5].includes(Number(value)) && Number(value) <= community.maxSquad ? Number(value) : 0;
   deployDrafts.set(key, draft);
   await interaction.update(deployView(community, draft));
 }
@@ -360,7 +360,7 @@ async function onGo(interaction: ButtonInteraction, community: Community): Promi
   const players = await stored(playersStore.read());
   if (!players) return say(interaction, STORE_DOWN);
   const card = peekPlayer(players, userId).cards[community.key];
-  if (!card) return say(interaction, 'Make your Survivor ID first: **🪪 My Survivor ID**.');
+  if (!card) return say(interaction, `Make your ${community.cardName} first: **🪪 My ${community.cardName}**.`);
   const draft = deployDrafts.get(draftKey(userId, community.key)) ?? { mode: 'any', size: 0 };
   const elite = client ? await isEliteMember(client, userId) : false;
   const seeker = seekerFrom(players, community, userId, card, draft.mode, draft.size, existing?.since ?? Date.now(), elite);
@@ -443,7 +443,7 @@ async function runMatching(): Promise<void> {
       const players = (await stored(playersStore.read())) ?? {};
       const offered = new Set([...checks.values()].filter((check) => check.join && !check.resolved).map((check) => check.join!.id));
       for (const squad of Object.values(squads)) {
-        if (squad.community !== community.key || squad.endedAt || !squad.open || offered.has(squad.id) || squad.members.length >= MAX_SQUAD) continue;
+        if (squad.community !== community.key || squad.endedAt || !squad.open || offered.has(squad.id) || squad.members.length >= community.maxSquad) continue;
         const members: Seeker[] = [];
         for (const memberId of squad.members) {
           const card = peekPlayer(players, memberId).cards[community.key];
@@ -498,7 +498,7 @@ async function onReadyAnswer(interaction: ButtonInteraction, checkId: string, an
   const check = checks.get(checkId);
   if (!check || check.resolved) return say(interaction, 'This ready check is over.');
   const userId = interaction.user.id;
-  if (!check.members.some((member) => member.userId === userId)) return say(interaction, 'This ready check is for the survivors it names. Press **Deploy** on the panel to find your own squad.');
+  if (!check.members.some((member) => member.userId === userId)) return say(interaction, 'This ready check is for the players it names. Press **Deploy** on the panel to find your own squad.');
   if (answer === 'yes') check.accepted.add(userId);
   else {
     check.accepted.delete(userId);
@@ -539,7 +539,7 @@ async function resolveCheck(check: ReadyCheck): Promise<void> {
         ...readyCheckView(
           check,
           'failed',
-          `${declined ? '❌ Someone declined.' : '💤 Not everyone answered in time.'} Survivors who accepted are back in the queue, at the front. The others left it.`,
+          `${declined ? '❌ Someone declined.' : '💤 Not everyone answered in time.'} Everyone who accepted is back in the queue, at the front. The others left it.`,
         ),
         content: '',
       })
@@ -615,7 +615,7 @@ async function createSquad(community: Community, members: Seeker[], score: numbe
       name: `🔊 Squad ${sign}`,
       type: ChannelType.GuildVoice,
       parent,
-      userLimit: Math.min(MAX_SQUAD, Math.max(members.length, 2)),
+      userLimit: Math.min(community.maxSquad, Math.max(members.length, 2)),
       permissionOverwrites: squadOverwrites(guild, memberIds, client.user.id, 'voice'),
     });
   } catch (error) {
@@ -693,7 +693,8 @@ async function addToSquad(squadId: string, seeker: Seeker): Promise<SquadRecord>
   await text.permissionOverwrites.edit(seeker.userId, memberAllow('text'));
   await voice.permissionOverwrites.edit(seeker.userId, memberAllow('voice'));
   const size = squad.members.length + 1;
-  if ((voice.userLimit || 0) < size) await voice.setUserLimit(Math.min(MAX_SQUAD, size)).catch(() => undefined);
+  const max = communityOf(squad.community)?.maxSquad ?? MAX_SQUAD;
+  if ((voice.userLimit || 0) < size) await voice.setUserLimit(Math.min(max, size)).catch(() => undefined);
   const updated = await squadsStore.update((all) => {
     const record = all[squadId]!;
     if (!record.members.includes(seeker.userId)) record.members.push(seeker.userId);
@@ -770,7 +771,7 @@ async function onSquadButton(interaction: ButtonInteraction, squadId: string, op
     const lines = await Promise.all(
       squad.members.map(async (memberId) => {
         const card = peekPlayer(players, memberId).cards[community.key];
-        return `**${await nameOf(memberId)}** · ${card ? `\`${card.gamertag}\`` : 'no Survivor ID'}`;
+        return `**${await nameOf(memberId)}** · ${card ? `\`${card.gamertag}\`` : `no ${community.cardName}`}`;
       }),
     );
     await interaction.reply({ ...notice(`📋 **Squad ${squad.callSign}: add each other in game**\n\n${lines.join('\n')}`), ephemeral: true });
@@ -778,7 +779,7 @@ async function onSquadButton(interaction: ButtonInteraction, squadId: string, op
   }
 
   if (op === 'open' || op === 'close') {
-    if (op === 'open' && squad.members.length >= MAX_SQUAD) return say(interaction, `A squad holds at most ${MAX_SQUAD}.`);
+    if (op === 'open' && squad.members.length >= community.maxSquad) return say(interaction, `A ${community.name} squad holds at most ${community.maxSquad}.`);
     const updated = await stored(
       squadsStore.update((all) => {
         const record = all[squadId]!;
@@ -837,11 +838,11 @@ async function onOpenSquads(interaction: ButtonInteraction, community: Community
   const [squads, players] = await Promise.all([stored(squadsStore.read()), stored(playersStore.read())]);
   if (!squads || !players) return say(interaction, STORE_DOWN);
   const card = peekPlayer(players, userId).cards[community.key];
-  if (!card) return void (await show(interaction, cardEditorView(community, await draftFor(userId, community), 1, 'Make your Survivor ID first, then you can join open squads.')));
+  if (!card) return void (await show(interaction, cardEditorView(community, await draftFor(userId, community), 1, `Make your ${community.cardName} first, then you can join open squads.`)));
   const me = seekerFrom(players, community, userId, card, 'any', 0, Date.now(), false);
   const now = Date.now();
   const fits = Object.values(squads)
-    .filter((squad) => squad.community === community.key && !squad.endedAt && squad.open && !squad.members.includes(userId) && squad.members.length < MAX_SQUAD)
+    .filter((squad) => squad.community === community.key && !squad.endedAt && squad.open && !squad.members.includes(userId) && squad.members.length < community.maxSquad)
     .map((squad) => {
       const members = squad.members
         .map((memberId) => {
@@ -884,7 +885,7 @@ async function onJoin(interaction: ButtonInteraction, squadId: string): Promise<
   const busy = await busyText(userId, community);
   if (busy) return say(interaction, busy);
   const card = peekPlayer(players, userId).cards[community.key];
-  if (!card) return say(interaction, 'Make your Survivor ID first.');
+  if (!card) return say(interaction, `Make your ${community.cardName} first.`);
   const seeker = seekerFrom(players, community, userId, card, squad.mode, 0, Date.now(), false);
   const now = Date.now();
   const fits = squad.members.every((memberId) => {
@@ -916,7 +917,7 @@ async function onTrustBoard(interaction: ButtonInteraction, community: Community
   await interaction.reply({
     embeds: [
       tcpEmbed({
-        title: `🏆 Most trusted ${community.name} survivors`,
+        title: `🏆 Most trusted ${community.name} ${community.people}`,
         description: lines.join('\n') || 'No commendations yet. Squad up, then rate your squadmates.',
         footer: 'Commendations come from squadmates after every squad.',
       }),

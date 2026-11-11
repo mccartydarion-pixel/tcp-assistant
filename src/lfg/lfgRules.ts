@@ -6,9 +6,9 @@ const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-/** DayZ has no crossplay, so the platform is a hard filter. */
-export type Platform = 'ps' | 'xbox';
-export const PLATFORMS: Record<Platform, string> = { ps: 'PlayStation', xbox: 'Xbox' };
+/** A hard filter, unless the community's game has crossplay (Community.crossplay). */
+export type Platform = 'ps' | 'xbox' | 'pc';
+export const PLATFORMS: Record<Platform, string> = { ps: 'PlayStation', xbox: 'Xbox', pc: 'PC' };
 
 export const REGIONS = { nae: 'NA East', naw: 'NA West', eu: 'Europe', oce: 'Oceania', sa: 'South America', asia: 'Asia' } as const;
 export type Region = keyof typeof REGIONS;
@@ -34,8 +34,20 @@ export interface Community {
   name: string;
   /** The server category this community lives in; its "lfg" channel carries the panel. */
   categoryMatch: RegExp;
+  /** The platforms the game is on, and whether players on different ones can be matched together. */
+  platforms: Platform[];
+  crossplay: boolean;
+  /** The biggest squad the game takes. */
+  maxSquad: number;
+  /** What the card is called ("Survivor ID") and the players ("survivor", "survivors"). */
+  cardName: string;
+  person: string;
+  people: string;
   playstyles: Record<string, string>;
+  /** The card's last choice: the servers (DayZ) or modes (Battlefield) a member plays. */
   servers: Record<string, string>;
+  serverLabel: string;
+  serverPrompt: string;
   /** Shown in a new squad's channel when one of its members picked one of these servers. */
   serverTip?: { servers: string[]; text: string };
 }
@@ -45,6 +57,15 @@ export const COMMUNITIES: readonly Community[] = [
     key: 'dayz',
     name: 'DayZ',
     categoryMatch: /dayz/i,
+    // DayZ has no crossplay.
+    platforms: ['ps', 'xbox'],
+    crossplay: false,
+    maxSquad: 5,
+    cardName: 'Survivor ID',
+    person: 'survivor',
+    people: 'survivors',
+    serverLabel: 'Server',
+    serverPrompt: 'Servers you play',
     playstyles: {
       pvp: '⚔️ PvP hunter',
       pve: '🏕️ Survival / PvE',
@@ -58,6 +79,35 @@ export const COMMUNITIES: readonly Community[] = [
     serverTip: {
       servers: ['community', 'daynite'],
       text: '🌗 Need a community server? **Day & Nite** (Vanilla++, factions, PvP): https://discord.gg/26Vwz66aKV',
+    },
+  },
+  {
+    key: 'bf6',
+    name: 'Battlefield 6',
+    categoryMatch: /battlefield/i,
+    // Battlefield 6 has crossplay: PlayStation, Xbox and PC players are matched together.
+    platforms: ['ps', 'xbox', 'pc'],
+    crossplay: true,
+    maxSquad: 4,
+    cardName: 'Soldier ID',
+    person: 'soldier',
+    people: 'soldiers',
+    serverLabel: 'Modes',
+    serverPrompt: 'Modes you play',
+    playstyles: {
+      obj: '🎯 Objective player',
+      slayer: '⚔️ Slayer',
+      vehicles: '🚁 Vehicles / pilot',
+      support: '🩹 Support / revives',
+      recon: '🔭 Recon / sniper',
+      engineer: '🛠️ Engineer',
+      chill: '🗣️ Chill / chat',
+    },
+    servers: {
+      large: '⚔️ Large-scale (Conquest, Breakthrough, Rush)',
+      close: '🏙️ Close quarters (Domination, TDM)',
+      redsec: '🪂 REDSEC battle royale',
+      portal: '🧩 Portal / custom',
     },
   },
 ];
@@ -85,6 +135,7 @@ export function readCard(stored: Partial<LfgCard> | undefined, community: Commun
   const playstyles = Array.isArray(stored.playstyles) ? stored.playstyles.filter((style) => isKey(community.playstyles, style)).slice(0, 3) : [];
   if (
     !isKey(PLATFORMS, stored.platform) ||
+    !community.platforms.includes(stored.platform) ||
     !isKey(REGIONS, stored.region) ||
     !isKey(LANGUAGES, stored.language) ||
     !isKey(MICS, stored.mic) ||
@@ -201,7 +252,8 @@ export const waited = (seeker: Seeker, now: number) => now - priorityTime(seeker
 /** The hard rules: same community, platform and language, region (NA East and West mix after 3 minutes), trust, nobody avoided, and no new player with a veteran in the first 2 minutes. */
 export function compatible(a: Seeker, b: Seeker, now: number): boolean {
   if (a.userId === b.userId || a.community !== b.community) return false;
-  if (a.card.platform !== b.card.platform || a.card.language !== b.card.language) return false;
+  if (a.card.language !== b.card.language) return false;
+  if (a.card.platform !== b.card.platform && !communityOf(a.community)?.crossplay) return false;
   if (a.lowTrust !== b.lowTrust) return false;
   if (a.avoid.includes(b.userId) || b.avoid.includes(a.userId)) return false;
   const longest = Math.max(waited(a, now), waited(b, now));
@@ -288,7 +340,7 @@ export function formSquads(seekers: Seeker[], now: number): Match[] {
     if (used.has(anchor.userId)) continue;
     const pool = order.filter((candidate) => candidate !== anchor && !used.has(candidate.userId) && compatible(anchor, candidate, now));
     if (pool.length === 0) continue;
-    const target = Math.min(MAX_SQUAD, anchor.size || preferredSize(pool));
+    const target = Math.min(communityOf(anchor.community)?.maxSquad ?? MAX_SQUAD, anchor.size || preferredSize(pool));
     const group = [anchor];
     while (group.length < target) {
       let best: Seeker | null = null;

@@ -47,6 +47,7 @@ import { handleTuneInteraction } from '../tuning/tuningWizard.js';
 import { handleTicTacToeInteraction } from '../fun/ticTacToe.js';
 import { handleCasinoInteraction } from '../casino/casino.js';
 import { handleLfgInteraction } from '../lfg/lfg.js';
+import { handleCommunityInteraction, scheduleCommunitiesRefresh } from '../communities/communities.js';
 
 export function registerEvents(
   client: Client,
@@ -70,6 +71,7 @@ export function registerEvents(
           (await handleTicTacToeInteraction(interaction)) ||
           (await handleCasinoInteraction(interaction)) ||
           (await handleLfgInteraction(interaction)) ||
+          (await handleCommunityInteraction(interaction)) ||
           (await handleTeachInteraction(interaction)) ||
           (await handleAuditInteraction(interaction)) ||
           (await handleSettingsInteraction(interaction)) ||
@@ -303,6 +305,8 @@ function refreshGuideFor(client: Client, channel: GuildBasedChannel): void {
   if (channel.guild.id !== env.DISCORD_GUILD_ID) return;
   if ('topic' in channel && isTicketTopic(channel.topic)) return;
   scheduleServerGuideRefresh(client);
+  // A new game category, a renamed channel or the picker channel: the community picker looks again.
+  scheduleCommunitiesRefresh();
 }
 
 /** Replies with an answer as embeds; a long answer continues in further messages. */

@@ -225,3 +225,35 @@ describe('squad finder screens', () => {
     expect(check.components).toHaveLength(1);
   });
 });
+
+describe('more than one game community', () => {
+  const bf6 = rules.communityOf('bf6')!;
+
+  it('matches Battlefield 6 players across platforms, and keeps DayZ to one platform', () => {
+    const ps = seeker({ community: 'bf6', mode: 'obj' }, { platform: 'ps', playstyles: ['obj'], server: 'large' });
+    const pc = seeker({ community: 'bf6', mode: 'obj' }, { platform: 'pc', playstyles: ['obj'], server: 'large' });
+    expect(compatible(ps, pc, NOW)).toBe(true);
+    expect(compatible(seeker(), seeker({}, { platform: 'xbox' }), NOW)).toBe(false);
+    // Different communities never mix.
+    expect(compatible(ps, seeker(), NOW)).toBe(false);
+  });
+
+  it('only accepts the platforms a game is on', () => {
+    expect(readCard({ ...card(), platform: 'pc' }, dayz)).toBeNull();
+    expect(readCard({ ...card(), platform: 'pc', playstyles: ['obj'], server: 'redsec' }, bf6)).toMatchObject({ platform: 'pc', server: 'redsec' });
+    expect(readCard({ ...card(), playstyles: ['obj'], server: 'daynite' }, bf6)).toBeNull();
+  });
+
+  it('never forms a Battlefield 6 squad over 4', () => {
+    const players = Array.from({ length: 6 }, () => seeker({ community: 'bf6', mode: 'obj', size: 0 }, { playstyles: ['obj'], server: 'large' }));
+    const [match] = formSquads(players, NOW);
+    expect(match!.members).toHaveLength(4);
+    const view = rules.SIZES;
+    expect(Object.keys(view).filter((size) => Number(size) <= bf6.maxSquad)).not.toContain('5');
+  });
+
+  it('names the card after the game', () => {
+    expect(cardEditorView(bf6, {}, 1).embeds[0]!.toJSON().title).toContain('Soldier ID');
+    expect(cardEditorView(dayz, {}, 1).embeds[0]!.toJSON().title).toContain('Survivor ID');
+  });
+});
