@@ -15,6 +15,7 @@ import {
 } from 'discord.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { plainName } from '../utils/names.js';
 import { notice, tcpEmbed } from '../bot/embeds.js';
 import { ensurePanel } from '../bot/panels.js';
 import { staffRoles } from '../bot/staff.js';
@@ -36,17 +37,21 @@ const REFRESH_DELAY_MS = 20 * 1000;
 /** Category ID → the community's role ID, so a renamed role or category never gets a second role. */
 const rolesStore = jsonStore<Record<string, string>>('communities.roles', () => ({}));
 
-/** "· Battlefield™ 6" → "Battlefield™ 6": the category's name without the decoration in front. */
+/** "· Battlefield™ 6" → "Battlefield 6": the category's name in plain letters, without the decoration in front. */
 export function communityName(categoryName: string): string {
-  return categoryName.replace(/^[^\p{L}\p{N}]+/u, '').trim() || categoryName.trim();
+  const plain = plainName(categoryName).trim();
+  return plain.replace(/^[^\p{L}\p{N}]+/u, '').trim() || plain;
 }
 
-/** A category is a game community when it has an LFG channel and a Script channel. */
+/** A category is a game community when it has an LFG channel and a Script channel (styled names included). */
 export function isCommunityCategory(channelNames: string[]): boolean {
-  return channelNames.some((name) => /lfg/i.test(name)) && channelNames.some((name) => /script/i.test(name));
+  const names = channelNames.map(plainName);
+  return names.some((name) => /lfg/i.test(name)) && names.some((name) => /script/i.test(name));
 }
 
-export const isPickerChannelName = (name: string) => /communit/i.test(name);
+export const isPickerChannelName = (name: string) => /communit/i.test(plainName(name));
+const isLfgName = (name: string) => /lfg/i.test(plainName(name));
+const isSquadName = (name: string) => /squad/i.test(plainName(name));
 
 /** "・lfg" → "LFG"-ish display: the channel's name without its decoration. */
 const channelLabel = (name: string) => communityName(name.replace(/[-_]+/g, ' '));
@@ -92,7 +97,7 @@ async function discover(guild: Guild): Promise<CommunityInfo[]> {
       logger.info(`[TCP Communities] Made the role "${name}" for the ${name} community`);
     }
     if (stored[category.id] !== role.id) newRoles[category.id] = role.id;
-    found.push({ category, name, role, channels, lfg: channels.find((channel) => /lfg/i.test(channel.name)) ?? null });
+    found.push({ category, name, role, channels, lfg: channels.find((channel) => isLfgName(channel.name)) ?? null });
   }
   if (Object.keys(newRoles).length > 0) {
     await rolesStore
@@ -123,7 +128,7 @@ async function hideCommunity(guild: Guild, community: CommunityInfo, squadChanne
   let changes = 0;
   const targets: (CategoryChannel | GuildBasedChannel)[] = [
     community.category,
-    ...community.channels.filter((channel) => !squadChannels.has(channel.id) && !/squad/i.test(channel.name)),
+    ...community.channels.filter((channel) => !squadChannels.has(channel.id) && !isSquadName(channel.name)),
   ];
   for (const channel of targets) {
     // Allow first, then deny everyone, so the bot never loses sight of a channel half-way.
@@ -140,7 +145,7 @@ function panelView(communities: CommunityInfo[]) {
     name: `🎮 ${community.name}`,
     value:
       community.channels
-        .filter((channel) => channel.type === ChannelType.GuildText && !/squad/i.test(channel.name))
+        .filter((channel) => channel.type === ChannelType.GuildText && !isSquadName(channel.name))
         .map((channel) => channelLabel(channel.name))
         .join(' · ') || 'Its channels',
     inline: true,

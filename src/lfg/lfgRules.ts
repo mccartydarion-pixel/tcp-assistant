@@ -34,6 +34,8 @@ export interface Community {
   name: string;
   /** The server category this community lives in; its "lfg" channel carries the panel. */
   categoryMatch: RegExp;
+  /** The lfg channel's ID, when the owner gave it: found by ID first, by name otherwise. */
+  lfgChannelId?: string;
   /** The platforms the game is on, and whether players on different ones can be matched together. */
   platforms: Platform[];
   crossplay: boolean;
@@ -85,6 +87,7 @@ export const COMMUNITIES: readonly Community[] = [
     key: 'bf6',
     name: 'Battlefield 6',
     categoryMatch: /battlefield/i,
+    lfgChannelId: '1569930588218064956',
     // Battlefield 6 has crossplay: PlayStation, Xbox and PC players are matched together.
     platforms: ['ps', 'xbox', 'pc'],
     crossplay: true,

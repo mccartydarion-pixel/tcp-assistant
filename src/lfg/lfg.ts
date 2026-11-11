@@ -22,6 +22,7 @@ import {
 } from 'discord.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { plainName } from '../utils/names.js';
 import { notice, tcpEmbed } from '../bot/embeds.js';
 import { ensurePanel, fetchSendableChannel } from '../bot/panels.js';
 import { staffRoles } from '../bot/staff.js';
@@ -112,9 +113,12 @@ function guildOf(): Guild | null {
 }
 
 function lfgChannelFor(guild: Guild | null, community: Community): TextChannel | null {
+  const byId = community.lfgChannelId ? guild?.channels.cache.get(community.lfgChannelId) : undefined;
+  if (byId?.type === ChannelType.GuildText) return byId as TextChannel;
   const channel = guild?.channels.cache.find(
     (candidate) =>
-      candidate.type === ChannelType.GuildText && /lfg/i.test(candidate.name) && Boolean(candidate.parent && community.categoryMatch.test(candidate.parent.name)),
+      // Names may be styled with Unicode letters (𝑳𝑭𝑮): read them as plain text.
+      candidate.type === ChannelType.GuildText && /lfg/i.test(plainName(candidate.name)) && Boolean(candidate.parent && community.categoryMatch.test(plainName(candidate.parent.name))),
   );
   return (channel as TextChannel | undefined) ?? null;
 }
