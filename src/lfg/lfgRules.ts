@@ -7,8 +7,17 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
 /** A hard filter, unless the community's game has crossplay (Community.crossplay). */
-export type Platform = 'ps' | 'xbox' | 'pc';
-export const PLATFORMS: Record<Platform, string> = { ps: 'PlayStation', xbox: 'Xbox', pc: 'PC' };
+// ps / xbox where a game's generations play together; ps5 / ps4 / xsx / xone where they do not (GTA Online).
+export type Platform = 'ps' | 'xbox' | 'pc' | 'ps5' | 'ps4' | 'xsx' | 'xone';
+export const PLATFORMS: Record<Platform, string> = {
+  ps: 'PlayStation',
+  xbox: 'Xbox',
+  pc: 'PC',
+  ps5: 'PS5',
+  ps4: 'PS4',
+  xsx: 'Xbox Series X|S',
+  xone: 'Xbox One',
+};
 
 export const REGIONS = { nae: 'NA East', naw: 'NA West', eu: 'Europe', oce: 'Oceania', sa: 'South America', asia: 'Asia' } as const;
 export type Region = keyof typeof REGIONS;
@@ -111,6 +120,34 @@ export const COMMUNITIES: readonly Community[] = [
       close: '🏙️ Close quarters (Domination, TDM)',
       redsec: '🪂 REDSEC battle royale',
       portal: '🧩 Portal / custom',
+    },
+  },
+  {
+    key: 'gta5',
+    name: 'GTA V',
+    categoryMatch: /gta|grand theft/i,
+    // GTA Online has no crossplay, and PS5 / PS4 and Xbox Series / Xbox One play apart: each is its own platform.
+    platforms: ['ps5', 'ps4', 'xsx', 'xone'],
+    crossplay: false,
+    maxSquad: 4,
+    cardName: 'Crew ID',
+    person: 'player',
+    people: 'players',
+    serverLabel: 'Sessions',
+    serverPrompt: 'Sessions you play',
+    playstyles: {
+      heists: '💰 Heists',
+      freeroam: '🏙️ Free roam',
+      pvp: '⚔️ PvP / bounties',
+      races: '🏁 Races',
+      business: '💼 Business grinding',
+      missions: '🎯 Missions / contacts',
+      chill: '🗣️ Chill / cruising',
+    },
+    servers: {
+      public: '🌐 Public sessions',
+      crew: '🔒 Crew / invite-only sessions',
+      any: '🎲 Either',
     },
   },
 ];

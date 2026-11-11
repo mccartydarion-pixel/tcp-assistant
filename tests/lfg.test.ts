@@ -257,3 +257,21 @@ describe('more than one game community', () => {
     expect(cardEditorView(dayz, {}, 1).embeds[0]!.toJSON().title).toContain('Survivor ID');
   });
 });
+
+describe('the GTA V community', () => {
+  const gta = rules.communityOf('gta5')!;
+  const gtaSeeker = (platform: import('../src/lfg/lfgRules.js').Platform) =>
+    seeker({ community: 'gta5', mode: 'heists' }, { platform, playstyles: ['heists'], server: 'public' });
+
+  it('keeps PS5 and PS4 (and Xbox Series and Xbox One) apart', () => {
+    expect(compatible(gtaSeeker('ps5'), gtaSeeker('ps5'), NOW)).toBe(true);
+    expect(compatible(gtaSeeker('ps5'), gtaSeeker('ps4'), NOW)).toBe(false);
+    expect(compatible(gtaSeeker('xsx'), gtaSeeker('xone'), NOW)).toBe(false);
+  });
+
+  it('takes a Crew ID with its own consoles', () => {
+    expect(readCard({ ...card(), platform: 'ps5', playstyles: ['heists'], server: 'crew' }, gta)).toMatchObject({ platform: 'ps5' });
+    expect(readCard({ ...card(), platform: 'ps', playstyles: ['heists'], server: 'crew' }, gta)).toBeNull();
+    expect(cardEditorView(gta, {}, 1).embeds[0]!.toJSON().title).toContain('Crew ID');
+  });
+});

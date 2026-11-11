@@ -62,7 +62,15 @@ export const SCRIPTS: readonly ScriptConfig[] = [
       updatedAt: Date.UTC(2026, 9, 29, 19, 19),
     },
   },
-  { key: 'bf6', name: 'Battlefield 6', channelId: '1569930663346446386', slug: 'bf6', premium: false, defaults: { edition: 'T.C.P', device: 'Cronus Zen' } },
+  {
+    key: 'bf6',
+    name: 'Battlefield 6',
+    channelId: '1569930663346446386',
+    slug: 'bf6',
+    premium: false,
+    // Still being worked on (the owner, 2026-11-11): /tcp script switches it to Online when it ships.
+    defaults: { edition: 'T.C.P', device: 'Cronus Zen', state: 'updating', note: 'Still being worked on: the T.C.P Battlefield 6 script is on its way.' },
+  },
   { key: 'gta5', name: 'GTA V', channelId: '1570136255306404084', slug: 'gta5', premium: false, defaults: { edition: 'T.C.P', device: 'Cronus Zen' } },
 ];
 
@@ -87,9 +95,13 @@ const BLANK: ScriptStatus = {
 export function effectiveStatus(script: ScriptConfig, stored: Partial<ScriptStatus> | undefined): ScriptStatus {
   const merged = { ...BLANK, ...script.defaults, ...(stored ?? {}) };
   const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+  const state = isState(merged.state) ? merged.state : 'online';
+  // A default note belongs to the default state ("Still being worked on" while Updating): once the team sets
+  // another state it goes, unless they wrote a note of their own.
+  const note = stored?.note !== undefined ? stored.note : state === (script.defaults.state ?? 'online') ? script.defaults.note : '';
   return {
-    state: isState(merged.state) ? merged.state : 'online',
-    note: text(merged.note).slice(0, 300),
+    state,
+    note: text(note).slice(0, 300),
     changedAt: Number(merged.changedAt) || 0,
     updatedAt: Number(merged.updatedAt) || 0,
     edition: text(merged.edition).slice(0, 40),

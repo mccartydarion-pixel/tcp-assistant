@@ -17,9 +17,10 @@ describe('script status cards', () => {
     const status = effectiveStatus(dayz, undefined);
     expect(cardTitle(dayz, status)).toBe('🟢 DayZ · T.C.P Premium is ONLINE');
     expect(cardFields(status).map((field) => field.name)).toEqual(['Status', 'Build', 'Updated', 'Device', 'Platforms', 'Editions', "What's in it", 'Latest changes']);
-    const other = effectiveStatus(bf6, undefined);
+    const gta = scriptOf('gta5')!;
+    const other = effectiveStatus(gta, undefined);
     expect(cardFields(other).map((field) => field.name)).toEqual(['Status', 'Device']);
-    expect(cardTitle(bf6, other)).toBe('🟢 Battlefield 6 · T.C.P is ONLINE');
+    expect(cardTitle(gta, other)).toBe('🟢 GTA V · T.C.P is ONLINE');
   });
 
   it('stamps a new state and a new build, and "-" clears a field', () => {
@@ -44,5 +45,16 @@ describe('script status cards', () => {
 
   it('says what a paused script means', () => {
     expect(cardDescription(bf6, effectiveStatus(bf6, { state: 'down' }))).toMatch(/hold off/);
+  });
+});
+
+describe('Battlefield 6 while it is being worked on', () => {
+  it('shows Updating with its note until the team switches it', () => {
+    const status = effectiveStatus(bf6, undefined);
+    expect(cardTitle(bf6, status)).toBe('🟡 Battlefield 6 · T.C.P is UPDATING');
+    expect(cardDescription(bf6, status)).toMatch(/Still being worked on/);
+    // Switched to Online, the default "being worked on" note goes; a note of the team's own stays.
+    expect(effectiveStatus(bf6, { state: 'online' })).toMatchObject({ state: 'online', note: '' });
+    expect(effectiveStatus(bf6, { state: 'online', note: 'Out now!' }).note).toBe('Out now!');
   });
 });
