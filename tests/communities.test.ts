@@ -65,3 +65,11 @@ describe('announcement channel links', () => {
     expect(withChannelLinks([entry], { communities: null })[0]!.description).toBe('Go to the communities channel now');
   });
 });
+
+describe('the license panel link', () => {
+  it('links {license} to the license channel, or says the license panel', () => {
+    const entry = { id: 'y', date: '2026-11-16', ready: true, title: 'T', description: 'Press Generate in {license}.' };
+    expect(withChannelLinks([entry], { communities: null, license: '222222222222222222' })[0]!.description).toBe('Press Generate in <#222222222222222222>.');
+    expect(withChannelLinks([entry], { communities: null })[0]!.description).toBe('Press Generate in the license panel.');
+  });
+});

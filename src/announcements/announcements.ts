@@ -26,8 +26,12 @@ let running: Promise<unknown> = Promise.resolve();
  * The queue with its channel placeholders filled in at posting time: {communities} becomes a link to the
  * community picker channel (found by name, so a rename never breaks it), or plain words when there is none.
  */
-export function withChannelLinks(queue: readonly QueuedAnnouncement[], links: { communities: string | null }): QueuedAnnouncement[] {
-  const fill = (text: string) => text.replace(/\{communities\}/g, links.communities ? `<#${links.communities}>` : 'the communities channel');
+export function withChannelLinks(queue: readonly QueuedAnnouncement[], links: { communities: string | null; license?: string | null }): QueuedAnnouncement[] {
+  // {license} is the license panel's channel (LICENSE_CHANNEL_ID).
+  const fill = (text: string) =>
+    text
+      .replace(/\{communities\}/g, links.communities ? `<#${links.communities}>` : 'the communities channel')
+      .replace(/\{license\}/g, links.license ? `<#${links.license}>` : 'the license panel');
   return queue.map((entry) => ({
     ...entry,
     description: fill(entry.description),
@@ -36,7 +40,10 @@ export function withChannelLinks(queue: readonly QueuedAnnouncement[], links: { 
 }
 
 function linkedQueue(client: Client): QueuedAnnouncement[] {
-  return withChannelLinks(ANNOUNCEMENT_QUEUE, { communities: pickerChannelOf(client.guilds.cache.get(env.DISCORD_GUILD_ID))?.id ?? null });
+  return withChannelLinks(ANNOUNCEMENT_QUEUE, {
+    communities: pickerChannelOf(client.guilds.cache.get(env.DISCORD_GUILD_ID))?.id ?? null,
+    license: env.LICENSE_CHANNEL_ID ?? null,
+  });
 }
 
 function runQueue(client: Client): Promise<QueueRunReport> {

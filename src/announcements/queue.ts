@@ -9,6 +9,23 @@ import type { QueuedAnnouncement } from './announcementQueue.js';
  */
 export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
   {
+    // The paid key reset (2026-11-16): $2.99, resets the daily code limit automatically. {license} becomes a
+    // link to the license panel's channel when posted (withChannelLinks).
+    id: '2026-11-key-reset',
+    date: '2026-11-16',
+    ready: true,
+    title: '🔄 NEW: INSTANT KEY RESET. NEW ZEN? NEW CODE, NOW.',
+    description:
+      "Got a new Zen, re-flashed the script, or your Zen wants a new number after you already made today's code? No more waiting a day or opening a ticket. ⚡\n\n" +
+      '🔄 **RESET NOW.** When you hit the daily code limit, the message now has a **Reset now · $2.99** button.\n\n' +
+      '💳 **PAY ONCE.** A Stripe checkout made for your Discord account: **$2.99**, one payment, nothing recurring.\n\n' +
+      '⚡ **RESET AUTOMATICALLY.** Seconds after the payment goes through, your daily code limit resets by itself and the bot DMs you. Press **Generate** for your new code.\n\n' +
+      '✅ Codes you already have keep working. Happy to wait? The limit still resets by itself after a day, for free.',
+    fields: [{ name: '🚀 Where', value: 'Press **Generate** on the license panel in {license}. Hit the limit? **Reset now** is right there.', inline: false }],
+    gif: 'tcp-key-reset.gif',
+    ping: '@everyone',
+  },
+  {
     // The opt-in game communities (2026-11-11): send everyone to the picker. {communities} becomes a link to the
     // picker channel when posted (withChannelLinks).
     id: '2026-11-communities',
