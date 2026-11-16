@@ -35,6 +35,8 @@ export interface PaymentHooks {
   onEnded?: (discordUserId: string) => Promise<void>;
   /** A paid license reset went through: reset the member's daily code limit (licensePanel.ts). */
   onResetPaid?: (discordUserId: string) => Promise<void>;
+  /** Why a member may not buy a reset now (the weekly cap, code sharing), or null; asked before any checkout opens. */
+  canPayReset?: (discordUserId: string) => Promise<string | null>;
 }
 
 let stripe: Stripe | null = null;
@@ -78,7 +80,7 @@ export function usePaymentsForTests(deps: { stripe: Stripe; store: PaymentStore;
   store = deps.store;
   grantDays = deps.grantDays;
   grantUntil = deps.grantUntil ?? null;
-  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded, onResetPaid: deps.onResetPaid };
+  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded, onResetPaid: deps.onResetPaid, canPayReset: deps.canPayReset };
   client = null;
 }
 
@@ -86,7 +88,7 @@ export async function initPayments(discord: Client, deps: { grantDays: GrantDays
   client = discord;
   grantDays = deps.grantDays;
   grantUntil = deps.grantUntil ?? null;
-  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded, onResetPaid: deps.onResetPaid };
+  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded, onResetPaid: deps.onResetPaid, canPayReset: deps.canPayReset };
   if (!paymentsConfigured()) {
     logger.info('[TCP Payments] STRIPE_SECRET_KEY or STRIPE_PRICE_ID not set; payments are off.');
     return;
@@ -282,6 +284,12 @@ export async function handlePaymentInteraction(interaction: Interaction): Promis
 
   // A paid license reset: one card payment, on a Checkout page made for this member.
   if (interaction.customId === RESET_ID) {
+    const refusal = (await hooks.canPayReset?.(userId)) ?? null;
+    if (refusal) {
+      logger.info(`[TCP Payments] License reset refused for ${userId} before checkout`);
+      await interaction.editReply(notice(refusal, { title: 'Reset not available', tone: 'warning' }));
+      return true;
+    }
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [

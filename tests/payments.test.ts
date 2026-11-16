@@ -301,3 +301,12 @@ describe('paid license reset', () => {
     expect(events.has('evt_r4')).toBe(false);
   });
 });
+
+describe('paid reset guards', () => {
+  it('reads a member reset history, old single times included', async () => {
+    const { paidResetTimes } = await import('../src/license/licensePanel.js');
+    expect(paidResetTimes(undefined)).toEqual([]);
+    expect(paidResetTimes(1000)).toEqual([1000]);
+    expect(paidResetTimes([3000, 1000, 0])).toEqual([1000, 3000]);
+  });
+});

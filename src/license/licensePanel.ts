@@ -270,23 +270,65 @@ async function usageSince(records: LicenseStore, userId: string, since: number):
   return Math.max(since, await records.codeUsageResetAt(userId));
 }
 
-/** When each member last paid for a reset (Reset now). It clears the daily limit only, never the sharing check. */
-const paidResets = jsonStore<Record<string, number>>('license.paidResets', () => ({}));
+/** When each member paid for a reset (Reset now), newest last. It clears the daily limit only, never the sharing check. */
+const paidResets = jsonStore<Record<string, number | number[]>>('license.paidResets', () => ({}));
+/** At most this many paid resets in PAID_RESET_WINDOW_MS (the owner's choice, 2026-11-16: 2 a week). */
+export const PAID_RESETS_PER_WEEK = 2;
+const PAID_RESET_WINDOW_MS = 7 * DAY_MS;
+
+/** A member's paid resets, oldest first (one stored time from before the history was kept counts as one). */
+export function paidResetTimes(stored: number | number[] | undefined): number[] {
+  if (Array.isArray(stored)) return stored.filter((at) => Number(at) > 0).map(Number).sort((a, b) => a - b);
+  return Number(stored) > 0 ? [Number(stored)] : [];
+}
+
+async function paidResetsOf(userId: string): Promise<number[]> {
+  return paidResetTimes((await paidResets.read().catch(() => ({}) as Record<string, number | number[]>))[userId]);
+}
 
 /** Since when a member's codes count toward the daily limit: the last day, the owner's reset or a paid one. */
 async function dailySince(records: LicenseStore, userId: string, now: number): Promise<number> {
-  const paid = (await paidResets.read().catch(() => ({}) as Record<string, number>))[userId] ?? 0;
+  const paid = (await paidResetsOf(userId)).at(-1) ?? 0;
   return Math.max(await usageSince(records, userId, now - DAY_MS), paid);
 }
+
+/** How many different Zens a member has made codes for in the sharing window (since the owner's last reset). */
+async function zensThisWeek(records: LicenseStore, userId: string, now: number): Promise<number> {
+  return (await records.listCodesSince(userId, await usageSince(records, userId, now - SHARING_WINDOW_MS))).length;
+}
+
+/** Why a member cannot pay for a reset right now (code sharing, or the weekly cap), or null when they can. */
+export async function paidResetRefusal(userId: string, now = Date.now()): Promise<string | null> {
+  if (!store) return 'License records are not available right now. Try again in a minute.';
+  if ((await zensThisWeek(store, userId, now)) >= SHARING_ALERT_ZENS) return sharingBlockText();
+  const recent = (await paidResetsOf(userId)).filter((at) => now - at < PAID_RESET_WINDOW_MS);
+  if (recent.length >= PAID_RESETS_PER_WEEK) {
+    const next = recent[0]! + PAID_RESET_WINDOW_MS;
+    return `You have used your ${PAID_RESETS_PER_WEEK} paid resets for this week; you can buy another <t:${Math.floor(next / 1000)}:R>. Your daily limit also resets by itself, free, a day after your last code.`;
+  }
+  return null;
+}
+
+function sharingBlockText(): string {
+  return `You have made codes for ${SHARING_ALERT_ZENS} different Zens in the last 7 days, so new codes and paid resets are paused to protect T.C.P from code sharing. Your existing codes keep working. If you really need another one, open a support ticket and the team will help.`;
+}
+
+// One log line per member per few hours, however often they press Generate while blocked.
+const blockLogged = new Map<string, number>();
 
 /**
  * A paid reset went through (Stripe): the member's daily code limit starts again from now, and they get a DM.
  * Throws when it cannot be recorded, so the payment's event is retried.
  */
 export async function resetDailyLimitPaid(client: Client, userId: string): Promise<void> {
-  await paidResets.update((resets, now) => {
-    resets[userId] = now;
+  const thisWeek = await paidResets.update((resets, now) => {
+    // Keep the last month: enough for the weekly cap.
+    const times = [...paidResetTimes(resets[userId]), now].filter((at) => now - at < 30 * DAY_MS);
+    resets[userId] = times;
+    return times.filter((at) => now - at < PAID_RESET_WINDOW_MS).length;
   });
+  // Possible only with several checkout links paid at once: the payment is honoured, and the owner sees it.
+  if (thisWeek > PAID_RESETS_PER_WEEK) logger.warn(`[TCP License] ${userId} has ${thisWeek} paid resets this week (several checkouts paid at once)`);
   const user = await client.users.fetch(userId).catch(() => null);
   await user
     ?.send({
@@ -621,16 +663,43 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   await grantMemberRole(interaction, userId);
 
   const alreadyIssued = await store.hasCode(userId, challenge);
+
+  // Codes for 3 different Zens in 7 days: no code for another Zen (the same Zen's code can still be sent again).
+  if (!alreadyIssued && !isOwner && (await zensThisWeek(store, userId, now)) >= SHARING_ALERT_ZENS) {
+    logger.info(`[TCP License] Refused ${userId}: codes for ${SHARING_ALERT_ZENS}+ Zens this week`);
+    await interaction.editReply(notice(sharingBlockText(), { title: 'New codes paused', tone: 'warning' }));
+    if (env.LOG_CHANNEL_ID && now - (blockLogged.get(userId) ?? 0) > 6 * 60 * 60 * 1000) {
+      blockLogged.set(userId, now);
+      const channel = await interaction.client.channels.fetch(env.LOG_CHANNEL_ID).catch(() => null);
+      if (channel && channel.isTextBased() && 'send' in channel) {
+        await channel
+          .send({
+            ...notice(
+              `<@${userId}> tried to make a code for another Zen (number \`${challenge}\`) after codes for ${SHARING_ALERT_ZENS} different Zens in 7 days, and was refused. Paid resets are paused for them too. If it is genuine, **Reset code usage** on the owner panel lifts it.`,
+              { title: '🛑 Code sharing blocked', tone: 'danger' },
+            ),
+            allowedMentions: { parse: [] },
+          })
+          .catch(() => undefined);
+      }
+    }
+    return true;
+  }
+
   const issuedToday = await store.countCodesSince(userId, await dailySince(store, userId, now));
   const decision = decideLicense({ alreadyIssued, issuedToday, maxPerDay: env.LICENSE_MAX_CODES, isOwner });
   if (decision === 'LIMIT') {
     logger.info(`[TCP License] Daily limit reached for ${userId}`);
-    const reset = resetButton();
+    const refusal = isOwner ? null : await paidResetRefusal(userId, now);
+    const reset = refusal ? null : resetButton();
+    const limit = `You have generated ${issuedToday} code${issuedToday === 1 ? '' : 's'} in the last day, which is the limit.`;
     await interaction.editReply({
       ...notice(
         reset
-          ? `You have generated ${issuedToday} code${issuedToday === 1 ? '' : 's'} in the last day, which is the limit. Try again tomorrow, or press **Reset now** (${resetPriceText()}, one payment) and you can generate a new code straight away.`
-          : `You have generated ${issuedToday} codes in the last day, which is the limit. Try again tomorrow, or open a support ticket.`,
+          ? `${limit} Try again tomorrow, or press **Reset now** (${resetPriceText()}, one payment) and you can generate a new code straight away.`
+          : refusal
+            ? `${limit} Try again tomorrow.\n\n${refusal}`
+            : `${limit} Try again tomorrow, or open a support ticket.`,
         { tone: 'warning' },
       ),
       components: reset ? [new ActionRowBuilder<ButtonBuilder>().addComponents(reset)] : [],

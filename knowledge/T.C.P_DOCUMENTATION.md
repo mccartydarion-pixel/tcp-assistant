@@ -697,7 +697,7 @@ The /casino command is a play-money casino: Blackjack, Slots, Mines and Coinflip
 
 ### Paid code reset
 
-You can generate one license code a day. If you need another one sooner (a new Zen, or the script asks for a new number after a re-flash), you can wait until tomorrow, or press **🔄 Reset now** on the "that's the limit" message: a one-time **$2.99** card payment on Stripe (not a subscription). As soon as it goes through, your daily code limit resets by itself and the bot sends you a DM; then press **Generate** again for your new code. Codes you already have keep working.
+You can generate one license code a day. If you need another one sooner (a new Zen, or the script asks for a new number after a re-flash), you can wait until tomorrow, or press **🔄 Reset now** on the "that's the limit" message: a one-time **$2.99** card payment on Stripe (not a subscription). As soon as it goes through, your daily code limit resets by itself and the bot sends you a DM; then press **Generate** again for your new code. Codes you already have keep working. You can buy at most 2 resets a week. Codes for 3 different Zens in 7 days pause new codes and resets (code sharing protection): your existing codes keep working, and a support ticket sorts out a genuine case.
 
 ### Script status cards
 
