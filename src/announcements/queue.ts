@@ -23,7 +23,8 @@ export const ANNOUNCEMENT_QUEUE: QueuedAnnouncement[] = [
       '✅ Codes you already have keep working. Happy to wait? The limit still resets by itself after a day, for free.',
     fields: [{ name: '🚀 Where', value: 'Press **Generate** on the license panel in {license}. Hit the limit? **Reset now** is right there.', inline: false }],
     gif: 'tcp-key-reset.gif',
-    ping: '@everyone',
+    // Only Elite Supporters can generate codes (the owner's choice of ping).
+    ping: 'elite',
   },
   {
     // The opt-in game communities (2026-11-11): send everyone to the picker. {communities} becomes a link to the
