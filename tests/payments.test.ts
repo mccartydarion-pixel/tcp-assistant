@@ -215,3 +215,89 @@ describe('stripe webhook', () => {
     expect(store.records.get('u2')).toMatchObject({ customerId: 'cus_2', subscriptionId: 'sub_2', status: 'active' });
   });
 });
+
+describe('paid license reset', () => {
+  const stripe = new Stripe('sk_test_not_used');
+  const signed = (event: object) => {
+    const payload = JSON.stringify(event);
+    return { body: Buffer.from(payload), signature: stripe.webhooks.generateTestHeaderString({ payload, secret: 'whsec_test_secret' }) };
+  };
+  const resetEvent = (id: string, paymentStatus: string, metadata: Record<string, string> = { discord_user_id: 'u9', kind: 'license-reset' }) =>
+    signed({
+      id,
+      object: 'event',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: `cs_${id}`,
+          object: 'checkout.session',
+          mode: 'payment',
+          payment_status: paymentStatus,
+          client_reference_id: metadata.discord_user_id ?? null,
+          customer: null,
+          amount_total: 299,
+          currency: 'usd',
+          metadata,
+        },
+      },
+    });
+
+  function setUpReset() {
+    const resets: string[] = [];
+    const events = new Set<string>();
+    const store = {
+      async getByUser() {
+        return null;
+      },
+      async save() {},
+      async claimEvent(id: string) {
+        if (events.has(id)) return false;
+        events.add(id);
+        return true;
+      },
+      async releaseEvent(id: string) {
+        events.delete(id);
+      },
+    } as unknown as PaymentStore;
+    usePaymentsForTests({ stripe, store, grantDays: async () => 0, onResetPaid: async (user) => void resets.push(user) });
+    return resets;
+  }
+
+  it('resets the member once the payment is in, and only once per event', async () => {
+    const resets = setUpReset();
+    const { body, signature } = resetEvent('evt_r1', 'paid');
+    expect((await handleStripeWebhook(body, signature)).status).toBe(200);
+    expect((await handleStripeWebhook(body, signature)).body).toBe('already handled');
+    expect(resets).toEqual(['u9']);
+  });
+
+  it('resets nothing when the checkout is not paid, or is not a reset', async () => {
+    const resets = setUpReset();
+    const unpaid = resetEvent('evt_r2', 'unpaid');
+    expect((await handleStripeWebhook(unpaid.body, unpaid.signature)).status).toBe(200);
+    const other = resetEvent('evt_r3', 'paid', { discord_user_id: 'u9', kind: 'something-else' });
+    expect((await handleStripeWebhook(other.body, other.signature)).status).toBe(200);
+    expect(resets).toEqual([]);
+  });
+
+  it('lets Stripe retry when the reset cannot be saved', async () => {
+    const events = new Set<string>();
+    const store = {
+      async getByUser() {
+        return null;
+      },
+      async claimEvent(id: string) {
+        if (events.has(id)) return false;
+        events.add(id);
+        return true;
+      },
+      async releaseEvent(id: string) {
+        events.delete(id);
+      },
+    } as unknown as PaymentStore;
+    usePaymentsForTests({ stripe, store, grantDays: async () => 0, onResetPaid: async () => { throw new Error('database down'); } });
+    const { body, signature } = resetEvent('evt_r4', 'paid');
+    expect((await handleStripeWebhook(body, signature)).status).toBe(500);
+    expect(events.has('evt_r4')).toBe(false);
+  });
+});

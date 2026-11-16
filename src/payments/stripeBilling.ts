@@ -15,10 +15,15 @@ import { premiumAvailable, premiumDownloadButton } from '../premium/premium.js';
 // Manage subscription opens Stripe's own portal (cancel, change card). The bot never sees card details: it
 // only reacts to the signed events Stripe sends to /stripe/webhook. Refunds and disputes are flagged to the
 // owner, who decides whether to end access.
+// A paid license reset (Reset now, LICENSE_RESET_PRICE_CENTS) is a one-time card payment on a Checkout page made
+// for the member; once Stripe says it is paid, onResetPaid resets their daily code limit.
 const PREFIX = 'tcp-pay:';
 const SUBSCRIBE_ID = `${PREFIX}subscribe`;
 const SUBSCRIBE_YEARLY_ID = `${PREFIX}subscribe-yearly`;
 const MANAGE_ID = `${PREFIX}manage`;
+const RESET_ID = `${PREFIX}reset`;
+/** The Checkout metadata that marks a paid license reset. */
+export const RESET_KIND = 'license-reset';
 
 export type GrantDays = (discordUserId: string, days: number) => Promise<number | null>;
 /** Extends a licence to at least the given time; the new end and the whole days added, or null when the records are closed. */
@@ -28,6 +33,8 @@ export type GrantUntil = (discordUserId: string, until: number) => Promise<{ exp
 export interface PaymentHooks {
   onPaid?: (discordUserId: string, first: boolean) => Promise<void>;
   onEnded?: (discordUserId: string) => Promise<void>;
+  /** A paid license reset went through: reset the member's daily code limit (licensePanel.ts). */
+  onResetPaid?: (discordUserId: string) => Promise<void>;
 }
 
 let stripe: Stripe | null = null;
@@ -37,6 +44,7 @@ let grantUntil: GrantUntil | null = null;
 let hooks: PaymentHooks = {};
 let client: Client | null = null;
 let priceLabel = '';
+let priceCurrency = 'usd';
 let yearlyLabel = '';
 /** "save $14.00" when a year costs less than twelve months, else empty. */
 let yearlySaving = '';
@@ -70,7 +78,7 @@ export function usePaymentsForTests(deps: { stripe: Stripe; store: PaymentStore;
   store = deps.store;
   grantDays = deps.grantDays;
   grantUntil = deps.grantUntil ?? null;
-  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded };
+  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded, onResetPaid: deps.onResetPaid };
   client = null;
 }
 
@@ -78,7 +86,7 @@ export async function initPayments(discord: Client, deps: { grantDays: GrantDays
   client = discord;
   grantDays = deps.grantDays;
   grantUntil = deps.grantUntil ?? null;
-  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded };
+  hooks = { onPaid: deps.onPaid, onEnded: deps.onEnded, onResetPaid: deps.onResetPaid };
   if (!paymentsConfigured()) {
     logger.info('[TCP Payments] STRIPE_SECRET_KEY or STRIPE_PRICE_ID not set; payments are off.');
     return;
@@ -91,6 +99,7 @@ export async function initPayments(discord: Client, deps: { grantDays: GrantDays
     stripe = new Stripe(env.STRIPE_SECRET_KEY!);
     const price = await stripe.prices.retrieve(env.STRIPE_PRICE_ID!);
     priceLabel = formatPrice(price.unit_amount, price.currency, price.recurring?.interval, price.recurring?.interval_count ?? 1);
+    priceCurrency = price.currency;
     if (!price.recurring) logger.warn('[TCP Payments] STRIPE_PRICE_ID is a one-off price; Subscribe expects a monthly (recurring) price.');
     if (env.STRIPE_YEARLY_PRICE_ID) {
       try {
@@ -246,6 +255,17 @@ function returnUrl(): string {
   return `https://discord.com/channels/${env.DISCORD_GUILD_ID}${env.LICENSE_CHANNEL_ID ? `/${env.LICENSE_CHANNEL_ID}` : ''}`;
 }
 
+/** "$2.99": what a paid license reset costs. */
+export function resetPriceText(): string {
+  return formatPrice(env.LICENSE_RESET_PRICE_CENTS, priceCurrency);
+}
+
+/** Reset now: pay once to reset the daily code limit. Null while payments are off. */
+export function resetButton(): ButtonBuilder | null {
+  if (!paymentsEnabled()) return null;
+  return new ButtonBuilder().setCustomId(RESET_ID).setLabel(`Reset now · ${resetPriceText()}`).setEmoji('🔄').setStyle(ButtonStyle.Primary);
+}
+
 function linkRow(label: string, url: string) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setLabel(label).setStyle(ButtonStyle.Link).setURL(url));
 }
@@ -259,6 +279,47 @@ export async function handlePaymentInteraction(interaction: Interaction): Promis
   await interaction.deferReply({ ephemeral: true });
   const userId = interaction.user.id;
   const record = await store.getByUser(userId);
+
+  // A paid license reset: one card payment, on a Checkout page made for this member.
+  if (interaction.customId === RESET_ID) {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: priceCurrency,
+            unit_amount: env.LICENSE_RESET_PRICE_CENTS,
+            product_data: { name: 'T.C.P license reset', description: 'Resets your daily code limit so you can generate a new code right away.' },
+          },
+        },
+      ],
+      client_reference_id: userId,
+      metadata: { discord_user_id: userId, kind: RESET_KIND },
+      payment_intent_data: { metadata: { discord_user_id: userId, kind: RESET_KIND } },
+      success_url: returnUrl(),
+      cancel_url: returnUrl(),
+      ...(record?.customerId ? { customer: record.customerId } : {}),
+    });
+    if (!session.url) throw new Error('Stripe returned a checkout session without a URL');
+    logger.info(`[TCP Payments] License reset checkout started for ${userId}`);
+    await interaction.editReply({
+      embeds: [
+        tcpEmbed({
+          title: '🔄 Reset your code limit',
+          description: [
+            `**${resetPriceText()}**, one payment, nothing recurring.`,
+            '',
+            'As soon as it goes through, your daily code limit resets by itself and you get a DM. Then press **Generate** on the license panel for your new code.',
+            '',
+            'This payment link is made for your Discord account, so do not share it. It expires in 24 hours.',
+          ].join('\n'),
+        }),
+      ],
+      components: [linkRow('Pay with Stripe', session.url)],
+    });
+    return true;
+  }
 
   const subscribing = interaction.customId === SUBSCRIBE_ID || interaction.customId === SUBSCRIBE_YEARLY_ID;
   // Someone already subscribed gets the portal, never a second subscription; they switch plan there.
@@ -377,7 +438,27 @@ async function saveSubscription(subscription: Stripe.Subscription, discordUserId
   return { before, after };
 }
 
+/** A paid license reset: once the money is in, the member's daily code limit resets (once per event). */
+async function onResetPaid(session: Stripe.Checkout.Session): Promise<void> {
+  const discordUserId = session.client_reference_id ?? session.metadata?.discord_user_id ?? null;
+  const amount = formatPrice(session.amount_total, session.currency ?? priceCurrency);
+  if (session.payment_status !== 'paid') {
+    // A delayed method (a bank payment): checkout.session.async_payment_succeeded resets it once the money is in.
+    logger.info(`[TCP Payments] License reset ${session.id} is waiting for its payment (${session.payment_status})`);
+    return;
+  }
+  if (!discordUserId) {
+    await ownerLog('Paid reset from an unknown member', `Checkout ${session.id} (${amount}) has no Discord account attached. Find them in Stripe and use **Reset code usage** by hand.`, 'danger');
+    return;
+  }
+  // Throws when it cannot reset, so Stripe sends the event again.
+  await hooks.onResetPaid?.(discordUserId);
+  logger.info(`[TCP Payments] Paid license reset for ${discordUserId}`);
+  await ownerLog('Paid key reset', `<@${discordUserId}> paid ${amount} to reset their daily code limit. It was reset automatically; the code-sharing check keeps counting.`, 'success');
+}
+
 async function onCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
+  if (session.mode === 'payment' && session.metadata?.kind === RESET_KIND) return onResetPaid(session);
   if (session.mode !== 'subscription') return;
   const discordUserId = session.client_reference_id ?? session.metadata?.discord_user_id ?? null;
   const customerId = idOf(session.customer);
@@ -538,6 +619,8 @@ async function onChargeProblem(charge: Stripe.Charge | Stripe.Dispute, kind: 're
 async function processEvent(event: Stripe.Event): Promise<void> {
   switch (event.type) {
     case 'checkout.session.completed':
+      return onCheckoutCompleted(event.data.object);
+    case 'checkout.session.async_payment_succeeded':
       return onCheckoutCompleted(event.data.object);
     case 'invoice.paid':
       return onInvoicePaid(event.data.object);

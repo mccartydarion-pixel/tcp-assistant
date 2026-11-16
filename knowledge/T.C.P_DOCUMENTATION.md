@@ -695,6 +695,10 @@ The /casino command is a play-money casino: Blackjack, Slots, Mines and Coinflip
 - A Blackjack hand or Mines game left alone for 5 minutes is finished for the player (Blackjack stands, Mines cashes out, or gives the bet back if no tile was picked). If the bot restarts mid-game, the bet goes back.
 - /casino balance shows your chips, your daily and your place; /casino leaderboard shows the richest players and the biggest single wins.
 
+### Paid code reset
+
+You can generate one license code a day. If you need another one sooner (a new Zen, or the script asks for a new number after a re-flash), you can wait until tomorrow, or press **🔄 Reset now** on the "that's the limit" message: a one-time **$2.99** card payment on Stripe (not a subscription). As soon as it goes through, your daily code limit resets by itself and the bot sends you a DM; then press **Generate** again for your new code. Codes you already have keep working.
+
 ### Script status cards
 
 Each script channel (DayZ, Battlefield 6, GTA V) has a live **status card** at the top: an animated banner and the script's status. 🟢 **Online**: it works on the current game update. 🟡 **Updating**: a game update landed and a new build is on the way. 🔴 **Paused**: something is broken, hold off until it is green again. The card shows the build, when it was updated, the device and platforms, what is in the script and the latest changes, with buttons: **Download** (DayZ: **Download Premium**), **Changelog**, **Setup guide** and **Report a problem** (opens a bug report ticket). If a script is Updating or Paused, wait for the card to turn green before reporting it as broken.

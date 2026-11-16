@@ -10,7 +10,7 @@ import { registerCommands } from './bot/registerCommands.js';
 import { registerEvents } from './bot/events.js';
 import { SpecialIntentRouter } from './ai/specialIntentRouter.js';
 import { ConversationMemory } from './ai/conversationMemory.js';
-import { ensureLicensePanel, grantPaidDays, grantPaidUntil, refreshLicensePanel } from './license/licensePanel.js';
+import { ensureLicensePanel, grantPaidDays, grantPaidUntil, refreshLicensePanel, resetDailyLimitPaid } from './license/licensePanel.js';
 import { startBoostRewards } from './license/boostRewards.js';
 import { ensureEliteHub } from './premium/eliteHub.js';
 import { ensureSettingsPanel } from './settings/settingsPanel.js';
@@ -208,6 +208,7 @@ async function start(): Promise<void> {
     grantUntil: (discordUserId, until) => grantPaidUntil(client, discordUserId, until),
     onPaid: (discordUserId, first) => onPremiumPaid(client, discordUserId, first),
     onEnded: (discordUserId) => onPremiumEnded(client, discordUserId),
+    onResetPaid: (discordUserId) => resetDailyLimitPaid(client, discordUserId),
   });
   if (paymentsConfigured()) startHttpServer(env.PORT);
   await ensureLicensePanel(client);

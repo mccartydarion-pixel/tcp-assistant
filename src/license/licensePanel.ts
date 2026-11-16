@@ -30,7 +30,8 @@ import { startReminderLoop } from './reminders.js';
 import { ensurePanel } from '../bot/panels.js';
 import { notice } from '../bot/embeds.js';
 import { ANNOUNCE_BUTTON_ID, ANNOUNCE_FLYER_BUTTON_ID } from '../owner/announcer.js';
-import { manageButton, paymentButtons, paymentsEnabled, planButtons, priceText, renewsAutomatically, subscriptionSummary, yearlyPriceText } from '../payments/stripeBilling.js';
+import { manageButton, paymentButtons, paymentsEnabled, planButtons, priceText, renewsAutomatically, resetButton, resetPriceText, subscriptionSummary, yearlyPriceText } from '../payments/stripeBilling.js';
+import { jsonStore } from '../database/jsonStore.js';
 import { eliteRoleName, isEliteMember, premiumAvailable, premiumDownloadButton, setEliteRole } from '../premium/premium.js';
 
 const PREFIX = 'tcp-license:';
@@ -269,6 +270,34 @@ async function usageSince(records: LicenseStore, userId: string, since: number):
   return Math.max(since, await records.codeUsageResetAt(userId));
 }
 
+/** When each member last paid for a reset (Reset now). It clears the daily limit only, never the sharing check. */
+const paidResets = jsonStore<Record<string, number>>('license.paidResets', () => ({}));
+
+/** Since when a member's codes count toward the daily limit: the last day, the owner's reset or a paid one. */
+async function dailySince(records: LicenseStore, userId: string, now: number): Promise<number> {
+  const paid = (await paidResets.read().catch(() => ({}) as Record<string, number>))[userId] ?? 0;
+  return Math.max(await usageSince(records, userId, now - DAY_MS), paid);
+}
+
+/**
+ * A paid reset went through (Stripe): the member's daily code limit starts again from now, and they get a DM.
+ * Throws when it cannot be recorded, so the payment's event is retried.
+ */
+export async function resetDailyLimitPaid(client: Client, userId: string): Promise<void> {
+  await paidResets.update((resets, now) => {
+    resets[userId] = now;
+  });
+  const user = await client.users.fetch(userId).catch(() => null);
+  await user
+    ?.send({
+      ...notice(
+        `Your payment went through and your daily code limit is reset. Press **Generate** on the license panel${env.LICENSE_CHANNEL_ID ? ` in <#${env.LICENSE_CHANNEL_ID}>` : ''} for your new code.`,
+        { title: '✅ Code limit reset', tone: 'success' },
+      ),
+    })
+    .catch(() => undefined);
+}
+
 function describeSubscription(expiresAt: number | null, now: number): string {
   const days = daysLeft(expiresAt, now);
   if (expiresAt === null) return 'No subscription.';
@@ -330,7 +359,7 @@ async function handleAdmin(interaction: Interaction, records: LicenseStore): Pro
   if (interaction.isUserSelectMenu()) {
     const userId = interaction.values[0]!;
     const expiresAt = await records.getExpiry(userId);
-    const issuedToday = await records.countCodesSince(userId, await usageSince(records, userId, now - DAY_MS));
+    const issuedToday = await records.countCodesSince(userId, await dailySince(records, userId, now));
     const embed = new EmbedBuilder()
       .setTitle('Member license')
       .setColor(ADMIN_COLOUR)
@@ -489,7 +518,7 @@ export async function memberLicenceEmbed(userId: string, heading: string): Promi
     expiresAt: subscription?.expiresAt ?? null,
     hadTrial: subscription?.trialGrantedAt != null,
     onTrial: subscription !== null && isOnTrial(subscription, env.LICENSE_TRIAL_DAYS),
-    codesToday: await store.countCodesSince(userId, await usageSince(store, userId, now - DAY_MS)),
+    codesToday: await store.countCodesSince(userId, await dailySince(store, userId, now)),
     maxPerDay: env.LICENSE_MAX_CODES,
     latest: await store.latestCodeFor(userId),
     now,
@@ -592,13 +621,20 @@ export async function handleLicenseInteraction(interaction: Interaction): Promis
   await grantMemberRole(interaction, userId);
 
   const alreadyIssued = await store.hasCode(userId, challenge);
-  const issuedToday = await store.countCodesSince(userId, await usageSince(store, userId, now - DAY_MS));
+  const issuedToday = await store.countCodesSince(userId, await dailySince(store, userId, now));
   const decision = decideLicense({ alreadyIssued, issuedToday, maxPerDay: env.LICENSE_MAX_CODES, isOwner });
   if (decision === 'LIMIT') {
     logger.info(`[TCP License] Daily limit reached for ${userId}`);
-    await interaction.editReply(
-      notice(`You have generated ${issuedToday} codes in the last day, which is the limit. Try again tomorrow, or open a support ticket.`, { tone: 'warning' }),
-    );
+    const reset = resetButton();
+    await interaction.editReply({
+      ...notice(
+        reset
+          ? `You have generated ${issuedToday} code${issuedToday === 1 ? '' : 's'} in the last day, which is the limit. Try again tomorrow, or press **Reset now** (${resetPriceText()}, one payment) and you can generate a new code straight away.`
+          : `You have generated ${issuedToday} codes in the last day, which is the limit. Try again tomorrow, or open a support ticket.`,
+        { tone: 'warning' },
+      ),
+      components: reset ? [new ActionRowBuilder<ButtonBuilder>().addComponents(reset)] : [],
+    });
     return true;
   }
   if (decision === 'ISSUE') await store.recordCode(userId, challenge, tier);

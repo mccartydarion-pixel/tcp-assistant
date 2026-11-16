@@ -60,6 +60,8 @@ const envSchema = z.object({
   LICENSE_TRIAL_DAYS: z.coerce.number().int().min(1).max(3650).default(14),
   // New numbers each member may get a code for per day. One Zen rarely needs more than one.
   LICENSE_MAX_CODES: z.coerce.number().int().min(1).default(1),
+  /** What a paid license reset costs, in cents of the subscription's currency (the owner, 2026-11-15: $2.99). */
+  LICENSE_RESET_PRICE_CENTS: z.coerce.number().int().min(50).default(299),
   DATABASE_URL: z.string().default('file:./data/tcp.db'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),
